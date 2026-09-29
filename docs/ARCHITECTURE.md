@@ -161,5 +161,73 @@ sequenceDiagram
 | :--- | :--- | :--- | :--- |
 | **Application RAM** | JS Heap | Volatile (Lost on close/lock) | Plaintext master password, derived AES-256 CryptoKey, unencrypted in-memory SQLite tables. |
 | **Browser IndexedDB** | Disk VFS | Non-Volatile (Survives reload) | Binary SQLite database file (`superapps_sqlite_v1`). |
-| **Browser LocalStorage** | Disk Key-Value | Non-Volatile | Vault metadata: Salt (hex), PBKDF2 iterations, auto-lock timeout, verification ciphertext. |
+| **Browser LocalStorage** | Disk Key-Value | Non-Volatile | Vault metadata: Salt (hex), PBKDF2 iterations, auto-lock timeout, verification ciphertext, wrapped WebAuthn envelope, active theme. |
 | **Exported Files** | User Local Filesystem | Non-Volatile | Encrypted `.vault` container file (AES-256-GCM) or raw `.sqlite3` binary. |
+
+---
+
+## 📱 6. Progressive Web App (PWA) & Offline Cache Architecture
+
+Superapps OS complies with the modern Progressive Web App (PWA) specification, enabling users to install it as an operating-system level desktop application (macOS dock, Windows taskbar/Start, Linux) or mobile home screen app.
+
+```mermaid
+graph TD
+    Request([Fetch Event]) --> SW{Service Worker Cache?}
+    SW -->|Cache Hit| ReturnCached[Return Precached Asset from CacheStorage]
+    SW -->|Cache Miss| FetchNet[Network Fetch]
+    FetchNet --> SaveCache[Store in CacheStorage & Return]
+    FetchNet -.->|Offline / No Net| OfflineFallback[Offline Fallback Mode]
+```
+
+### PWA Components
+1. **Web App Manifest (`public/manifest.json`)**: Configures display mode (`standalone`), theme color (`#0b0f19`), responsive high-res vector icons (`512x512` & `192x192`), and application metadata.
+2. **Service Worker (`public/sw.js`)**: Employs a Cache-First strategy for core static scripts, CSS bundles, vector logos, and the WebAssembly SQLite binary (`sql-wasm.wasm`), ensuring 100% offline functionality.
+3. **Storage Persistence API**: Automatically invokes `navigator.storage.persist()` upon initialization to prevent the browser from automatically clearing IndexedDB under storage pressure.
+4. **Custom Install Prompt Handler (`src/services/pwaService.ts`)**: Intercepts `beforeinstallprompt` to offer a seamless, one-click in-app install button within the top navigation bar and command palette.
+
+---
+
+## 🔐 7. WebAuthn Hardware Authenticator & Biometrics Architecture
+
+To eliminate the friction of typing a complex master password while retaining high security, Superapps OS implements a local hardware biometric envelope leveraging the W3C Web Authentication standard (`navigator.credentials`).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant App as Superapps Client
+    participant WebAuthn as Platform Authenticator (Touch ID / Windows Hello)
+    participant LocalStore as LocalStorage
+
+    Note over User,WebAuthn: Enrollment Flow
+    User->>App: Enable Biometrics with Master Password
+    App->>WebAuthn: navigator.credentials.create({authenticatorAttachment: 'platform'})
+    WebAuthn-->>App: Credential (rawId)
+    App->>App: Derive AES-GCM wrap key from SHA-256(rawId)
+    App->>App: Encrypt Master Password with wrap key
+    App->>LocalStore: Save {credentialId, iv, wrappedKey}
+
+    Note over User,WebAuthn: Unlock Flow
+    User->>App: Click "Unlock with Touch ID"
+    App->>WebAuthn: navigator.credentials.get({allowCredentials: [credentialId]})
+    WebAuthn->>User: Hardware Biometric Prompt (Fingerprint / Face ID)
+    WebAuthn-->>App: Assertion with rawId
+    App->>App: Derive wrap key from SHA-256(rawId)
+    App->>App: Decrypt Master Password from wrappedKey
+    App->>App: Derive AES-256-GCM Vault Key & Unlock SQLite DB
+```
+
+---
+
+## 🎨 8. Theme Studio & Synthesized Web Audio Soundscapes
+
+### Multi-Theme Engine
+The theme engine operates dynamically without requiring page reloads:
+- `cyber`: Electric cobalt, deep slate, and violet glow.
+- `oled`: Pure pitch-black `#000000` with high-contrast neon accents, optimized for battery preservation on OLED screens.
+- `nord`: Arctic Scandinavian muted slates and crisp cyan highlights.
+- `emerald`: Cyberpunk phosphor matrix green with telemetry amber.
+
+### Web Audio Synthesizer
+Rather than streaming large external MP3/WAV audio files, `src/services/soundService.ts` procedurally generates micro-interaction acoustics using the browser's native `AudioContext` and oscillator nodes (sine/triangle waves with exponential gain ramp envelopes). It introduces zero external asset weight and works completely offline.
+

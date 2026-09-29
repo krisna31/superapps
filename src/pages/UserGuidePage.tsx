@@ -26,6 +26,9 @@ import {
   Clock,
   Layers,
   FileCode2,
+  Fingerprint,
+  Palette,
+  Volume2,
 } from 'lucide-react';
 import { SuperappsLogo } from '../components/brand/SuperappsLogo';
 
@@ -435,6 +438,77 @@ export const UserGuidePage: React.FC<UserGuideProps> = ({ standalone = false }) 
                   {copiedSnippet === 'sql-1' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'pwa-biometrics',
+      title: 'PWA Offline Mode & Biometrics (Touch ID / Face ID)',
+      category: 'core',
+      icon: Fingerprint,
+      badge: 'PWA + WebAuthn',
+      badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+      summary: 'Install Superapps OS as a native desktop or mobile app, run fully offline, and unlock your vault in milliseconds with hardware biometrics.',
+      routeLink: '/app',
+      routeLabel: 'Open App',
+      content: (
+        <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
+          <p>
+            Superapps OS is a fully certified <strong>Progressive Web App (PWA)</strong> and supports <strong>WebAuthn hardware authenticators</strong>:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide block mb-1">
+                Offline Service Worker Pre-Caching
+              </span>
+              <p className="text-[11px] text-slate-400">
+                Core UI bundles and the WebAssembly SQLite binary are cached locally. Once loaded, Superapps OS operates seamlessly with zero internet access, on airplanes, or in isolated high-security environments.
+              </p>
+            </div>
+            <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+              <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wide block mb-1">
+                WebAuthn Hardware Passkeys
+              </span>
+              <p className="text-[11px] text-slate-400">
+                Enroll Touch ID, Windows Hello, or Face ID to quickly unlock your vault without typing your long master password on every visit. Keys are protected with device-bound hardware envelopes.
+              </p>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'themes-soundscapes',
+      title: 'Multi-Theme Studio & Acoustic Soundscapes',
+      category: 'core',
+      icon: Palette,
+      badge: 'Customization',
+      badgeColor: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+      summary: 'Personalize your workspace with 4 custom cyberpunk color palettes and toggle synthesized acoustic feedback.',
+      routeLink: '/app',
+      routeLabel: 'Open App',
+      content: (
+        <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
+          <p>
+            Customize your visual and acoustic working environment directly from the top navigation bar or via <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-white">Cmd+K</kbd>:
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <span className="font-semibold text-indigo-300 text-xs block mb-1">🎨 4 Curated Themes</span>
+              <ul className="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
+                <li><strong>Cyber Midnight:</strong> Electric cobalt, indigo & violet.</li>
+                <li><strong>OLED Stealth:</strong> Pure pitch-black #000000 for battery saving.</li>
+                <li><strong>Nordic Frost:</strong> Cool Scandinavian slate and frost cyan.</li>
+                <li><strong>Matrix Terminal:</strong> Retro cyberpunk green & phosphor telemetry.</li>
+              </ul>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <span className="font-semibold text-cyan-300 text-xs block mb-1">🎵 Web Audio Soundscapes</span>
+              <p className="text-[11px] text-slate-400">
+                Real-time synthesized harmonic chimes provide acoustic feedback on vault unlock, lock, command execution, and Pomodoro cycles. Toggle on or off anytime with the volume button.
+              </p>
             </div>
           </div>
         </div>

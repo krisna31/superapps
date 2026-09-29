@@ -3,12 +3,23 @@ import { useAuth } from '../context/AuthContext';
 import { Shield, Lock, KeyRound, Eye, EyeOff, Sparkles, AlertTriangle, Fingerprint } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { SuperappsLogo } from '../components/brand/SuperappsLogo';
+import { soundService } from '../services/soundService';
 
 export const AuthLockPage: React.FC = () => {
-  const { isConfigured, setupVault, unlockVault, resetVault, biometricsAvailable } = useAuth();
+  const {
+    isConfigured,
+    setupVault,
+    unlockVault,
+    resetVault,
+    biometricsAvailable,
+    isBiometricEnrolled,
+    unlockWithBiometrics,
+    enableBiometrics,
+  } = useAuth();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [autoLockMinutes, setAutoLockMinutes] = useState(15);
+  const [enableBiometricsOnSetup, setEnableBiometricsOnSetup] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,13 +40,21 @@ export const AuthLockPage: React.FC = () => {
 
     setIsLoading(true);
     const ok = await setupVault(password, autoLockMinutes);
-    setIsLoading(false);
 
     if (ok) {
+      if (biometricsAvailable && enableBiometricsOnSetup) {
+        try {
+          await enableBiometrics(password);
+        } catch {
+          // Non-fatal, biometric can be configured later
+        }
+      }
+      soundService.playUnlock();
       confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
     } else {
       setError('Failed to initialize cryptographic vault.');
     }
+    setIsLoading(false);
   };
 
   const handleUnlock = async (e: React.FormEvent) => {
@@ -53,7 +72,26 @@ export const AuthLockPage: React.FC = () => {
     if (!ok) {
       setError('Incorrect password. Please try again.');
     } else {
+      soundService.playUnlock();
       confetti({ particleCount: 50, spread: 50, origin: { y: 0.7 } });
+    }
+  };
+
+  const handleBiometricUnlock = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const ok = await unlockWithBiometrics();
+      if (ok) {
+        soundService.playUnlock();
+        confetti({ particleCount: 50, spread: 50, origin: { y: 0.7 } });
+      } else {
+        setError('Biometric authentication cancelled or not recognized.');
+      }
+    } catch {
+      setError('Failed to authenticate with device biometrics.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -147,6 +185,26 @@ export const AuthLockPage: React.FC = () => {
                   💡 <strong>Zero-Knowledge Promise:</strong> Your password is never sent to any server. If you forget your password, your encrypted data cannot be recovered without a previously exported backup file.
                 </div>
 
+                {biometricsAvailable && (
+                  <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-700/60 cursor-pointer hover:border-slate-600 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={enableBiometricsOnSetup}
+                      onChange={(e) => setEnableBiometricsOnSetup(e.target.checked)}
+                      className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 bg-slate-800 border-slate-700"
+                    />
+                    <div className="text-xs">
+                      <span className="font-semibold text-white flex items-center gap-1.5">
+                        <Fingerprint className="w-4 h-4 text-emerald-400" />
+                        Enable Biometric Fast Unlock
+                      </span>
+                      <span className="text-slate-400 block mt-0.5">
+                        Unlock with Touch ID, Face ID, or Windows Hello on this device.
+                      </span>
+                    </div>
+                  </label>
+                )}
+
                 <button
                   type="submit"
                   disabled={isLoading}
@@ -158,50 +216,74 @@ export const AuthLockPage: React.FC = () => {
               </form>
             ) : (
               /* Unlock Form */
-              <form onSubmit={handleUnlock} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                    Master Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter master password..."
-                      autoFocus
-                      className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors pr-10"
-                      required
-                    />
+              <div className="space-y-4">
+                {isBiometricEnrolled && (
+                  <div>
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
+                      onClick={handleBiometricUnlock}
+                      disabled={isLoading}
+                      className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-medium text-sm shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 group"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      <Fingerprint className="w-5 h-5 text-emerald-200 group-hover:scale-110 transition-transform" />
+                      <span>Unlock with Biometrics (Passkey / Touch ID)</span>
+                    </button>
+
+                    <div className="relative flex py-2 items-center">
+                      <div className="flex-grow border-t border-slate-800"></div>
+                      <span className="flex-shrink mx-3 text-[11px] text-slate-500 uppercase tracking-wider font-semibold">
+                        Or Enter Master Password
+                      </span>
+                      <div className="flex-grow border-t border-slate-800"></div>
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={handleUnlock} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                      Master Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter master password..."
+                        autoFocus={!isBiometricEnrolled}
+                        className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors pr-10"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-medium text-sm shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                    <span>{isLoading ? 'Verifying...' : 'Unlock Vault'}</span>
+                  </button>
+
+                  <div className="pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setShowResetWarning(true)}
+                      className="text-slate-500 hover:text-red-400 transition-colors"
+                    >
+                      Reset or Forgot Password?
                     </button>
                   </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-medium text-sm shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <KeyRound className="w-4 h-4" />
-                  <span>{isLoading ? 'Verifying...' : 'Unlock Vault'}</span>
-                </button>
-
-                <div className="pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setShowResetWarning(true)}
-                    className="text-slate-500 hover:text-red-400 transition-colors"
-                  >
-                    Reset or Forgot Password?
-                  </button>
-                </div>
-              </form>
+                </form>
+              </div>
             )}
 
             {/* Reset Warning Modal */}

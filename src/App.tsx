@@ -16,15 +16,17 @@ import { SwissKnifePage } from './pages/SwissKnifePage';
 import { HabitsPage } from './pages/HabitsPage';
 import { BackupCenterPage } from './pages/BackupCenterPage';
 import { UserGuidePage } from './pages/UserGuidePage';
+import { ThemeProvider } from './context/ThemeContext';
 import { CommandPaletteProvider } from './context/CommandPaletteContext';
 import { CommandPaletteModal } from './components/palette/CommandPaletteModal';
 
 export const App: React.FC = () => {
   return (
     <HashRouter>
-      <AuthProvider>
-        <DbProvider>
-          <CommandPaletteProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <DbProvider>
+            <CommandPaletteProvider>
             <Routes>
             {/* Public Landing Page */}
             <Route path="/" element={<LandingPage />} />
@@ -55,7 +57,8 @@ export const App: React.FC = () => {
         </CommandPaletteProvider>
       </DbProvider>
     </AuthProvider>
-  </HashRouter>
+  </ThemeProvider>
+</HashRouter>
   );
 };
 

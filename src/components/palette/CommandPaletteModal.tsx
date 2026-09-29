@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useCommandPalette } from '../../context/CommandPaletteContext';
 import { useDb } from '../../context/DbContext';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { soundService } from '../../services/soundService';
+import { promptInstall, isInstallPromptAvailable } from '../../services/pwaService';
 import {
   Search,
   Zap,
@@ -20,6 +23,8 @@ import {
   ExternalLink,
   Plus,
   CornerDownLeft,
+  Palette,
+  Volume2,
 } from 'lucide-react';
 
 interface PaletteItem {
@@ -37,6 +42,7 @@ export const CommandPaletteModal: React.FC = () => {
   const { isOpen, closePalette } = useCommandPalette();
   const { runQuery } = useDb();
   const { lockVault } = useAuth();
+  const { theme, setTheme, themes } = useTheme();
   const navigate = useNavigate();
 
   const [query, setQuery] = useState('');
@@ -181,7 +187,43 @@ export const CommandPaletteModal: React.FC = () => {
       icon: Download,
       onSelect: () => { navigate('/app/backup'); closePalette(); },
     },
-  ], [navigate, closePalette, lockVault]);
+    ...themes.map((th) => ({
+      id: `act-theme-${th.id}`,
+      category: 'Actions' as const,
+      title: `Switch Theme: ${th.name}`,
+      subtitle: th.description,
+      badge: th.id === theme ? 'Active' : 'Theme',
+      badgeColor: th.id === theme ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-400 border-slate-700',
+      icon: Palette,
+      onSelect: () => { setTheme(th.id); closePalette(); },
+    })),
+    {
+      id: 'act-sound-toggle',
+      category: 'Actions',
+      title: soundService.getSoundEnabled() ? 'Mute Acoustic Soundscapes' : 'Enable Acoustic Soundscapes',
+      subtitle: 'Synthesized micro-interactions and audio feedback',
+      badge: 'Audio',
+      badgeColor: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+      icon: Volume2,
+      onSelect: () => {
+        soundService.setSoundEnabled(!soundService.getSoundEnabled());
+        closePalette();
+      },
+    },
+    {
+      id: 'act-pwa-install',
+      category: 'Actions',
+      title: 'Install Native App (PWA)',
+      subtitle: 'Install onto desktop dock or home screen',
+      badge: 'PWA',
+      badgeColor: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+      icon: Download,
+      onSelect: () => {
+        promptInstall();
+        closePalette();
+      },
+    },
+  ], [navigate, closePalette, lockVault, themes, theme, setTheme]);
 
   // Dynamic SQLite Search Results
   const dynamicResults = useMemo(() => {

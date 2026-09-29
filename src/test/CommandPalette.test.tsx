@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { HashRouter } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import { DbProvider } from '../context/DbContext';
+import { ThemeProvider } from '../context/ThemeContext';
 import { CommandPaletteProvider, useCommandPalette } from '../context/CommandPaletteContext';
 import { CommandPaletteModal } from '../components/palette/CommandPaletteModal';
 
@@ -14,14 +15,16 @@ const TestTrigger = () => {
 const renderWithProviders = (ui: React.ReactNode) => {
   return render(
     <HashRouter>
-      <AuthProvider>
-        <DbProvider>
-          <CommandPaletteProvider>
-            {ui}
-            <CommandPaletteModal />
-          </CommandPaletteProvider>
-        </DbProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <DbProvider>
+            <CommandPaletteProvider>
+              {ui}
+              <CommandPaletteModal />
+            </CommandPaletteProvider>
+          </DbProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </HashRouter>
   );
 };

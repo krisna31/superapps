@@ -5,6 +5,12 @@ import {
   verifyPasswordAndDeriveKey,
   isPlatformBiometricsAvailable,
 } from '../services/cryptoService';
+import {
+  enrollBiometrics,
+  authenticateWithBiometrics,
+  isBiometricsEnrolled as checkBiometricsEnrolled,
+  clearBiometricsEnrollment,
+} from '../services/webAuthnService';
 
 interface AuthContextType {
   isConfigured: boolean;
@@ -13,6 +19,10 @@ interface AuthContextType {
   activeKey: CryptoKey | null;
   setupVault: (password: string, autoLockMinutes?: number) => Promise<boolean>;
   unlockVault: (password: string) => Promise<boolean>;
+  unlockWithBiometrics: () => Promise<boolean>;
+  enableBiometrics: (password: string) => Promise<boolean>;
+  disableBiometrics: () => void;
+  isBiometricEnrolled: boolean;
   lockVault: () => void;
   resetVault: () => void;
   updateAutoLock: (minutes: number) => void;
@@ -28,6 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
   const [activeKey, setActiveKey] = useState<CryptoKey | null>(null);
   const [biometricsAvailable, setBiometricsAvailable] = useState<boolean>(false);
+  const [isBiometricEnrolled, setIsBiometricEnrolled] = useState<boolean>(() => checkBiometricsEnrolled());
 
   // Load vault configuration on start
   useEffect(() => {
@@ -42,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     isPlatformBiometricsAvailable().then(setBiometricsAvailable);
+    setIsBiometricEnrolled(checkBiometricsEnrolled());
   }, []);
 
   const lockVault = useCallback(() => {
@@ -117,7 +129,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   };
 
+  const unlockWithBiometrics = async (): Promise<boolean> => {
+    try {
+      const password = await authenticateWithBiometrics();
+      if (!password) return false;
+      return await unlockVault(password);
+    } catch (err) {
+      console.error('Biometric unlock failed', err);
+      return false;
+    }
+  };
+
+  const enableBiometrics = async (password: string): Promise<boolean> => {
+    try {
+      const ok = await enrollBiometrics(password);
+      if (ok) {
+        setIsBiometricEnrolled(true);
+      }
+      return ok;
+    } catch (err) {
+      console.error('Failed to enable biometrics', err);
+      return false;
+    }
+  };
+
+  const disableBiometrics = () => {
+    clearBiometricsEnrollment();
+    setIsBiometricEnrolled(false);
+  };
+
   const resetVault = () => {
+    clearBiometricsEnrollment();
+    setIsBiometricEnrolled(false);
     localStorage.removeItem(VAULT_STORAGE_KEY);
     setVaultMeta(null);
     setActiveKey(null);
@@ -140,6 +183,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activeKey,
         setupVault,
         unlockVault,
+        unlockWithBiometrics,
+        enableBiometrics,
+        disableBiometrics,
+        isBiometricEnrolled,
         lockVault,
         resetVault,
         updateAutoLock,
