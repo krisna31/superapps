@@ -50,6 +50,7 @@ Zero servers. Zero monthly hosting fees. Zero telemetry.
 | 💰 **Expense & Budget Flow** | Track income & expenses, category breakdown with visual progress bars, monthly net balance calculation, and CSV export. | SQLite WASM |
 | 🛠️ **Dev & Daily Swiss Knife** | JSON Studio (beautify, minify, validate), JWT Inspector (claims and expiry check), Base64/Hex encoder, Hasher (SHA-256, SHA-512, MD5, UUID v4), Regex tester. | In-Memory / Client |
 | ⏱️ **Focus & Habit Streaks** | Pomodoro focus timer with Web Audio synthesized chimes (25m focus / 5m break) + Daily habit tracker with streak counters. | SQLite WASM |
+| ⚡ **Command Palette & Omni-Search** | Spotlight/Raycast-style global launcher (`Ctrl+K` / `Cmd+K`), live relational search across SQLite tables, global shortcuts (`Ctrl+Shift+L` to lock, `Ctrl+Shift+N` for notes). | In-Memory / SQLite |
 
 ---
 

@@ -48,10 +48,14 @@ superapps/
 ├── src/                       # Application TypeScript source
 │   ├── components/            # Reusable UI & layout components
 │   │   ├── auth/              # Lock screen & vault setup modal
-│   │   └── layout/            # AppShell, Navbar, Sidebar
+│   │   ├── brand/             # SuperappsLogo SVG vector component
+│   │   ├── layout/            # AppShell, Navbar, Sidebar
+│   │   └── palette/           # CommandPaletteModal & omni-search
 │   ├── context/               # React Context Providers
 │   │   ├── AuthContext.tsx    # Vault state, key derivation, auto-lock
-│   │   └── DbContext.tsx      # SQLite WASM instance & query runner
+│   │   ├── DbContext.tsx      # SQLite WASM instance & query runner
+│   │   └── CommandPaletteContext.tsx # Global Cmd+K palette & hotkeys
+│   ├── hooks/                 # Custom React hooks (useActionQuery)
 │   ├── pages/                 # Full-page route views
 │   │   ├── LandingPage.tsx    # Public marketing & feature overview
 │   │   ├── DashboardPage.tsx  # Metrics & quick launchpad
@@ -101,6 +105,13 @@ Data security is enforced using standard **Web Crypto API**:
 3. The password is fed through **PBKDF2** (HMAC-SHA256, 100,000 rounds) to derive an AES-256 key.
 4. An authentication verification token is encrypted with **AES-256-GCM** to validate unlock attempts.
 5. In-memory keys are zeroized upon manual lock or after auto-lock inactivity timeout.
+
+### D. Global Command Palette & Keyboard Shortcut Engine
+A Raycast/Spotlight-style omni-search modal mounted at the root (`App.tsx`):
+- Accessible anywhere via `Ctrl+K` / `Cmd+K` or the Navbar search bar.
+- Runs live SQLite queries across `shortlinks`, `notes`, `expenses`, and `habits`.
+- Dispatches deep-link actions (`?action=new`) consumed via the `useActionQuery` hook without router coupling.
+- Global hotkeys: `Ctrl+Shift+L` (Lock), `Ctrl+Shift+N` (New Note), `Ctrl+Shift+S` (New Shortlink).
 
 ---
 

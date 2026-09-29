@@ -97,6 +97,53 @@ export const UserGuidePage: React.FC<UserGuideProps> = ({ standalone = false }) 
       ),
     },
     {
+      id: 'palette',
+      title: 'Command Palette & Keyboard Shortcuts',
+      category: 'core',
+      icon: Terminal,
+      badge: 'Cmd+K / Ctrl+K',
+      badgeColor: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+      summary: 'Spotlight/Raycast-style omni-search to jump across shortlinks, notes, and actions instantly.',
+      routeLink: '/app',
+      routeLabel: 'Open App',
+      content: (
+        <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
+          <p>
+            Superapps OS includes a global <strong>Spotlight/Raycast-style Command Palette</strong> accessible from anywhere by pressing <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-white">Ctrl+K</kbd> or <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-white">Cmd+K</kbd>.
+          </p>
+
+          <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+            <h4 className="font-semibold text-white flex items-center gap-1.5 text-xs">
+              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+              <span>Keyboard Shortcuts Cheat Sheet</span>
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800">
+                <span className="text-slate-300">Toggle Command Palette</span>
+                <kbd className="font-mono text-blue-400 font-semibold">Ctrl + K</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800">
+                <span className="text-slate-300">Instant Vault Lock</span>
+                <kbd className="font-mono text-red-400 font-semibold">Ctrl + Shift + L</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800">
+                <span className="text-slate-300">Quick New Note</span>
+                <kbd className="font-mono text-emerald-400 font-semibold">Ctrl + Shift + N</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800">
+                <span className="text-slate-300">Quick New Shortlink</span>
+                <kbd className="font-mono text-cyan-400 font-semibold">Ctrl + Shift + S</kbd>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400">
+            Type anything in the palette search bar to perform a real-time relational query across your local SQLite database (including shortlink shortcuts, note contents, expense transactions, and habit streaks).
+          </div>
+        </div>
+      ),
+    },
+    {
       id: 'shortlinks',
       title: 'Shortlink Hub & Stateless Redirects',
       category: 'apps',

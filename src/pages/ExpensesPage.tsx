@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDb } from '../context/DbContext';
+import { useActionQuery } from '../hooks/useActionQuery';
 import { Expense } from '../types';
 import {
   Wallet,
@@ -18,6 +19,9 @@ export const ExpensesPage: React.FC = () => {
   const { runQuery, runMutation, refreshSignal } = useDb();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // Deep-link action handler
+  useActionQuery('new', useCallback(() => setShowAddModal(true), []));
 
   // Form state
   const [title, setTitle] = useState('');

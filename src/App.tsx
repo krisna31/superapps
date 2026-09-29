@@ -16,13 +16,16 @@ import { SwissKnifePage } from './pages/SwissKnifePage';
 import { HabitsPage } from './pages/HabitsPage';
 import { BackupCenterPage } from './pages/BackupCenterPage';
 import { UserGuidePage } from './pages/UserGuidePage';
+import { CommandPaletteProvider } from './context/CommandPaletteContext';
+import { CommandPaletteModal } from './components/palette/CommandPaletteModal';
 
 export const App: React.FC = () => {
   return (
     <HashRouter>
       <AuthProvider>
         <DbProvider>
-          <Routes>
+          <CommandPaletteProvider>
+            <Routes>
             {/* Public Landing Page */}
             <Route path="/" element={<LandingPage />} />
 
@@ -48,9 +51,11 @@ export const App: React.FC = () => {
             {/* 404 Catch-All */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </DbProvider>
-      </AuthProvider>
-    </HashRouter>
+          <CommandPaletteModal />
+        </CommandPaletteProvider>
+      </DbProvider>
+    </AuthProvider>
+  </HashRouter>
   );
 };
 

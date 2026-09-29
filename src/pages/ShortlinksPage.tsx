@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDb } from '../context/DbContext';
+import { useActionQuery } from '../hooks/useActionQuery';
 import { Shortlink } from '../types';
 import {
   encodeStatelessLink,
@@ -28,6 +29,9 @@ export const ShortlinksPage: React.FC = () => {
 
   // Form State
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // Check for deep-link action query param
+  useActionQuery('new', useCallback(() => setShowAddModal(true), []));
   const [keyInput, setKeyInput] = useState('');
   const [titleInput, setTitleInput] = useState('');
   const [urlInput, setUrlInput] = useState('');

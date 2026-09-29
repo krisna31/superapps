@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDb } from '../context/DbContext';
+import { useActionQuery } from '../hooks/useActionQuery';
 import { Note } from '../types';
 import {
   FileText,
@@ -77,6 +78,9 @@ export const NotesPage: React.FC = () => {
 
     selectNote(newNote);
   };
+
+  // Deep-link action handler
+  useActionQuery('new', handleCreateNote);
 
   const handleSaveNote = () => {
     if (!activeNoteId) return;
