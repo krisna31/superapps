@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useDb } from '../../context/DbContext';
-import { Lock, Unlock, Database, ShieldCheck, Clock, ExternalLink } from 'lucide-react';
+import { Lock, Unlock, Database, ShieldCheck, Clock, BookOpen, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Navbar: React.FC = () => {
@@ -40,6 +40,16 @@ export const Navbar: React.FC = () => {
           <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
           <span className="text-slate-300 text-[11px]">AES-256-GCM</span>
         </div>
+
+        {/* User Guide Link */}
+        <Link
+          to="/app/guide"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 text-xs font-medium transition-all"
+          title="User Guide & Help"
+        >
+          <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+          <span className="hidden sm:inline">Guide</span>
+        </Link>
 
         {/* Auto-Lock Selector */}
         {isUnlocked && vaultMeta && (

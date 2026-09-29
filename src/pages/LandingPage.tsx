@@ -16,6 +16,7 @@ import {
   Download,
   KeyRound,
   ExternalLink,
+  BookOpen,
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
@@ -81,6 +82,13 @@ export const LandingPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link
+            to="/guide"
+            className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 bg-slate-900/60"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+            <span>User Guide</span>
+          </Link>
           <a
             href="https://github.com/krisna31/superapps"
             target="_blank"
@@ -220,8 +228,23 @@ export const LandingPage: React.FC = () => {
             <span>•</span>
             <span>Zero-Knowledge Client-Side Suite</span>
           </div>
-          <div>
-            Built for GitHub Pages with React, Vite, SQLite WASM & Web Crypto API.
+          <div className="flex items-center gap-4 text-slate-400">
+            <Link to="/guide" className="hover:text-blue-400 transition-colors">
+              User Guide
+            </Link>
+            <span>•</span>
+            <a
+              href="https://github.com/krisna31/superapps/tree/main/docs"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-blue-400 transition-colors"
+            >
+              Developer Docs
+            </a>
+            <span>•</span>
+            <Link to="/app/backup" className="hover:text-blue-400 transition-colors">
+              Backup Center
+            </Link>
           </div>
         </div>
       </footer>

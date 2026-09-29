@@ -9,6 +9,7 @@ import {
   Wrench,
   CheckCircle2,
   Database,
+  BookOpen,
   ArrowUpRight,
 } from 'lucide-react';
 
@@ -26,6 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
     { to: '/app/tools', label: 'Swiss Knife', icon: Wrench },
     { to: '/app/habits', label: 'Focus & Habits', icon: CheckCircle2 },
     { to: '/app/backup', label: 'Backup & SQL Lab', icon: Database },
+    { to: '/app/guide', label: 'User Guide', icon: BookOpen },
   ];
 
   return (

@@ -14,6 +14,7 @@ import {
   Plus,
   ExternalLink,
   ShieldCheck,
+  BookOpen,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -322,6 +323,28 @@ export const DashboardPage: React.FC = () => {
             </div>
           </Link>
         </div>
+      </div>
+
+      {/* User Guide and Docs Callout */}
+      <div className="glass-panel p-5 rounded-2xl border border-slate-800 bg-gradient-to-r from-blue-950/30 via-slate-900 to-indigo-950/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+            <BookOpen className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <div className="text-sm font-bold text-white">Need help or tips on Superapps OS?</div>
+            <div className="text-xs text-slate-400">
+              Explore the interactive User Guide covering zero-knowledge encryption, P2P WebRTC transfers, go/links, and backups.
+            </div>
+          </div>
+        </div>
+        <Link
+          to="/app/guide"
+          className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-blue-600/30 shrink-0 transition-all"
+        >
+          <span>Read User Guide</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
     </div>
   );

@@ -97,6 +97,17 @@ This repository comes preconfigured with a GitHub Actions workflow in [`.github/
    - Navigate to **Settings > Pages**.
    - Under **Build and deployment > Source**, select **GitHub Actions**.
 3. Every commit to `main` will automatically build and publish the site!
+---
+
+## 📖 Documentation & Guides
+
+Comprehensive guides are available both inside the running application and in the codebase repository:
+
+- 🖥️ **Interactive In-App User Guide**: Navigate to `/#/guide` or click **User Guide** in the navigation menu. Includes interactive walkthroughs of every app, zero-knowledge vault setup, WebRTC file transfers, and troubleshooting FAQs.
+- 📚 **Developer Guide ([`docs/DEVELOPER_GUIDE.md`](docs/DEVELOPER_GUIDE.md))**: Detailed environment setup, architecture map, and a step-by-step tutorial on adding new mini-apps.
+- 🏛️ **System Architecture ([`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md))**: Client-side execution model, SQLite WASM + IndexedDB persistence lifecycle, and WebRTC streaming.
+- 🔐 **Cryptographic Specification ([`docs/CRYPTOGRAPHY.md`](docs/CRYPTOGRAPHY.md))**: PBKDF2 (100k rounds) + AES-256-GCM specs, `.vault` format, and threat model.
+- 🗄️ **Database Schema Reference ([`docs/DATABASE_SCHEMA.md`](docs/DATABASE_SCHEMA.md))**: SQLite DDL, tables, indexes, and SQL console queries.
 
 ---
 

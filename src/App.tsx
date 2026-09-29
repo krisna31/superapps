@@ -15,6 +15,7 @@ import { ExpensesPage } from './pages/ExpensesPage';
 import { SwissKnifePage } from './pages/SwissKnifePage';
 import { HabitsPage } from './pages/HabitsPage';
 import { BackupCenterPage } from './pages/BackupCenterPage';
+import { UserGuidePage } from './pages/UserGuidePage';
 
 export const App: React.FC = () => {
   return (
@@ -24,6 +25,9 @@ export const App: React.FC = () => {
           <Routes>
             {/* Public Landing Page */}
             <Route path="/" element={<LandingPage />} />
+
+            {/* Public User Guide (Accessible without unlocking vault) */}
+            <Route path="/guide" element={<UserGuidePage standalone />} />
 
             {/* Public Stateless Redirect Handler (Zero server, zero DB) */}
             <Route path="/r" element={<RedirectHandlerPage />} />
@@ -38,6 +42,7 @@ export const App: React.FC = () => {
               <Route path="tools" element={<SwissKnifePage />} />
               <Route path="habits" element={<HabitsPage />} />
               <Route path="backup" element={<BackupCenterPage />} />
+              <Route path="guide" element={<UserGuidePage />} />
             </Route>
 
             {/* 404 Catch-All */}
