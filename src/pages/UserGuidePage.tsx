@@ -27,6 +27,7 @@ import {
   Layers,
   FileCode2,
 } from 'lucide-react';
+import { SuperappsLogo } from '../components/brand/SuperappsLogo';
 
 interface GuideSection {
   id: string;
@@ -434,13 +435,8 @@ export const UserGuidePage: React.FC<UserGuideProps> = ({ standalone = false }) 
       {/* Standalone Header Bar if accessed as /guide */}
       {standalone && (
         <header className="flex items-center justify-between pb-6 border-b border-slate-800">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center">
-              <span className="text-white text-base font-bold">⚡</span>
-            </div>
-            <span className="font-bold text-white group-hover:text-blue-400 transition-colors">
-              Superapps<span className="text-blue-500">OS</span>
-            </span>
+          <Link to="/" className="group">
+            <SuperappsLogo size={32} showWordmark />
           </Link>
           <div className="flex items-center gap-3">
             <Link

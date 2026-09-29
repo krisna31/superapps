@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { decodeStatelessLink } from '../services/statelessLinkService';
 import { ExternalLink, AlertTriangle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { SuperappsLogo } from '../components/brand/SuperappsLogo';
 
 export const RedirectHandlerPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -45,6 +46,10 @@ export const RedirectHandlerPage: React.FC = () => {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full glass-panel p-8 rounded-3xl border border-slate-800 text-center shadow-2xl relative overflow-hidden">
         <div className="absolute -inset-1 rounded-3xl bg-blue-600/10 blur-xl pointer-events-none" />
+
+        <div className="flex justify-center mb-4">
+          <SuperappsLogo size={42} variant="badge" />
+        </div>
 
         {error ? (
           <div>

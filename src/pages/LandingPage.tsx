@@ -18,6 +18,7 @@ import {
   ExternalLink,
   BookOpen,
 } from 'lucide-react';
+import { SuperappsLogo } from '../components/brand/SuperappsLogo';
 
 export const LandingPage: React.FC = () => {
   const apps = [
@@ -70,13 +71,10 @@ export const LandingPage: React.FC = () => {
       {/* Top Bar */}
       <header className="h-16 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/25">
-            <span className="text-white text-lg font-black">⚡</span>
-          </div>
-          <span className="font-bold text-lg tracking-tight text-white">
-            Superapps<span className="text-blue-500">OS</span>
-          </span>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
+          <Link to="/" className="group">
+            <SuperappsLogo size={36} showWordmark />
+          </Link>
+          <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
             v1.0 • GITHUB PAGES READY
           </span>
         </div>
@@ -224,7 +222,8 @@ export const LandingPage: React.FC = () => {
       <footer className="mt-auto border-t border-slate-800/80 py-8 px-6 text-center text-xs text-slate-500">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-400">Superapps OS</span>
+            <SuperappsLogo size={20} variant="icon" />
+            <span className="font-semibold text-slate-300">Superapps OS</span>
             <span>•</span>
             <span>Zero-Knowledge Client-Side Suite</span>
           </div>

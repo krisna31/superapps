@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useDb } from '../../context/DbContext';
 import { Lock, Unlock, Database, ShieldCheck, Clock, BookOpen, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SuperappsLogo } from '../brand/SuperappsLogo';
 
 export const Navbar: React.FC = () => {
   const { isUnlocked, lockVault, vaultMeta, updateAutoLock } = useAuth();
@@ -11,18 +12,8 @@ export const Navbar: React.FC = () => {
   return (
     <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30">
       <div className="flex items-center gap-3">
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-            <span className="text-white text-lg font-black">⚡</span>
-          </div>
-          <div>
-            <span className="font-bold text-base tracking-tight text-white group-hover:text-blue-400 transition-colors">
-              Superapps<span className="text-blue-500">OS</span>
-            </span>
-            <span className="text-[10px] ml-2 px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
-              CLIENT-SIDE
-            </span>
-          </div>
+        <Link to="/" className="group">
+          <SuperappsLogo size={36} showWordmark />
         </Link>
       </div>
 

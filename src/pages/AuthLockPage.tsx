@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Shield, Lock, KeyRound, Eye, EyeOff, Sparkles, AlertTriangle, Fingerprint } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { SuperappsLogo } from '../components/brand/SuperappsLogo';
 
 export const AuthLockPage: React.FC = () => {
   const { isConfigured, setupVault, unlockVault, resetVault, biometricsAvailable } = useAuth();
@@ -66,8 +67,8 @@ export const AuthLockPage: React.FC = () => {
           <div className="relative glass-panel rounded-3xl p-8 border border-slate-700/80 shadow-2xl">
             {/* Header Icon */}
             <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-500/25 mb-4">
-                <Shield className="w-8 h-8 text-white" />
+              <div className="mb-4">
+                <SuperappsLogo size={64} variant="badge" />
               </div>
               <h2 className="text-2xl font-bold tracking-tight text-white">
                 {isConfigured ? 'Unlock Superapps Vault' : 'Setup Zero-Knowledge Vault'}
