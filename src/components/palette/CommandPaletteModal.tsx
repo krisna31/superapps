@@ -28,6 +28,7 @@ import {
   KanbanSquare,
   Code2,
 } from 'lucide-react';
+import { NAVIGATION_GROUPS } from '../../config/navigation';
 
 interface PaletteItem {
   id: string;
@@ -61,97 +62,28 @@ export const CommandPaletteModal: React.FC = () => {
     }
   }, [isOpen]);
 
-  // Static Navigation items
-  const navItems: PaletteItem[] = useMemo(() => [
-    {
-      id: 'nav-dash',
-      category: 'Navigation',
-      title: 'Go to Dashboard',
-      subtitle: 'Overview & metrics',
-      icon: LayoutDashboard,
-      onSelect: () => { navigate('/app'); closePalette(); },
-    },
-    {
-      id: 'nav-links',
-      category: 'Navigation',
-      title: 'Go to Shortlink Hub',
-      subtitle: 'Personal bookmarks & stateless redirector',
-      icon: Link2,
-      onSelect: () => { navigate('/app/shortlinks'); closePalette(); },
-    },
-    {
-      id: 'nav-drop',
-      category: 'Navigation',
-      title: 'Go to DropZone',
-      subtitle: 'P2P WebRTC transfers & ephemeral uploads',
-      icon: Share2,
-      onSelect: () => { navigate('/app/dropzone'); closePalette(); },
-    },
-    {
-      id: 'nav-notes',
-      category: 'Navigation',
-      title: 'Go to Encrypted Notes',
-      subtitle: 'Distraction-free Markdown editor',
-      icon: FileText,
-      onSelect: () => { navigate('/app/notes'); closePalette(); },
-    },
-    {
-      id: 'nav-exp',
-      category: 'Navigation',
-      title: 'Go to Expense & Budget Flow',
-      subtitle: 'Financial ledger & spending charts',
-      icon: Wallet,
-      onSelect: () => { navigate('/app/expenses'); closePalette(); },
-    },
-    {
-      id: 'nav-tools',
-      category: 'Navigation',
-      title: 'Go to Dev Swiss Knife',
-      subtitle: 'JSON, JWT, Hashes, UUID, Regex',
-      icon: Wrench,
-      onSelect: () => { navigate('/app/tools'); closePalette(); },
-    },
-    {
-      id: 'nav-habits',
-      category: 'Navigation',
-      title: 'Go to Focus & Habits',
-      subtitle: 'Pomodoro timer & streak tracker',
-      icon: CheckCircle2,
-      onSelect: () => { navigate('/app/habits'); closePalette(); },
-    },
-    {
-      id: 'nav-tasks',
-      category: 'Navigation',
-      title: 'Go to Task Matrix',
-      subtitle: 'Kanban board, priorities & checklists',
-      icon: KanbanSquare,
-      onSelect: () => { navigate('/app/tasks'); closePalette(); },
-    },
-    {
-      id: 'nav-snippets',
-      category: 'Navigation',
-      title: 'Go to Snippets Vault',
-      subtitle: 'Reusable code, shell commands & prompts',
-      icon: Code2,
-      onSelect: () => { navigate('/app/snippets'); closePalette(); },
-    },
-    {
-      id: 'nav-backup',
-      category: 'Navigation',
-      title: 'Go to Backup & SQL Lab',
-      subtitle: 'Export encrypted .vault & SQL runner',
-      icon: Download,
-      onSelect: () => { navigate('/app/backup'); closePalette(); },
-    },
-    {
-      id: 'nav-guide',
-      category: 'Navigation',
-      title: 'Go to User Guide',
-      subtitle: 'Manual, walkthroughs & FAQs',
-      icon: BookOpen,
-      onSelect: () => { navigate('/app/guide'); closePalette(); },
-    },
-  ], [navigate, closePalette]);
+  // Grouped Navigation items
+  const navItems: PaletteItem[] = useMemo(() => {
+    const list: PaletteItem[] = [];
+    NAVIGATION_GROUPS.forEach((group) => {
+      group.items.forEach((app) => {
+        list.push({
+          id: `nav-${app.id}`,
+          category: 'Navigation',
+          title: `Go to ${app.label}`,
+          subtitle: `${group.title} • ${app.description}`,
+          icon: app.icon,
+          badge: group.title.split(' ')[0],
+          badgeColor: 'bg-slate-800 text-slate-300 border-slate-700',
+          onSelect: () => {
+            navigate(app.to);
+            closePalette();
+          },
+        });
+      });
+    });
+    return list;
+  }, [navigate, closePalette]);
 
   // Static Quick Actions
   const actionItems: PaletteItem[] = useMemo(() => [

@@ -18,9 +18,11 @@ import {
   KanbanSquare,
   Code2,
 } from 'lucide-react';
+import { NAVIGATION_GROUPS } from '../config/navigation';
 
 export const DashboardPage: React.FC = () => {
   const { runQuery, refreshSignal } = useDb();
+  const [activeGroupFilter, setActiveGroupFilter] = useState<string>('all');
   const [stats, setStats] = useState({
     shortlinkCount: 0,
     totalClicks: 0,
@@ -319,77 +321,90 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Launchpad to all tools */}
+      {/* Grouped App Directory / Launchpad */}
       <div>
-        <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3">
-          Daily Utilities & Power Tools
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <Link
-            to="/app/tasks"
-            className="glass-card p-4 rounded-xl flex items-center gap-3 hover:border-blue-500/40 transition-colors"
-          >
-            <KanbanSquare className="w-5 h-5 text-blue-400 shrink-0" />
-            <div>
-              <div className="text-xs font-semibold text-white">Task Matrix</div>
-              <div className="text-[10px] text-slate-400">Kanban board</div>
-            </div>
-          </Link>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+              Superapps Application Directory
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Modular client-side apps organized by functional domain
+            </p>
+          </div>
 
-          <Link
-            to="/app/snippets"
-            className="glass-card p-4 rounded-xl flex items-center gap-3 hover:border-blue-500/40 transition-colors"
-          >
-            <Code2 className="w-5 h-5 text-emerald-400 shrink-0" />
-            <div>
-              <div className="text-xs font-semibold text-white">Snippets Vault</div>
-              <div className="text-[10px] text-slate-400">Reusable code</div>
-            </div>
-          </Link>
+          {/* Group Filter Tabs */}
+          <div className="flex flex-wrap gap-1.5 p-1 rounded-xl bg-slate-900/80 border border-slate-800">
+            <button
+              onClick={() => setActiveGroupFilter('all')}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                activeGroupFilter === 'all'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              All Apps
+            </button>
+            {NAVIGATION_GROUPS.filter((g) => g.id !== 'core').map((group) => (
+              <button
+                key={group.id}
+                onClick={() => setActiveGroupFilter(group.id)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                  activeGroupFilter === group.id
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {group.title.split(' ')[0]}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          <Link
-            to="/app/tools"
-            className="glass-card p-4 rounded-xl flex items-center gap-3 hover:border-blue-500/40 transition-colors"
-          >
-            <Wrench className="w-5 h-5 text-rose-400 shrink-0" />
-            <div>
-              <div className="text-xs font-semibold text-white">Swiss Knife</div>
-              <div className="text-[10px] text-slate-400">Passgen, JWT, JSON</div>
-            </div>
-          </Link>
+        {/* Group Sections */}
+        <div className="space-y-6">
+          {NAVIGATION_GROUPS.filter(
+            (g) => g.id !== 'core' && (activeGroupFilter === 'all' || activeGroupFilter === g.id)
+          ).map((group) => (
+            <div key={group.id} className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                  {group.title}
+                </span>
+                <span className="text-[11px] text-slate-500 font-normal">
+                  — {group.description}
+                </span>
+              </div>
 
-          <Link
-            to="/app/habits"
-            className="glass-card p-4 rounded-xl flex items-center gap-3 hover:border-blue-500/40 transition-colors"
-          >
-            <CheckCircle2 className="w-5 h-5 text-purple-400 shrink-0" />
-            <div>
-              <div className="text-xs font-semibold text-white">Focus & Habits</div>
-              <div className="text-[10px] text-slate-400">Pomodoro timer</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {group.items.map((app) => {
+                  const Icon = app.icon;
+                  return (
+                    <Link
+                      key={app.id}
+                      to={app.to}
+                      className="glass-card p-4 rounded-2xl flex flex-col justify-between hover:border-blue-500/40 hover:bg-slate-800/60 transition-all group"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-blue-400 group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">
+                          {app.label}
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                          {app.description}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </Link>
-
-          <Link
-            to="/app/expenses"
-            className="glass-card p-4 rounded-xl flex items-center gap-3 hover:border-blue-500/40 transition-colors"
-          >
-            <Wallet className="w-5 h-5 text-amber-400 shrink-0" />
-            <div>
-              <div className="text-xs font-semibold text-white">Budget Flow</div>
-              <div className="text-[10px] text-slate-400">Expenses & charts</div>
-            </div>
-          </Link>
-
-          <Link
-            to="/app/backup"
-            className="glass-card p-4 rounded-xl flex items-center gap-3 hover:border-blue-500/40 transition-colors"
-          >
-            <Database className="w-5 h-5 text-emerald-400 shrink-0" />
-            <div>
-              <div className="text-xs font-semibold text-white">Backup & SQL</div>
-              <div className="text-[10px] text-slate-400">Export & SQL runner</div>
-            </div>
-          </Link>
+          ))}
         </div>
       </div>
 
