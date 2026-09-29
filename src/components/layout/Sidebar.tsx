@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useDb } from '../../context/DbContext';
 import {
   LayoutDashboard,
   Link2,
@@ -20,6 +21,21 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
+  const { isReady, runQuery, refreshSignal } = useDb();
+  const [taskCount, setTaskCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isReady) return;
+    try {
+      const res = runQuery("SELECT COUNT(*) FROM tasks WHERE status != 'completed';");
+      if (res.values && res.values[0]) {
+        setTaskCount(Number(res.values[0][0]) || 0);
+      }
+    } catch {
+      // In case table not initialized yet
+    }
+  }, [isReady, runQuery, refreshSignal]);
+
   const navItems = [
     { to: '/app', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { to: '/app/tasks', label: 'Kanban & Tasks', icon: KanbanSquare },
@@ -59,7 +75,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 >
                   <Icon className="w-4 h-4 shrink-0" />
-                  <span>{item.label}</span>
+                  <span className="flex-1">{item.label}</span>
+                  {item.to === '/app/tasks' && taskCount !== null && taskCount > 0 && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-bold">
+                      {taskCount}
+                    </span>
+                  )}
                 </NavLink>
               );
             })}

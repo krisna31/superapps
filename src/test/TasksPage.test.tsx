@@ -139,6 +139,62 @@ describe('TasksPage Component', () => {
     );
   });
 
+  it('moves task to another column via HTML5 drag and drop', () => {
+    renderComponent();
+
+    const inProgressCard = screen.getByText('Implement WebAuthn Fast Unlock').closest('[draggable="true"]');
+    expect(inProgressCard).toBeInTheDocument();
+
+    const completedColumn = screen.getByRole('heading', { name: 'Completed' }).closest('div[class*="rounded-2xl"]');
+    expect(completedColumn).toBeInTheDocument();
+
+    fireEvent.dragStart(inProgressCard!, {
+      dataTransfer: {
+        setData: vi.fn(),
+        getData: () => 't1',
+        effectAllowed: 'move',
+      },
+    });
+
+    fireEvent.dragOver(completedColumn!, {
+      dataTransfer: { dropEffect: 'move' },
+    });
+
+    fireEvent.drop(completedColumn!, {
+      dataTransfer: {
+        getData: () => 't1',
+      },
+    });
+
+    expect(mockRunMutation).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE tasks SET status = ?, updatedAt = ? WHERE id = ?;'),
+      ['completed', expect.any(String), 't1']
+    );
+  });
+
+  it('handles corrupted/malformed tags and checklist without crashing', () => {
+    mockRunQuery.mockReturnValueOnce({
+      columns: ['id', 'title', 'description', 'status', 'priority', 'dueDate', 'tags', 'checklist', 'createdAt', 'updatedAt'],
+      values: [
+        [
+          't_corrupted',
+          'Malformed Task Record',
+          'Description',
+          'backlog',
+          'high',
+          '2026-10-01',
+          '{not_valid_json',
+          'also_not_valid_json',
+          '2026-09-29T10:00:00Z',
+          '2026-09-29T10:00:00Z',
+        ],
+      ],
+    });
+
+    renderComponent();
+    expect(screen.getByText('Malformed Task Record')).toBeInTheDocument();
+  });
+
   it('deletes task after confirmation', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderComponent();

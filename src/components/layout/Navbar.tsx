@@ -14,6 +14,8 @@ import {
   VolumeX,
   Download,
   Fingerprint,
+  KanbanSquare,
+  Plus,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SuperappsLogo } from '../brand/SuperappsLogo';
@@ -24,18 +26,34 @@ import { subscribeToInstallPrompt, promptInstall } from '../../services/pwaServi
 
 export const Navbar: React.FC = () => {
   const { isUnlocked, lockVault, vaultMeta, updateAutoLock, isBiometricEnrolled } = useAuth();
-  const { isReady } = useDb();
+  const { isReady, runQuery, refreshSignal } = useDb();
   const { openPalette } = useCommandPalette();
   const { theme, cycleTheme, themes } = useTheme();
 
   const [soundEnabled, setSoundEnabled] = useState(() => soundService.getSoundEnabled());
   const [canInstall, setCanInstall] = useState(false);
+  const [taskStats, setTaskStats] = useState({ pending: 0, urgent: 0 });
 
   useEffect(() => {
     return subscribeToInstallPrompt((available) => {
       setCanInstall(available);
     });
   }, []);
+
+  useEffect(() => {
+    if (!isUnlocked || !isReady) return;
+    try {
+      const res = runQuery("SELECT COUNT(*), SUM(CASE WHEN priority='urgent' THEN 1 ELSE 0 END) FROM tasks WHERE status != 'completed';");
+      if (res.values && res.values[0]) {
+        setTaskStats({
+          pending: Number(res.values[0][0]) || 0,
+          urgent: Number(res.values[0][1]) || 0,
+        });
+      }
+    } catch {
+      // In case table not initialized yet
+    }
+  }, [isUnlocked, isReady, runQuery, refreshSignal]);
 
   const handleToggleSound = () => {
     const next = !soundEnabled;
@@ -94,6 +112,41 @@ export const Navbar: React.FC = () => {
           >
             <Search className="w-4 h-4 text-blue-400" />
           </button>
+        )}
+
+        {/* Task Matrix Quick Metric Jump Button */}
+        {isUnlocked && (
+          <Link
+            to="/app/tasks"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 text-xs font-medium transition-all group"
+            title={`Kanban Tasks: ${taskStats.pending} pending (${taskStats.urgent} urgent)`}
+          >
+            <KanbanSquare className={`w-3.5 h-3.5 ${taskStats.urgent > 0 ? 'text-rose-400' : 'text-blue-400'}`} />
+            <span className="hidden md:inline">Tasks</span>
+            {taskStats.pending > 0 && (
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-semibold border ${
+                  taskStats.urgent > 0
+                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                    : 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                }`}
+              >
+                {taskStats.pending}
+              </span>
+            )}
+          </Link>
+        )}
+
+        {/* Quick New Task Action Button */}
+        {isUnlocked && (
+          <Link
+            to="/app/tasks?action=new"
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 border border-blue-500/30 text-xs font-medium transition-all"
+            title="Quick New Task (Ctrl+Shift+T)"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden xl:inline">Task</span>
+          </Link>
         )}
 
         {/* PWA Install Button */}

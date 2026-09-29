@@ -106,6 +106,11 @@ sequenceDiagram
 | `habits` | Pomodoro & Daily Streaks | `id`, `title`, `frequency`, `streak`, `completedDates` (JSON), `createdAt` |
 | `local_stash` | In-Browser SQLite Files | `id`, `name`, `size`, `type`, `dataBase64`, `createdAt`, `expiresAt`, `note` |
 
+#### Data Resilience & UX Integrations
+- **Defensive JSON Parsing**: `tags` and `checklist` columns use safe parsing with automatic fallbacks to empty arrays if raw or corrupted SQL strings are encountered.
+- **Native HTML5 Drag-and-Drop**: Tasks can be dragged seamlessly between Backlog, In Progress, Review, and Completed columns with visual drop target feedback.
+- **Live Navigation Metrics**: Real-time pending and urgent task counts are integrated into Navbar, Sidebar, and Dashboard via reactive SQLite query subscriptions.
+
 ---
 
 ## 🔗 3. Stateless Public Link Architecture

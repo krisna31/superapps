@@ -50,6 +50,7 @@ describe('SwissKnifePage Component', () => {
     fireEvent.click(dicewareBtn);
 
     expect(screen.getByText('Diceware Settings')).toBeInTheDocument();
+    expect(screen.getAllByText(/-.*-/).length).toBeGreaterThanOrEqual(1);
 
     // Regenerate
     const regenBtn = screen.getByRole('button', { name: /Regenerate/i });

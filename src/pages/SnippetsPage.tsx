@@ -54,6 +54,22 @@ const LANGUAGE_STYLES: Record<string, { label: string; badge: string }> = {
   prompt: { label: 'Prompt Template', badge: 'bg-rose-500/15 text-rose-400 border-rose-500/30' },
 };
 
+function safeParseTags(val: any): string[] {
+  if (!val) return [];
+  if (Array.isArray(val)) return val.map(String);
+  try {
+    const parsed = JSON.parse(val);
+    if (Array.isArray(parsed)) return parsed.map(String);
+    if (typeof parsed === 'string') return [parsed];
+    return [];
+  } catch {
+    if (typeof val === 'string') {
+      return val.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    return [];
+  }
+}
+
 export const SnippetsPage: React.FC = () => {
   const { runQuery, runMutation, refreshSignal } = useDb();
   const location = useLocation();
@@ -88,7 +104,7 @@ export const SnippetsPage: React.FC = () => {
           description: (v[2] as string) || '',
           language: (v[3] as string) || 'typescript',
           code: (v[4] as string) || '',
-          tags: v[5] ? JSON.parse(v[5]) : [],
+          tags: safeParseTags(v[5]),
           isPinned: Boolean(v[6]),
           createdAt: v[7] as string,
           updatedAt: v[8] as string,
@@ -116,12 +132,13 @@ export const SnippetsPage: React.FC = () => {
   // Filter snippets
   const filteredSnippets = useMemo(() => {
     return snippets.filter((s) => {
+      const sTags = s.tags || [];
       const matchesSearch =
         searchQuery === '' ||
         s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+        sTags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesLang =
         selectedLanguage === 'all' || s.language.toLowerCase() === selectedLanguage.toLowerCase();
@@ -162,7 +179,7 @@ export const SnippetsPage: React.FC = () => {
     setFormDescription(snippet.description || '');
     setFormLanguage(snippet.language);
     setFormCode(snippet.code);
-    setFormTagsStr(snippet.tags.join(', '));
+    setFormTagsStr((snippet.tags || []).join(', '));
     setFormIsPinned(snippet.isPinned);
     setIsModalOpen(true);
   };
@@ -170,7 +187,7 @@ export const SnippetsPage: React.FC = () => {
   // Copy to clipboard with sound effect
   const handleCopyCode = (snippet: Snippet) => {
     if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(snippet.code);
+      navigator.clipboard.writeText(snippet.code).catch(() => {});
     }
     soundService.playSuccess();
     setCopiedId(snippet.id);

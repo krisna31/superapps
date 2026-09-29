@@ -41,6 +41,40 @@ const PRIORITY_CONFIG: Record<TaskPriority, { label: string; badge: string; icon
   low: { label: 'Low', badge: 'bg-blue-500/15 text-blue-400 border-blue-500/30', icon: CheckSquare },
 };
 
+function safeParseTags(val: any): string[] {
+  if (!val) return [];
+  if (Array.isArray(val)) return val.map(String);
+  try {
+    const parsed = JSON.parse(val);
+    if (Array.isArray(parsed)) return parsed.map(String);
+    if (typeof parsed === 'string') return [parsed];
+    return [];
+  } catch {
+    if (typeof val === 'string') {
+      return val.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    return [];
+  }
+}
+
+function safeParseChecklist(val: any): TaskChecklistItem[] {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  try {
+    const parsed = JSON.parse(val);
+    if (Array.isArray(parsed)) {
+      return parsed.map((item, idx) => ({
+        id: item?.id || `c_${idx}`,
+        text: String(item?.text || ''),
+        completed: Boolean(item?.completed),
+      }));
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
 export const TasksPage: React.FC = () => {
   const { runQuery, runMutation, refreshSignal } = useDb();
   const location = useLocation();
@@ -50,6 +84,10 @@ export const TasksPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('all');
+
+  // Drag and Drop State
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<TaskStatus | null>(null);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,8 +117,8 @@ export const TasksPage: React.FC = () => {
           status: (v[3] as TaskStatus) || 'backlog',
           priority: (v[4] as TaskPriority) || 'medium',
           dueDate: (v[5] as string) || '',
-          tags: v[6] ? JSON.parse(v[6]) : [],
-          checklist: v[7] ? JSON.parse(v[7]) : [],
+          tags: safeParseTags(v[6]),
+          checklist: safeParseChecklist(v[7]),
           createdAt: v[8] as string,
           updatedAt: v[9] as string,
         }))
@@ -101,21 +139,22 @@ export const TasksPage: React.FC = () => {
   // Extract all distinct tags for filter
   const allTags = useMemo(() => {
     const set = new Set<string>();
-    tasks.forEach((t) => t.tags.forEach((tag) => set.add(tag)));
+    tasks.forEach((t) => (t.tags || []).forEach((tag) => set.add(tag)));
     return Array.from(set).sort();
   }, [tasks]);
 
   // Filter tasks
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
+      const taskTags = task.tags || [];
       const matchesSearch =
         searchQuery === '' ||
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+        taskTags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-      const matchesTag = tagFilter === 'all' || task.tags.includes(tagFilter);
+      const matchesTag = tagFilter === 'all' || taskTags.includes(tagFilter);
 
       return matchesSearch && matchesPriority && matchesTag;
     });
@@ -153,7 +192,7 @@ export const TasksPage: React.FC = () => {
     setFormStatus(task.status);
     setFormPriority(task.priority);
     setFormDueDate(task.dueDate || '');
-    setFormTagsStr(task.tags.join(', '));
+    setFormTagsStr((task.tags || []).join(', '));
     setFormChecklist(task.checklist || []);
     setNewChecklistText('');
     setIsModalOpen(true);
@@ -421,7 +460,32 @@ export const TasksPage: React.FC = () => {
           return (
             <div
               key={col.id}
-              className={`rounded-2xl border ${col.border} ${col.bg} p-3.5 flex flex-col min-h-[450px] shadow-sm`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (dragOverCol !== col.id) {
+                  setDragOverCol(col.id);
+                }
+              }}
+              onDragLeave={(e) => {
+                if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                if (dragOverCol === col.id) {
+                  setDragOverCol(null);
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOverCol(null);
+                const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId;
+                if (!taskId) return;
+                const task = tasks.find((t) => t.id === taskId);
+                if (task && task.status !== col.id) {
+                  handleMoveColumn(task, col.id);
+                }
+              }}
+              className={`rounded-2xl border ${col.border} ${col.bg} p-3.5 flex flex-col min-h-[450px] shadow-sm transition-all ${
+                dragOverCol === col.id ? 'ring-2 ring-blue-500/60 bg-blue-950/30' : ''
+              }`}
             >
               {/* Column Header */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
@@ -458,7 +522,19 @@ export const TasksPage: React.FC = () => {
                     return (
                       <div
                         key={task.id}
-                        className="glass-card p-3.5 rounded-xl border border-slate-800/90 hover:border-slate-700 transition-all space-y-2.5 group relative"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/plain', task.id);
+                          e.dataTransfer.effectAllowed = 'move';
+                          setDraggedTaskId(task.id);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedTaskId(null);
+                          setDragOverCol(null);
+                        }}
+                        className={`glass-card p-3.5 rounded-xl border border-slate-800/90 hover:border-slate-700 transition-all space-y-2.5 group relative cursor-grab active:cursor-grabbing ${
+                          draggedTaskId === task.id ? 'opacity-50 scale-95' : ''
+                        }`}
                       >
                         {/* Top Badges & Actions */}
                         <div className="flex items-center justify-between gap-1">

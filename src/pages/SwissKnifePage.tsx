@@ -178,11 +178,17 @@ export const SwissKnifePage: React.FC = () => {
     return phrase;
   };
 
-  const generateNewSecret = () => {
-    const secret = passMode === 'password' ? generateRandomPassword() : generateDicewarePassphrase();
+  const generateNewSecret = (overrideMode?: 'password' | 'diceware') => {
+    const mode = overrideMode || passMode;
+    const secret = mode === 'password' ? generateRandomPassword() : generateDicewarePassphrase();
     setGeneratedPass(secret);
     setPassHistory((prev) => [secret, ...prev.filter((p) => p !== secret)].slice(0, 5));
     soundService.playClick();
+  };
+
+  const handleSwitchMode = (mode: 'password' | 'diceware') => {
+    setPassMode(mode);
+    generateNewSecret(mode);
   };
 
   // Generate on first mount
@@ -664,10 +670,7 @@ export const SwissKnifePage: React.FC = () => {
           {/* Mode Switcher */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                setPassMode('password');
-                soundService.playClick();
-              }}
+              onClick={() => handleSwitchMode('password')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                 passMode === 'password'
                   ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
@@ -679,10 +682,7 @@ export const SwissKnifePage: React.FC = () => {
             </button>
 
             <button
-              onClick={() => {
-                setPassMode('diceware');
-                soundService.playClick();
-              }}
+              onClick={() => handleSwitchMode('diceware')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                 passMode === 'diceware'
                   ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
@@ -704,7 +704,7 @@ export const SwissKnifePage: React.FC = () => {
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={generateNewSecret}
+                  onClick={() => generateNewSecret()}
                   className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors border border-slate-700/60"
                   title="Generate new secret"
                 >

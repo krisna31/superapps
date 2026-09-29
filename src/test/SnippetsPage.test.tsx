@@ -128,4 +128,26 @@ describe('SnippetsPage Component', () => {
       ['s1']
     );
   });
+
+  it('handles malformed/unquoted tags without crashing', () => {
+    mockRunQuery.mockReturnValueOnce({
+      columns: ['id', 'title', 'description', 'language', 'code', 'tags', 'isPinned', 'createdAt', 'updatedAt'],
+      values: [
+        [
+          's_corrupted',
+          'Corrupted Snippet',
+          'Desc',
+          'shell',
+          'echo "hello"',
+          '{not-valid-json',
+          0,
+          '2026-09-29T10:00:00Z',
+          '2026-09-29T10:00:00Z',
+        ],
+      ],
+    });
+
+    renderComponent();
+    expect(screen.getByText('Corrupted Snippet')).toBeInTheDocument();
+  });
 });
