@@ -15,6 +15,8 @@ import { ExpensesPage } from './pages/ExpensesPage';
 import { SwissKnifePage } from './pages/SwissKnifePage';
 import { HabitsPage } from './pages/HabitsPage';
 import { BackupCenterPage } from './pages/BackupCenterPage';
+import { TasksPage } from './pages/TasksPage';
+import { SnippetsPage } from './pages/SnippetsPage';
 import { UserGuidePage } from './pages/UserGuidePage';
 import { ThemeProvider } from './context/ThemeContext';
 import { CommandPaletteProvider } from './context/CommandPaletteContext';
@@ -46,6 +48,8 @@ export const App: React.FC = () => {
               <Route path="expenses" element={<ExpensesPage />} />
               <Route path="tools" element={<SwissKnifePage />} />
               <Route path="habits" element={<HabitsPage />} />
+              <Route path="tasks" element={<TasksPage />} />
+              <Route path="snippets" element={<SnippetsPage />} />
               <Route path="backup" element={<BackupCenterPage />} />
               <Route path="guide" element={<UserGuidePage />} />
             </Route>

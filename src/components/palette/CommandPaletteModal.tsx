@@ -25,11 +25,13 @@ import {
   CornerDownLeft,
   Palette,
   Volume2,
+  KanbanSquare,
+  Code2,
 } from 'lucide-react';
 
 interface PaletteItem {
   id: string;
-  category: 'Actions' | 'Navigation' | 'Shortlinks' | 'Notes' | 'Expenses' | 'Habits';
+  category: 'Actions' | 'Navigation' | 'Shortlinks' | 'Notes' | 'Expenses' | 'Habits' | 'Tasks' | 'Snippets';
   title: string;
   subtitle?: string;
   icon: any;
@@ -118,6 +120,22 @@ export const CommandPaletteModal: React.FC = () => {
       onSelect: () => { navigate('/app/habits'); closePalette(); },
     },
     {
+      id: 'nav-tasks',
+      category: 'Navigation',
+      title: 'Go to Task Matrix',
+      subtitle: 'Kanban board, priorities & checklists',
+      icon: KanbanSquare,
+      onSelect: () => { navigate('/app/tasks'); closePalette(); },
+    },
+    {
+      id: 'nav-snippets',
+      category: 'Navigation',
+      title: 'Go to Snippets Vault',
+      subtitle: 'Reusable code, shell commands & prompts',
+      icon: Code2,
+      onSelect: () => { navigate('/app/snippets'); closePalette(); },
+    },
+    {
       id: 'nav-backup',
       category: 'Navigation',
       title: 'Go to Backup & SQL Lab',
@@ -166,6 +184,26 @@ export const CommandPaletteModal: React.FC = () => {
       badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
       icon: Plus,
       onSelect: () => { navigate('/app/expenses?action=new'); closePalette(); },
+    },
+    {
+      id: 'act-new-task',
+      category: 'Actions',
+      title: 'Create New Task',
+      subtitle: 'Add item to Kanban matrix',
+      badge: 'Ctrl+Shift+T',
+      badgeColor: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+      icon: Plus,
+      onSelect: () => { navigate('/app/tasks?action=new'); closePalette(); },
+    },
+    {
+      id: 'act-new-snippet',
+      category: 'Actions',
+      title: 'Create New Snippet',
+      subtitle: 'Save reusable code or shell template',
+      badge: 'Snippets',
+      badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+      icon: Plus,
+      onSelect: () => { navigate('/app/snippets?action=new'); closePalette(); },
     },
     {
       id: 'act-lock',
@@ -325,6 +363,59 @@ export const CommandPaletteModal: React.FC = () => {
           badgeColor: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
           onSelect: () => {
             navigate('/app/habits');
+            closePalette();
+          },
+        });
+      });
+    } catch {
+      // Ignore query errors in memory
+    }
+
+    // 5. Query Tasks
+    try {
+      const taskRes = runQuery(
+        'SELECT id, title, priority, status FROM tasks WHERE title LIKE ? OR description LIKE ? OR tags LIKE ? ORDER BY updatedAt DESC LIMIT 4;',
+        [wildcard, wildcard, wildcard]
+      );
+      taskRes.values.forEach((v) => {
+        results.push({
+          id: `task-${v[0]}`,
+          category: 'Tasks',
+          title: v[1] as string,
+          subtitle: `Priority: ${v[2]} • ${String(v[3]).replace('_', ' ')}`,
+          icon: KanbanSquare,
+          badge: String(v[2]).toUpperCase(),
+          badgeColor:
+            v[2] === 'urgent'
+              ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+              : 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+          onSelect: () => {
+            navigate('/app/tasks');
+            closePalette();
+          },
+        });
+      });
+    } catch {
+      // Ignore query errors in memory
+    }
+
+    // 6. Query Snippets
+    try {
+      const snipRes = runQuery(
+        'SELECT id, title, language, code FROM snippets WHERE title LIKE ? OR code LIKE ? OR tags LIKE ? ORDER BY isPinned DESC, updatedAt DESC LIMIT 4;',
+        [wildcard, wildcard, wildcard]
+      );
+      snipRes.values.forEach((v) => {
+        results.push({
+          id: `snip-${v[0]}`,
+          category: 'Snippets',
+          title: v[1] as string,
+          subtitle: `${v[2]} • ${String(v[3]).slice(0, 45).replace(/\n/g, ' ')}...`,
+          icon: Code2,
+          badge: String(v[2]).toUpperCase(),
+          badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+          onSelect: () => {
+            navigate('/app/snippets');
             closePalette();
           },
         });

@@ -11,6 +11,8 @@ import {
   Database,
   BookOpen,
   ArrowUpRight,
+  KanbanSquare,
+  Code2,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -20,6 +22,8 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const navItems = [
     { to: '/app', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+    { to: '/app/tasks', label: 'Kanban & Tasks', icon: KanbanSquare },
+    { to: '/app/snippets', label: 'Snippets Vault', icon: Code2 },
     { to: '/app/shortlinks', label: 'Shortlinks & Hub', icon: Link2 },
     { to: '/app/dropzone', label: 'DropZone (Files & P2P)', icon: Share2 },
     { to: '/app/notes', label: 'Encrypted Notes', icon: FileText },

@@ -7,8 +7,12 @@ import {
   importDatabaseBinary,
   getTableNames,
   resetDatabase,
+  INIT_SCHEMA,
 } from '../services/sqliteService';
 import { QueryResult } from '../types';
+
+export { INIT_SCHEMA };
+
 
 interface DbContextType {
   isReady: boolean;

@@ -46,6 +46,8 @@ describe('CommandPaletteModal Component', () => {
     expect(screen.getByPlaceholderText(/Type a command or search SQLite records/i)).toBeInTheDocument();
     expect(screen.getByText('Create New Shortlink')).toBeInTheDocument();
     expect(screen.getByText('Create New Note')).toBeInTheDocument();
+    expect(screen.getByText('Create New Task')).toBeInTheDocument();
+    expect(screen.getByText('Create New Snippet')).toBeInTheDocument();
     expect(screen.getByText('Go to Dashboard')).toBeInTheDocument();
   });
 

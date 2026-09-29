@@ -126,75 +126,103 @@ export async function initSQLite(): Promise<Database> {
   return dbInstance;
 }
 
+export const INIT_SCHEMA = `
+  CREATE TABLE IF NOT EXISTS shortlinks (
+    id TEXT PRIMARY KEY,
+    key TEXT UNIQUE,
+    title TEXT,
+    url TEXT,
+    category TEXT,
+    clicks INTEGER DEFAULT 0,
+    createdAt TEXT,
+    updatedAt TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS notes (
+    id TEXT PRIMARY KEY,
+    title TEXT,
+    content TEXT,
+    category TEXT,
+    isPinned INTEGER DEFAULT 0,
+    createdAt TEXT,
+    updatedAt TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS expenses (
+    id TEXT PRIMARY KEY,
+    title TEXT,
+    amount REAL,
+    type TEXT,
+    category TEXT,
+    date TEXT,
+    notes TEXT,
+    createdAt TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS habits (
+    id TEXT PRIMARY KEY,
+    title TEXT,
+    frequency TEXT,
+    streak INTEGER DEFAULT 0,
+    completedDates TEXT,
+    createdAt TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS tasks (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT NOT NULL,
+    priority TEXT NOT NULL,
+    dueDate TEXT,
+    tags TEXT,
+    checklist TEXT,
+    createdAt TEXT,
+    updatedAt TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS snippets (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    language TEXT NOT NULL,
+    code TEXT NOT NULL,
+    tags TEXT,
+    isPinned INTEGER DEFAULT 0,
+    createdAt TEXT,
+    updatedAt TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS local_stash (
+    id TEXT PRIMARY KEY,
+    name TEXT,
+    size INTEGER,
+    type TEXT,
+    dataBase64 TEXT,
+    createdAt TEXT,
+    expiresAt TEXT,
+    note TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS ephemeral_uploads (
+    id TEXT PRIMARY KEY,
+    name TEXT,
+    size INTEGER,
+    url TEXT,
+    expiryHours INTEGER,
+    uploadedAt TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  );
+`;
+
 function runMigrations(db: Database) {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS shortlinks (
-      id TEXT PRIMARY KEY,
-      key TEXT UNIQUE,
-      title TEXT,
-      url TEXT,
-      category TEXT,
-      clicks INTEGER DEFAULT 0,
-      createdAt TEXT,
-      updatedAt TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS notes (
-      id TEXT PRIMARY KEY,
-      title TEXT,
-      content TEXT,
-      category TEXT,
-      isPinned INTEGER DEFAULT 0,
-      createdAt TEXT,
-      updatedAt TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS expenses (
-      id TEXT PRIMARY KEY,
-      title TEXT,
-      amount REAL,
-      type TEXT,
-      category TEXT,
-      date TEXT,
-      notes TEXT,
-      createdAt TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS habits (
-      id TEXT PRIMARY KEY,
-      title TEXT,
-      frequency TEXT,
-      streak INTEGER DEFAULT 0,
-      completedDates TEXT,
-      createdAt TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS local_stash (
-      id TEXT PRIMARY KEY,
-      name TEXT,
-      size INTEGER,
-      type TEXT,
-      dataBase64 TEXT,
-      createdAt TEXT,
-      expiresAt TEXT,
-      note TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS ephemeral_uploads (
-      id TEXT PRIMARY KEY,
-      name TEXT,
-      size INTEGER,
-      url TEXT,
-      expiryHours INTEGER,
-      uploadedAt TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS app_settings (
-      key TEXT PRIMARY KEY,
-      value TEXT
-    );
-  `);
+  db.run(INIT_SCHEMA);
 }
+
 
 export function executeQuery(sql: string, params: any[] = []): QueryResult {
   if (!dbInstance) {

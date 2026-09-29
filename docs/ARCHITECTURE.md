@@ -94,6 +94,18 @@ sequenceDiagram
 1. **Zero-Latency Reads and Writes**: Queries run against C-speed WebAssembly memory. There is zero asynchronous wait time when querying lists or sorting transactions.
 2. **Crash-Resilience**: Debouncing disk writes (300ms) guarantees that rapid-fire typing in the Markdown editor does not bottleneck the IndexedDB transactional queue while guaranteeing prompt persistence.
 
+### Relational Schema Specification
+
+| Table | Purpose | Core Columns |
+| :--- | :--- | :--- |
+| `tasks` | Agile Kanban & Task Matrix | `id`, `title`, `description`, `status` (backlog, in_progress, review, completed), `priority` (low, medium, high, urgent), `dueDate`, `tags` (JSON), `checklist` (JSON), `createdAt`, `updatedAt` |
+| `snippets` | Encrypted Code & Text Vault | `id`, `title`, `description`, `language` (ts, py, sh, sql, etc.), `code`, `tags` (JSON), `isPinned`, `createdAt`, `updatedAt` |
+| `shortlinks` | Personal Fast-Jump Links | `id`, `key` (unique), `title`, `url`, `category`, `clicks`, `createdAt`, `updatedAt` |
+| `notes` | Distraction-Free Markdown | `id`, `title`, `content`, `category`, `isPinned`, `createdAt`, `updatedAt` |
+| `expenses` | Budget & Financial Ledger | `id`, `title`, `amount`, `type` (expense/income), `category`, `date`, `notes`, `createdAt` |
+| `habits` | Pomodoro & Daily Streaks | `id`, `title`, `frequency`, `streak`, `completedDates` (JSON), `createdAt` |
+| `local_stash` | In-Browser SQLite Files | `id`, `name`, `size`, `type`, `dataBase64`, `createdAt`, `expiresAt`, `note` |
+
 ---
 
 ## 🔗 3. Stateless Public Link Architecture

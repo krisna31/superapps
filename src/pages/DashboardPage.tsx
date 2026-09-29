@@ -15,6 +15,8 @@ import {
   ExternalLink,
   ShieldCheck,
   BookOpen,
+  KanbanSquare,
+  Code2,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -26,6 +28,9 @@ export const DashboardPage: React.FC = () => {
     expensesTotal: 0,
     habitsCount: 0,
     activeStreaks: 0,
+    tasksCount: 0,
+    urgentTasks: 0,
+    snippetsCount: 0,
   });
   const [recentLinks, setRecentLinks] = useState<any[]>([]);
   const [recentNotes, setRecentNotes] = useState<any[]>([]);
@@ -49,6 +54,15 @@ export const DashboardPage: React.FC = () => {
     const hCount = habitsRes.values[0]?.[0] || 0;
     const hStreaks = habitsRes.values[0]?.[1] || 0;
 
+    // 5. Fetch tasks stats
+    const tasksRes = runQuery("SELECT COUNT(*), SUM(CASE WHEN priority='urgent' AND status != 'completed' THEN 1 ELSE 0 END) FROM tasks;");
+    const tCount = tasksRes.values[0]?.[0] || 0;
+    const tUrgent = tasksRes.values[0]?.[1] || 0;
+
+    // 6. Fetch snippets stats
+    const snipRes = runQuery('SELECT COUNT(*) FROM snippets;');
+    const snipCount = snipRes.values[0]?.[0] || 0;
+
     setStats({
       shortlinkCount: sCount,
       totalClicks: sClicks,
@@ -56,6 +70,9 @@ export const DashboardPage: React.FC = () => {
       expensesTotal: eTotal,
       habitsCount: hCount,
       activeStreaks: hStreaks,
+      tasksCount: tCount,
+      urgentTasks: tUrgent,
+      snippetsCount: snipCount,
     });
 
     // Recent links
@@ -108,69 +125,98 @@ export const DashboardPage: React.FC = () => {
 
           <div className="flex flex-wrap gap-2">
             <Link
-              to="/app/shortlinks"
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium flex items-center gap-1.5 shadow-md shadow-blue-600/20 transition-all"
+              to="/app/tasks?action=new"
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-blue-600/20 transition-all"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add Shortlink</span>
+              <span>New Task</span>
+            </Link>
+            <Link
+              to="/app/snippets?action=new"
+              className="px-4 py-2 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Snippet</span>
+            </Link>
+            <Link
+              to="/app/shortlinks"
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 border border-slate-700 transition-all"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Shortlink</span>
             </Link>
             <Link
               to="/app/notes"
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 border border-slate-700 transition-all"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>New Note</span>
-            </Link>
-            <Link
-              to="/app/dropzone"
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 border border-slate-700 transition-all"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>Share File</span>
+              <span>Note</span>
             </Link>
           </div>
         </div>
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card p-5 rounded-2xl">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="glass-card p-4 rounded-2xl">
+          <div className="flex items-center justify-between text-slate-400 text-xs">
+            <span>Tasks</span>
+            <KanbanSquare className="w-4 h-4 text-blue-400" />
+          </div>
+          <div className="text-xl font-bold text-white mt-1.5">{stats.tasksCount}</div>
+          <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+            <span className={stats.urgentTasks > 0 ? 'text-rose-400 font-semibold' : ''}>
+              {stats.urgentTasks} urgent
+            </span>
+          </div>
+        </div>
+
+        <div className="glass-card p-4 rounded-2xl">
+          <div className="flex items-center justify-between text-slate-400 text-xs">
+            <span>Snippets</span>
+            <Code2 className="w-4 h-4 text-emerald-400" />
+          </div>
+          <div className="text-xl font-bold text-white mt-1.5">{stats.snippetsCount}</div>
+          <div className="text-[10px] text-slate-400 mt-1">Code & commands</div>
+        </div>
+
+        <div className="glass-card p-4 rounded-2xl">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Shortlinks</span>
             <Link2 className="w-4 h-4 text-blue-400" />
           </div>
-          <div className="text-2xl font-bold text-white mt-2">{stats.shortlinkCount}</div>
-          <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+          <div className="text-xl font-bold text-white mt-1.5">{stats.shortlinkCount}</div>
+          <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
             <TrendingUp className="w-3 h-3 text-emerald-400" />
-            <span>{stats.totalClicks} total clicks logged</span>
+            <span>{stats.totalClicks} clicks</span>
           </div>
         </div>
 
-        <div className="glass-card p-5 rounded-2xl">
+        <div className="glass-card p-4 rounded-2xl">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Encrypted Notes</span>
+            <span>Notes</span>
             <FileText className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-bold text-white mt-2">{stats.notesCount}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Stored securely in SQLite</div>
+          <div className="text-xl font-bold text-white mt-1.5">{stats.notesCount}</div>
+          <div className="text-[10px] text-slate-400 mt-1">Encrypted DB</div>
         </div>
 
-        <div className="glass-card p-5 rounded-2xl">
+        <div className="glass-card p-4 rounded-2xl">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Total Expenses</span>
+            <span>Expenses</span>
             <Wallet className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-bold text-white mt-2">${stats.expensesTotal.toFixed(2)}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Logged locally</div>
+          <div className="text-xl font-bold text-white mt-1.5">${stats.expensesTotal.toFixed(2)}</div>
+          <div className="text-[10px] text-slate-400 mt-1">Local ledger</div>
         </div>
 
-        <div className="glass-card p-5 rounded-2xl">
+        <div className="glass-card p-4 rounded-2xl">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Active Habits</span>
+            <span>Habits</span>
             <CheckCircle2 className="w-4 h-4 text-purple-400" />
           </div>
-          <div className="text-2xl font-bold text-white mt-2">{stats.habitsCount}</div>
-          <div className="text-[11px] text-slate-400 mt-1">{stats.activeStreaks} day streak sum</div>
+          <div className="text-xl font-bold text-white mt-1.5">{stats.habitsCount}</div>
+          <div className="text-[10px] text-slate-400 mt-1">{stats.activeStreaks}d streak sum</div>
         </div>
       </div>
 
@@ -278,7 +324,29 @@ export const DashboardPage: React.FC = () => {
         <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3">
           Daily Utilities & Power Tools
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <Link
+            to="/app/tasks"
+            className="glass-card p-4 rounded-xl flex items-center gap-3 hover:border-blue-500/40 transition-colors"
+          >
+            <KanbanSquare className="w-5 h-5 text-blue-400 shrink-0" />
+            <div>
+              <div className="text-xs font-semibold text-white">Task Matrix</div>
+              <div className="text-[10px] text-slate-400">Kanban board</div>
+            </div>
+          </Link>
+
+          <Link
+            to="/app/snippets"
+            className="glass-card p-4 rounded-xl flex items-center gap-3 hover:border-blue-500/40 transition-colors"
+          >
+            <Code2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div>
+              <div className="text-xs font-semibold text-white">Snippets Vault</div>
+              <div className="text-[10px] text-slate-400">Reusable code</div>
+            </div>
+          </Link>
+
           <Link
             to="/app/tools"
             className="glass-card p-4 rounded-xl flex items-center gap-3 hover:border-blue-500/40 transition-colors"
@@ -286,7 +354,7 @@ export const DashboardPage: React.FC = () => {
             <Wrench className="w-5 h-5 text-rose-400 shrink-0" />
             <div>
               <div className="text-xs font-semibold text-white">Swiss Knife</div>
-              <div className="text-[10px] text-slate-400">JSON, JWT, Hashes</div>
+              <div className="text-[10px] text-slate-400">Passgen, JWT, JSON</div>
             </div>
           </Link>
 

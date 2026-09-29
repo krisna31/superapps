@@ -11,6 +11,7 @@ describe('SwissKnifePage Component', () => {
     expect(screen.getByText('Base64 / URL')).toBeInTheDocument();
     expect(screen.getByText('Crypto Hasher & UUID')).toBeInTheDocument();
     expect(screen.getByText('Regex Lab')).toBeInTheDocument();
+    expect(screen.getByText('Password & Diceware')).toBeInTheDocument();
   });
 
   it('formats JSON when clicking Beautify button', () => {
@@ -31,5 +32,33 @@ describe('SwissKnifePage Component', () => {
 
     expect(screen.getByText('Raw Text')).toBeInTheDocument();
     expect(screen.getByText('Base64 Encoded')).toBeInTheDocument();
+  });
+
+  it('switches to Password & Diceware tab and generates secrets', () => {
+    render(<SwissKnifePage />);
+
+    const passTab = screen.getByText('Password & Diceware');
+    fireEvent.click(passTab);
+
+    expect(screen.getByText('Generated Secret')).toBeInTheDocument();
+    expect(screen.getByText('Random Password')).toBeInTheDocument();
+    expect(screen.getByText('Diceware Passphrase')).toBeInTheDocument();
+    expect(screen.getByText('Password Settings')).toBeInTheDocument();
+
+    // Switch to Diceware mode
+    const dicewareBtn = screen.getByRole('button', { name: /Diceware Passphrase/i });
+    fireEvent.click(dicewareBtn);
+
+    expect(screen.getByText('Diceware Settings')).toBeInTheDocument();
+
+    // Regenerate
+    const regenBtn = screen.getByRole('button', { name: /Regenerate/i });
+    fireEvent.click(regenBtn);
+
+    // Copy secret
+    const copyBtn = screen.getByRole('button', { name: /Copy Secret/i });
+    fireEvent.click(copyBtn);
+
+    expect(screen.getByText('Copied!')).toBeInTheDocument();
   });
 });

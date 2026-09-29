@@ -29,6 +29,8 @@ import {
   Fingerprint,
   Palette,
   Volume2,
+  KanbanSquare,
+  Code2,
 } from 'lucide-react';
 import { SuperappsLogo } from '../components/brand/SuperappsLogo';
 
@@ -311,18 +313,92 @@ export const UserGuidePage: React.FC<UserGuideProps> = ({ standalone = false }) 
       ),
     },
     {
+      id: 'tasks',
+      title: 'Kanban & Task Matrix Board',
+      category: 'apps',
+      icon: KanbanSquare,
+      badge: 'SQLite Kanban',
+      badgeColor: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+      summary: 'Visual Kanban workflow with Backlog, In Progress, Review, and Completed columns, priority matrix, due dates, and checklist items.',
+      routeLink: '/app/tasks',
+      routeLabel: 'Open Task Matrix',
+      content: (
+        <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
+          <p>
+            The <strong>Kanban & Task Matrix</strong> gives you a clean, agile productivity board running directly on your client-side SQLite engine:
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <span className="font-semibold text-blue-400 text-xs block mb-1">📋 4-Stage Kanban Workflow</span>
+              <p className="text-[11px] text-slate-400">
+                Organize work across <strong>Backlog</strong>, <strong>In Progress</strong>, <strong>In Review</strong>, and <strong>Completed</strong> columns. Move tasks with single-click arrows.
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <span className="font-semibold text-rose-400 text-xs block mb-1">🔥 Priority & Due Date Matrix</span>
+              <p className="text-[11px] text-slate-400">
+                Categorize tasks by <strong>Urgent</strong>, <strong>High</strong>, <strong>Medium</strong>, and <strong>Low</strong> priorities. Automatic visual alerts for overdue tasks.
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <span className="font-semibold text-emerald-400 text-xs block mb-1">☑️ Subtask Checklists</span>
+              <p className="text-[11px] text-slate-400">
+                Break complex tasks into actionable steps. Check off items right from the card face with real-time SQLite updates and chime feedback.
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <span className="font-semibold text-purple-400 text-xs block mb-1">⚡ Omni-Search & Global Shortcuts</span>
+              <p className="text-[11px] text-slate-400">
+                Press <kbd className="font-mono text-white">Ctrl+Shift+T</kbd> to quickly log a new task anywhere. Search tasks instantly via Command Palette (<kbd className="font-mono text-white">Ctrl+K</kbd>).
+              </p>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'snippets',
+      title: 'Encrypted Code & Text Snippets Vault',
+      category: 'apps',
+      icon: Code2,
+      badge: 'Zero-Cloud Vault',
+      badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+      summary: 'Manage reusable code snippets, shell commands, prompt templates, and configs with language tagging and one-click copy.',
+      routeLink: '/app/snippets',
+      routeLabel: 'Open Snippets Vault',
+      content: (
+        <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
+          <p>
+            Keep your essential commands, scripts, configs, and LLM prompt templates at your fingertips with zero cloud leakage:
+          </p>
+
+          <ul className="list-disc list-inside space-y-1.5 text-slate-400 text-[11px]">
+            <li><strong>Syntax Tagging:</strong> Built-in support for TypeScript, Python, Shell/Bash, SQL, JSON, Markdown, HTML/CSS, Rust, Go, and LLM Prompts.</li>
+            <li><strong>One-Click Copy & Chime:</strong> Copy code directly to clipboard with acoustic micro-interaction feedback (<code className="text-emerald-400">soundService.playSuccess()</code>).</li>
+            <li><strong>Pinned Favorites:</strong> Star critical snippets to pin them to the top of your vault.</li>
+            <li><strong>Full-Text Relational Search:</strong> Search by title, language, tags, or code content instantaneously.</li>
+          </ul>
+        </div>
+      ),
+    },
+    {
       id: 'tools',
-      title: 'Dev Swiss Knife Utilities',
+      title: 'Dev Swiss Knife Utilities & Password Studio',
       category: 'apps',
       icon: Wrench,
-      badge: '6 Developer Tools',
+      badge: '7 Developer Tools',
       badgeColor: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-      summary: 'Instant browser-side utilities: JSON formatter, Base64/Hex, JWT inspector, Hashes, UUID, and Regex.',
+      summary: 'Instant browser utilities: CSPRNG Password & Diceware Passphrase generator, JSON formatter, Base64, JWT, Hashes, UUID, and Regex.',
       routeLink: '/app/tools',
       routeLabel: 'Open Swiss Knife',
       content: (
         <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+              <div className="font-semibold text-rose-400 text-xs">Password & Diceware</div>
+              <div className="text-[10px] text-slate-400 mt-1">Generate cryptographically secure random passwords and EFF Diceware passphrases with real-time entropy calculation.</div>
+            </div>
             <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="font-semibold text-rose-400 text-xs">JSON Prettifier</div>
               <div className="text-[10px] text-slate-400 mt-1">Format, validate, and minify dirty JSON blobs.</div>
@@ -338,10 +414,6 @@ export const UserGuidePage: React.FC<UserGuideProps> = ({ standalone = false }) 
             <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="font-semibold text-rose-400 text-xs">Crypto Hasher</div>
               <div className="text-[10px] text-slate-400 mt-1">Compute SHA-256, SHA-512, and MD5 hashes via Web Crypto.</div>
-            </div>
-            <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-              <div className="font-semibold text-rose-400 text-xs">UUID v4 Generator</div>
-              <div className="text-[10px] text-slate-400 mt-1">Generate cryptographically secure random UUIDs.</div>
             </div>
             <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="font-semibold text-rose-400 text-xs">Live Regex Tester</div>

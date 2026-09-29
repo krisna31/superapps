@@ -70,8 +70,43 @@ export interface Habit {
   createdAt: string;
 }
 
+export type TaskStatus = 'backlog' | 'in_progress' | 'review' | 'completed';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface TaskChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface TaskItem {
+  id: string;
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate?: string;
+  tags: string[];
+  checklist: TaskChecklistItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Snippet {
+  id: string;
+  title: string;
+  description?: string;
+  language: string;
+  code: string;
+  tags: string[];
+  isPinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface QueryResult {
   columns: string[];
   values: any[][];
   error?: string;
 }
+

@@ -29,3 +29,16 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: () => {},
   }),
 });
+
+// Polyfill navigator.clipboard
+if (!navigator.clipboard) {
+  Object.defineProperty(navigator, 'clipboard', {
+    value: {
+      writeText: vi.fn().mockImplementation(() => Promise.resolve()),
+      readText: vi.fn().mockImplementation(() => Promise.resolve('')),
+    },
+    configurable: true,
+    writable: true,
+  });
+}
+

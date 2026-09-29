@@ -75,6 +75,14 @@ export const CommandPaletteProvider: React.FC<{ children: React.ReactNode }> = (
         navigate('/app/shortlinks?action=new');
         return;
       }
+
+      // 6. Quick New Task: Cmd/Ctrl + Shift + T
+      if (isCmdOrCtrl && e.shiftKey && key === 't') {
+        e.preventDefault();
+        closePalette();
+        navigate('/app/tasks?action=new');
+        return;
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
