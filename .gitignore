@@ -11,8 +11,19 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
 
-# Tests
+# Backend storage & database
+backend/uploads
+backend/dist
+*.sqlite
+*.sqlite3
+*.vault
+
+# Tests & Coverage
+coverage/
 test-results/
 playwright-report/
 blob-report/
@@ -28,3 +39,4 @@ playwright/.cache/
 *.njsproj
 *.sln
 *.sw?
+

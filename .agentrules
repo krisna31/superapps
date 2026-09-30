@@ -1,0 +1,76 @@
+# Superapps OS - Agentic AI Developer Rules (.agentrules)
+# Applied across all AI coding agents (Antigravity, Cursor, Claude Code, Aider, etc.)
+
+## 1. Project Topology & Architecture Map
+This repository is an enterprise-grade fullstack monorepo:
+- `frontend/`: React 18 + TypeScript + Vite + Tailwind CSS + Lucide Icons + In-Browser SQLite WASM (Dual Mode Fallback).
+- `backend/`: NestJS 10 + TypeScript + Prisma ORM + PostgreSQL 16 + WebSockets (Socket.io) + Swagger/OpenAPI.
+- Root scripts orchestrate both services via npm workspaces (`npm run dev`, `npm run build`, `npm run test`).
+- Infrastructure is containerized via `docker-compose.yml` (`docker compose up -d`).
+
+---
+
+## 2. Universal Agent Guardrails
+1. **Never Commit or Push Automatically**:
+   - Do NOT run `git commit` or `git push` without explicit user instruction. Always leave changes staged or ready for user review.
+   - When generating commit proposals, strictly follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`).
+2. **Deterministic Verification Required**:
+   - Before completing any task or milestone, the agent MUST run:
+     - Frontend: `npm run build --prefix frontend` and `npm run test --prefix frontend`
+     - Backend: `npm run build --prefix backend` and `npm run test --prefix backend`
+   - Zero tolerance for unresolved TypeScript errors (`tsc`), missing imports, or failing unit tests.
+3. **Preserve Code & Comment Integrity**:
+   - Maintain existing comments, docstrings, type annotations, and tests.
+   - When adding custom regex, cryptographic flows, or non-trivial business logic, include a concise inline comment explaining the *why*.
+
+---
+
+## 3. Backend Conventions (NestJS + Prisma + PostgreSQL)
+- **Modular Directory Structure**:
+  - Each domain entity resides in `src/modules/<entity>/`:
+    - `<entity>.module.ts`: NestJS module declaration.
+    - `<entity>.controller.ts`: HTTP route definitions with Swagger annotations.
+    - `<entity>.service.ts`: Business logic and Prisma database access.
+    - `dto/<entity>.dto.ts`: Input validation schemas using `class-validator` & `@ApiProperty`.
+    - `guards/` & `strategies/`: Authentication and role-based guards.
+- **Data Validation & DTOs**:
+  - Every incoming request body or query parameter MUST be validated via typed DTO classes decorated with `class-validator` (`@IsString`, `@IsNotEmpty`, `@IsOptional`, `@IsEmail`, etc.).
+  - Always decorate DTO fields with `@ApiProperty()` or `@ApiPropertyOptional()` to maintain up-to-date Swagger docs at `/api/docs`.
+- **Database Access with Prisma**:
+  - Never execute raw SQL queries when Prisma Client methods suffice.
+  - Ensure all database queries filter by `userId` to enforce multi-tenant isolation.
+  - After modifying `backend/prisma/schema.prisma`, always execute `npx prisma generate`.
+- **Authentication & Security**:
+  - Protect all private endpoints with `@UseGuards(JwtAuthGuard)` and `@ApiBearerAuth('JWT-auth')`.
+  - Passwords MUST be hashed with `bcrypt` (minimum 10 salt rounds).
+  - Never expose password hashes or sensitive keys in API response payloads.
+
+---
+
+## 4. Frontend Conventions (React 18 + Tailwind CSS + Dual Mode)
+- **Dual Mode / Offline-First Fallback**:
+  - When the backend API is online, the frontend syncs and reads from the NestJS REST/WebSocket endpoints.
+  - When offline or unauthenticated, the app gracefully falls back to local in-browser SQLite WASM (`src/services/sqliteService.ts`).
+- **Styling**:
+  - Use Tailwind CSS classes exclusively. Respect light/dark mode classes (`dark:` modifier).
+- **Icons**:
+  - Use `lucide-react` icons. Maintain visual consistency with existing UI components.
+
+---
+
+## 5. Development & Testing Commands
+```bash
+# Start fullstack concurrently (Backend :3000, Frontend :5173)
+npm run dev
+
+# Start PostgreSQL container
+docker compose up -d
+
+# Prisma CLI (inside backend/ or via root npm scripts)
+npm run db:generate
+npm run db:migrate
+npm run db:studio
+
+# Run all test suites
+npm run test
+```
