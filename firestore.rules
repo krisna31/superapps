@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if the user is signed in
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // User-isolated collections: Tasks, Notes, Habits, Expenses, Snippets
+    match /users/{userId}/{document=**} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // URL Shortlinks: Anyone can read a shortlink by slug for redirection; authenticated users can create/manage
+    match /shortlinks/{code} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+  }
+}
