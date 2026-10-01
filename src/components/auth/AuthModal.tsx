@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { X, LogIn, UserPlus, Sparkles, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useAuth, DEFAULT_SUPERADMIN_CREDENTIALS } from '@/context/AuthContext';
+import { X, LogIn, UserPlus, Sparkles, AlertCircle, Shield } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -13,7 +13,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     signInWithEmail, 
     signUpWithEmail, 
     continueAsGuest,
-    isFirebaseConfigured 
+    isFirebaseConfigured,
+    systemSettings
   } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState(false);
@@ -21,6 +22,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // If registration is disabled, ensure isSignUp cannot remain active
+  useEffect(() => {
+    if (!systemSettings.allowUserRegistration && isSignUp) {
+      setIsSignUp(false);
+    }
+  }, [systemSettings.allowUserRegistration, isSignUp]);
 
   if (!isOpen) return null;
 
@@ -31,6 +39,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
     try {
       if (isSignUp) {
+        if (!systemSettings.allowUserRegistration) {
+          throw new Error('Registration is closed by administrator.');
+        }
         await signUpWithEmail(email, password);
       } else {
         await signInWithEmail(email, password);
@@ -57,6 +68,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   };
 
   const handleGuest = async () => {
+    if (!systemSettings.allowGuestAccess) {
+      setError('Guest access is disabled by administrator.');
+      return;
+    }
     setLoading(true);
     try {
       await continueAsGuest();
@@ -66,6 +81,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFillSuperadmin = () => {
+    setEmail(DEFAULT_SUPERADMIN_CREDENTIALS.email);
+    setPassword(DEFAULT_SUPERADMIN_CREDENTIALS.password);
+    setIsSignUp(false);
   };
 
   return (
@@ -94,12 +115,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {!isFirebaseConfigured && (
-          <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs flex items-start space-x-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">Firebase in Local Demo Mode</p>
-              <p className="mt-0.5">Firebase environment keys not found. You can continue as a Guest with offline storage, or configure keys in your .env file.</p>
+          <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs flex flex-col space-y-2">
+            <div className="flex items-start space-x-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Local / Offline Setup Mode</p>
+                <p className="mt-0.5">Firebase environment keys not found. You can sign in using default administrator credentials or continue as guest if permitted.</p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={handleFillSuperadmin}
+              className="inline-flex items-center space-x-1.5 self-start px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 rounded font-mono text-[11px] transition"
+            >
+              <Shield className="w-3 h-3" />
+              <span>Autofill Superadmin ({DEFAULT_SUPERADMIN_CREDENTIALS.email})</span>
+            </button>
           </div>
         )}
 
@@ -141,70 +172,81 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
               <span className="bg-white dark:bg-slate-900 px-3 text-xs text-slate-400 absolute">or email</span>
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-                  Email address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@domain.com"
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  placeholder="••••••••"
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition shadow-md mt-2"
-              >
-                {isSignUp ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
-                <span>{isSignUp ? 'Create Account' : 'Sign In'}</span>
-              </button>
-            </form>
-
-            <div className="mt-3 text-center">
-              <button
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
-              >
-                {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-              </button>
-            </div>
           </>
         )}
 
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label htmlFor="modal-email" className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              Email address
+            </label>
+            <input
+              id="modal-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@domain.com"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="modal-password" className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              Password
+            </label>
+            <input
+              id="modal-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              placeholder="••••••••"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+
           <button
-            type="button"
-            onClick={handleGuest}
+            type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center space-x-2 py-2 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs transition"
+            className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition shadow-md mt-2"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Continue as Guest (Instant Access)</span>
+            {isSignUp ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+            <span>{isSignUp ? 'Create Account' : 'Sign In'}</span>
           </button>
+        </form>
+
+        <div className="mt-3 text-center">
+          {systemSettings.allowUserRegistration ? (
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
+            >
+              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            </button>
+          ) : (
+            <span className="text-xs text-slate-400 dark:text-slate-500">
+              Registration is closed by administrator.
+            </span>
+          )}
         </div>
+
+        {/* Guest Access Option (hidden if allowGuestAccess is false) */}
+        {systemSettings.allowGuestAccess && (
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={handleGuest}
+              disabled={loading}
+              className="w-full flex items-center justify-center space-x-2 py-2 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs transition"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Continue as Guest (Instant Access)</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

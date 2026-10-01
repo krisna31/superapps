@@ -13,8 +13,10 @@ import {
   ChevronLeft, 
   ChevronRight,
   Download,
-  Globe
+  Globe,
+  ShieldCheck
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface SidebarProps {
   isOpenMobile: boolean;
@@ -22,6 +24,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile }) => {
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
@@ -54,6 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile })
     { name: 'SwissKnife Dev Tools', path: '/swissknife', icon: Wrench },
     { name: 'Dropzone File Sharing', path: '/dropzone', icon: CloudUpload },
     { name: 'URL Shortlinks', path: '/shortlinks', icon: Link2 },
+    ...(user?.role === 'superadmin' ? [{ name: 'Admin Settings', path: '/settings', icon: ShieldCheck }] : []),
   ];
 
   return (

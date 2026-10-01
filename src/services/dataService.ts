@@ -19,7 +19,8 @@ import {
   ExpenseItem, 
   SnippetItem, 
   ShortlinkItem, 
-  DropzoneItem 
+  DropzoneItem,
+  SystemSettings 
 } from '@/types';
 
 // Helper for local storage persistence fallback
@@ -38,6 +39,32 @@ const setLocalData = <T>(key: string, data: T[]): void => {
   } catch (err) {
     console.error('Failed to write to localStorage:', err);
   }
+};
+
+/* ==================== SYSTEM SETTINGS CONFIG & HELPERS ==================== */
+export const SYSTEM_SETTINGS_KEY = 'superapps_system_settings';
+
+export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
+  allowGuestAccess: true,
+  allowUserRegistration: true,
+  superadminEmail: 'admin@k31.my.id',
+};
+
+export const getCachedSystemSettings = (): SystemSettings => {
+  try {
+    const raw = localStorage.getItem(SYSTEM_SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        allowGuestAccess: parsed.allowGuestAccess !== undefined ? Boolean(parsed.allowGuestAccess) : DEFAULT_SYSTEM_SETTINGS.allowGuestAccess,
+        allowUserRegistration: parsed.allowUserRegistration !== undefined ? Boolean(parsed.allowUserRegistration) : DEFAULT_SYSTEM_SETTINGS.allowUserRegistration,
+        superadminEmail: parsed.superadminEmail || DEFAULT_SYSTEM_SETTINGS.superadminEmail,
+      };
+    }
+  } catch {
+    // fallback
+  }
+  return { ...DEFAULT_SYSTEM_SETTINGS };
 };
 
 /* ==================== TASKS SERVICE ==================== */
@@ -576,5 +603,70 @@ export const dataService = {
     const key = `superapps_dropzone_${userId}`;
     const items = getLocalData<DropzoneItem>(key).filter(i => i.id !== item.id);
     setLocalData(key, items);
+  },
+
+  /* ==================== SYSTEM SETTINGS SERVICE ==================== */
+  async getSystemSettings(): Promise<SystemSettings> {
+    if (isFirebaseConfigured && db) {
+      try {
+        const docRef = doc(db, 'system', 'settings');
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          const data = snap.data() as Partial<SystemSettings>;
+          const settings: SystemSettings = {
+            allowGuestAccess: data.allowGuestAccess !== undefined ? Boolean(data.allowGuestAccess) : DEFAULT_SYSTEM_SETTINGS.allowGuestAccess,
+            allowUserRegistration: data.allowUserRegistration !== undefined ? Boolean(data.allowUserRegistration) : DEFAULT_SYSTEM_SETTINGS.allowUserRegistration,
+            superadminEmail: data.superadminEmail || DEFAULT_SYSTEM_SETTINGS.superadminEmail,
+          };
+          try {
+            localStorage.setItem(SYSTEM_SETTINGS_KEY, JSON.stringify(settings));
+          } catch {
+            // ignore
+          }
+          return settings;
+        }
+      } catch (err) {
+        console.warn('Firestore getSystemSettings fallback:', err);
+      }
+    }
+
+    try {
+      const raw = localStorage.getItem(SYSTEM_SETTINGS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          allowGuestAccess: parsed.allowGuestAccess !== undefined ? Boolean(parsed.allowGuestAccess) : DEFAULT_SYSTEM_SETTINGS.allowGuestAccess,
+          allowUserRegistration: parsed.allowUserRegistration !== undefined ? Boolean(parsed.allowUserRegistration) : DEFAULT_SYSTEM_SETTINGS.allowUserRegistration,
+          superadminEmail: parsed.superadminEmail || DEFAULT_SYSTEM_SETTINGS.superadminEmail,
+        };
+      }
+    } catch (err) {
+      console.error('Failed to parse system settings from localStorage:', err);
+    }
+
+    // Default initialization
+    try {
+      localStorage.setItem(SYSTEM_SETTINGS_KEY, JSON.stringify(DEFAULT_SYSTEM_SETTINGS));
+    } catch {
+      // ignore
+    }
+    return { ...DEFAULT_SYSTEM_SETTINGS };
+  },
+
+  async saveSystemSettings(settings: SystemSettings): Promise<void> {
+    try {
+      localStorage.setItem(SYSTEM_SETTINGS_KEY, JSON.stringify(settings));
+    } catch (err) {
+      console.error('Failed to save system settings to localStorage:', err);
+    }
+
+    if (isFirebaseConfigured && db) {
+      try {
+        const docRef = doc(db, 'system', 'settings');
+        await setDoc(docRef, settings, { merge: true });
+      } catch (err) {
+        console.warn('Firestore saveSystemSettings fallback:', err);
+      }
+    }
   }
 };

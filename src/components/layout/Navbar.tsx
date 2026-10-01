@@ -114,6 +114,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden lg:inline-block text-xs font-medium text-slate-700 dark:text-slate-200 max-w-[120px] truncate">
                 {user.displayName || (user.isAnonymous ? 'Guest' : 'User')}
               </span>
+              {user.role === 'superadmin' && (
+                <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded">
+                  Admin
+                </span>
+              )}
             </div>
 
             <button

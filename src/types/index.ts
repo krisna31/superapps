@@ -6,6 +6,13 @@ export interface UserProfile {
   displayName: string | null;
   photoURL: string | null;
   isAnonymous: boolean;
+  role: 'superadmin' | 'user';
+}
+
+export interface SystemSettings {
+  allowGuestAccess: boolean;
+  allowUserRegistration: boolean;
+  superadminEmail: string;
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';

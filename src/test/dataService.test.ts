@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { dataService } from '@/services/dataService';
-import { TaskItem, NoteItem, ExpenseItem, ShortlinkItem } from '@/types';
+import { TaskItem, NoteItem, ExpenseItem, ShortlinkItem, SystemSettings } from '@/types';
 
 describe('dataService Tests', () => {
   const testUserId = 'test-user-123';
@@ -123,5 +123,42 @@ describe('dataService Tests', () => {
     expect(resolved).not.toBeNull();
     expect(resolved?.originalUrl).toBe('https://docs.github.com');
     expect(resolved?.clicks).toBe(1);
+  });
+
+  /* ==================== SYSTEM SETTINGS TESTS ==================== */
+  it('should initialize and return default system settings', async () => {
+    const settings = await dataService.getSystemSettings();
+    expect(settings).toBeDefined();
+    expect(settings.allowGuestAccess).toBe(true);
+    expect(settings.allowUserRegistration).toBe(true);
+    expect(settings.superadminEmail).toBe('admin@k31.my.id');
+  });
+
+  it('should update and persist system settings', async () => {
+    const updatedSettings: SystemSettings = {
+      allowGuestAccess: false,
+      allowUserRegistration: false,
+      superadminEmail: 'customadmin@k31.my.id',
+    };
+
+    await dataService.saveSystemSettings(updatedSettings);
+    const retrieved = await dataService.getSystemSettings();
+    expect(retrieved.allowGuestAccess).toBe(false);
+    expect(retrieved.allowUserRegistration).toBe(false);
+    expect(retrieved.superadminEmail).toBe('customadmin@k31.my.id');
+  });
+
+  it('should maintain system settings in localStorage under superapps_system_settings', async () => {
+    const custom: SystemSettings = {
+      allowGuestAccess: true,
+      allowUserRegistration: false,
+      superadminEmail: 'secops@k31.my.id',
+    };
+    await dataService.saveSystemSettings(custom);
+    const raw = localStorage.getItem('superapps_system_settings');
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.allowUserRegistration).toBe(false);
+    expect(parsed.superadminEmail).toBe('secops@k31.my.id');
   });
 });

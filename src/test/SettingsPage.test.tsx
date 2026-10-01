@@ -1,0 +1,138 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from '@/context/AuthContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { SettingsPage } from '@/pages/SettingsPage';
+import { dataService } from '@/services/dataService';
+
+const renderSettingsPage = () => {
+  return render(
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <SettingsPage />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+};
+
+describe('SettingsPage Component', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('renders access denied message for non-superadmin user', async () => {
+    localStorage.setItem(
+      'superapps_local_user',
+      JSON.stringify({
+        uid: 'user-regular',
+        email: 'regular@k31.my.id',
+        displayName: 'Regular User',
+        role: 'user',
+        isAnonymous: false,
+      })
+    );
+
+    await act(async () => {
+      renderSettingsPage();
+    });
+
+    expect(screen.getByText('Administrator Access Required')).toBeInTheDocument();
+    expect(screen.getByText(/restricted exclusively to the workspace Superadmin/i)).toBeInTheDocument();
+  });
+
+  it('renders admin toggles and system info for superadmin user', async () => {
+    localStorage.setItem(
+      'superapps_local_user',
+      JSON.stringify({
+        uid: 'local-superadmin',
+        email: 'admin@k31.my.id',
+        displayName: 'Superadmin',
+        role: 'superadmin',
+        isAnonymous: false,
+      })
+    );
+
+    await act(async () => {
+      renderSettingsPage();
+    });
+
+    expect(screen.getByText('System Administration & Security')).toBeInTheDocument();
+    expect(screen.getByText('Guest Mode Access')).toBeInTheDocument();
+    expect(screen.getByText('User Registration')).toBeInTheDocument();
+    expect(screen.getByText('Primary Superadmin Designation')).toBeInTheDocument();
+    expect(screen.getByText('apps.k31.my.id')).toBeInTheDocument();
+  });
+
+  it('allows superadmin to toggle guest access and registration', async () => {
+    localStorage.setItem(
+      'superapps_local_user',
+      JSON.stringify({
+        uid: 'local-superadmin',
+        email: 'admin@k31.my.id',
+        displayName: 'Superadmin',
+        role: 'superadmin',
+        isAnonymous: false,
+      })
+    );
+
+    await act(async () => {
+      renderSettingsPage();
+    });
+
+    const switches = screen.getAllByRole('switch');
+    expect(switches.length).toBe(2);
+
+    // Initial state: both are enabled (true)
+    expect(switches[0]).toHaveAttribute('aria-checked', 'true');
+    expect(switches[1]).toHaveAttribute('aria-checked', 'true');
+
+    // Toggle guest access switch
+    await act(async () => {
+      fireEvent.click(switches[0]);
+    });
+
+    const updatedSettings = await dataService.getSystemSettings();
+    expect(updatedSettings.allowGuestAccess).toBe(false);
+  });
+
+  it('validates email format and allows superadmin to update superadmin email', async () => {
+    localStorage.setItem(
+      'superapps_local_user',
+      JSON.stringify({
+        uid: 'local-superadmin',
+        email: 'admin@k31.my.id',
+        displayName: 'Superadmin',
+        role: 'superadmin',
+        isAnonymous: false,
+      })
+    );
+
+    await act(async () => {
+      renderSettingsPage();
+    });
+
+    const emailInput = screen.getByPlaceholderText('admin@k31.my.id');
+    const form = emailInput.closest('form')!;
+
+    // Try invalid email
+    await act(async () => {
+      fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
+      fireEvent.submit(form);
+    });
+
+    expect(screen.getByText('Please enter a valid email address.')).toBeInTheDocument();
+
+    // Enter valid new email
+    await act(async () => {
+      fireEvent.change(emailInput, { target: { value: 'lead@k31.my.id' } });
+      fireEvent.submit(form);
+    });
+
+    expect(screen.getByText('Superadmin primary email updated successfully.')).toBeInTheDocument();
+    const updatedSettings = await dataService.getSystemSettings();
+    expect(updatedSettings.superadminEmail).toBe('lead@k31.my.id');
+  });
+});

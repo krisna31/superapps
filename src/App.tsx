@@ -15,6 +15,7 @@ import { SwissKnifePage } from './pages/SwissKnifePage';
 import { DropZonePage } from './pages/DropZonePage';
 import { ShortlinksPage } from './pages/ShortlinksPage';
 import { RedirectHandlerPage } from './pages/RedirectHandlerPage';
+import { SettingsPage } from './pages/SettingsPage';
 
 export const App: React.FC = () => {
   return (
@@ -36,6 +37,7 @@ export const App: React.FC = () => {
               <Route path="swissknife" element={<SwissKnifePage />} />
               <Route path="dropzone" element={<DropZonePage />} />
               <Route path="shortlinks" element={<ShortlinksPage />} />
+              <Route path="settings" element={<SettingsPage />} />
               {/* Catch-all redirect to Dashboard */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

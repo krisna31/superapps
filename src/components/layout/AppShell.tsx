@@ -4,8 +4,11 @@ import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { CommandPaletteModal } from '../palette/CommandPaletteModal';
 import { AuthModal } from '../auth/AuthModal';
+import { AuthLockPage } from '@/pages/AuthLockPage';
+import { useAuth } from '@/context/AuthContext';
 
 export const AppShell: React.FC = () => {
+  const { user, systemSettings, loading } = useAuth();
   const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -21,6 +24,19 @@ export const AppShell: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#090d16] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // Access control lock screen: if guest access is disabled and user is not authenticated or is anonymous
+  if (!systemSettings.allowGuestAccess && (!user || user.isAnonymous)) {
+    return <AuthLockPage />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex transition-colors">

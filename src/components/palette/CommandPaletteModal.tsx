@@ -14,9 +14,11 @@ import {
   Sun, 
   Moon, 
   PlusCircle, 
-  KeyRound
+  KeyRound,
+  ShieldCheck
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface CommandPaletteModalProps {
   isOpen: boolean;
@@ -38,6 +40,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toggleTheme, resolvedTheme } = useTheme();
+  const { user } = useAuth();
 
   const commands: CommandItem[] = [
     // Navigation
@@ -113,6 +116,14 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       action: () => navigate('/shortlinks'),
       keywords: ['shortlinks', 'url', 'redirect', 'link']
     },
+    ...(user?.role === 'superadmin' ? [{
+      id: 'nav-settings',
+      title: 'Go to Admin Settings',
+      category: 'Navigation' as const,
+      icon: ShieldCheck,
+      action: () => navigate('/settings'),
+      keywords: ['settings', 'admin', 'superadmin', 'security', 'guest', 'registration']
+    }] : []),
     // Quick Actions
     {
       id: 'act-new-task',
