@@ -20,13 +20,13 @@ export const HabitsPage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
-  const loadHabits = async () => {
-    const data = await dataService.getHabits(userId);
-    setHabits(data);
-  };
-
   useEffect(() => {
-    loadHabits();
+    const unsubscribe = dataService.subscribeToHabits(userId, (data) => {
+      setHabits(data);
+    });
+    return () => {
+      unsubscribe();
+    };
   }, [userId]);
 
   // Generate last 7 days strings [YYYY-MM-DD]

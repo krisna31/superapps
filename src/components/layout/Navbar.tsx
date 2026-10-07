@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { SyncStatusBadge } from '@/components/common/SyncStatusBadge';
 
 interface NavbarProps {
   onOpenCommandPalette: () => void;
@@ -78,6 +79,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <Search className="w-5 h-5" />
         </button>
+
+        {/* Live Cloud Sync Status Badge */}
+        <SyncStatusBadge onOpenAuthModal={onOpenAuthModal} />
 
         {/* Theme Mode Toggle Button */}
         <div className="relative group">

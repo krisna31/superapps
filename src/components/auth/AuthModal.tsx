@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, DEFAULT_SUPERADMIN_CREDENTIALS } from '@/context/AuthContext';
-import { X, LogIn, UserPlus, Sparkles, AlertCircle, Shield } from 'lucide-react';
+import { X, LogIn, UserPlus, Sparkles, AlertCircle, Shield, UserCheck } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -9,14 +9,18 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const { 
+    user,
     signInWithGoogle, 
     signInWithEmail, 
     signUpWithEmail, 
+    linkWithGoogle,
+    linkWithEmail,
     continueAsGuest,
     isFirebaseConfigured,
     systemSettings
   } = useAuth();
 
+  const isGuest = Boolean(user && (user.isAnonymous || user.uid.startsWith('guest-')));
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,7 +42,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setLoading(true);
 
     try {
-      if (isSignUp) {
+      if (isGuest && typeof linkWithEmail === 'function') {
+        await linkWithEmail(email, password);
+      } else if (isSignUp) {
         if (!systemSettings.allowUserRegistration) {
           throw new Error('Registration is closed by administrator.');
         }
@@ -58,7 +64,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setError(null);
     setLoading(true);
     try {
-      await signInWithGoogle();
+      if (isGuest && typeof linkWithGoogle === 'function') {
+        await linkWithGoogle();
+      } else {
+        await signInWithGoogle();
+      }
       onClose();
     } catch (err: any) {
       setError(err?.message || 'Google sign-in failed.');
@@ -106,13 +116,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-              {isSignUp ? 'Create Superapps Account' : 'Sign in to Superapps'}
+              {isGuest ? 'Link & Sync Account' : isSignUp ? 'Create Superapps Account' : 'Sign in to Superapps'}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Sync tasks, notes, habits & files across devices
+              {isGuest ? 'Migrate local data to Cloud Firestore' : 'Sync tasks, notes, habits & files across devices'}
             </p>
           </div>
         </div>
+
+        {isGuest && (
+          <div className="mb-4 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs flex items-start space-x-2.5 shadow-sm">
+            <Sparkles className="w-4 h-4 flex-shrink-0 mt-0.5 text-emerald-500" />
+            <div className="space-y-1">
+              <p className="font-semibold text-emerald-900 dark:text-emerald-200">
+                Seamless Guest Data Migration
+              </p>
+              <p className="text-[11px] leading-relaxed text-emerald-700 dark:text-emerald-300/90">
+                You are currently in Guest Mode. Linking your account will automatically migrate all your existing guest tasks, notes, habits, expenses, and snippets to Cloud Firestore without data loss.
+              </p>
+            </div>
+          </div>
+        )}
 
         {!isFirebaseConfigured && (
           <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs flex flex-col space-y-2">
@@ -145,6 +169,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <button
               onClick={handleGoogle}
               disabled={loading}
+              data-testid="link-with-google-btn"
               className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-medium text-sm transition shadow-sm"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -165,7 +190,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>Continue with Google</span>
+              <span>{isGuest ? 'Link with Google' : 'Continue with Google'}</span>
             </button>
 
             <div className="relative my-4 flex items-center justify-center">
@@ -210,15 +235,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <button
             type="submit"
             disabled={loading}
+            data-testid="link-with-email-btn"
             className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition shadow-md mt-2"
           >
-            {isSignUp ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
-            <span>{isSignUp ? 'Create Account' : 'Sign In'}</span>
+            {isGuest ? <UserCheck className="w-4 h-4" /> : isSignUp ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+            <span>{isGuest ? 'Link with Email' : isSignUp ? 'Create Account' : 'Sign In'}</span>
           </button>
         </form>
 
         <div className="mt-3 text-center">
-          {systemSettings.allowUserRegistration ? (
+          {isGuest ? (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Enter your email and password to link your guest tasks, notes, habits, and expenses.
+            </p>
+          ) : systemSettings.allowUserRegistration ? (
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
@@ -233,8 +263,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           )}
         </div>
 
-        {/* Guest Access Option (hidden if allowGuestAccess is false) */}
-        {systemSettings.allowGuestAccess && (
+        {/* Guest Access Option (hidden if already guest or allowGuestAccess is false) */}
+        {!isGuest && systemSettings.allowGuestAccess && (
           <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"

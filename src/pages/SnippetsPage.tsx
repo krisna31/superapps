@@ -42,13 +42,13 @@ export const SnippetsPage: React.FC = () => {
     'rust'
   ];
 
-  const loadSnippets = async () => {
-    const data = await dataService.getSnippets(userId);
-    setSnippets(data);
-  };
-
   useEffect(() => {
-    loadSnippets();
+    const unsubscribe = dataService.subscribeToSnippets(userId, (data) => {
+      setSnippets(data);
+    });
+    return () => {
+      unsubscribe();
+    };
   }, [userId]);
 
   const handleCreateSnippet = async (e: React.FormEvent) => {

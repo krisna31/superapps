@@ -38,13 +38,13 @@ export const ExpensesPage: React.FC = () => {
     'Other'
   ];
 
-  const loadExpenses = async () => {
-    const data = await dataService.getExpenses(userId);
-    setExpenses(data);
-  };
-
   useEffect(() => {
-    loadExpenses();
+    const unsubscribe = dataService.subscribeToExpenses(userId, (data) => {
+      setExpenses(data);
+    });
+    return () => {
+      unsubscribe();
+    };
   }, [userId]);
 
   const handleCreateExpense = async (e: React.FormEvent) => {

@@ -7,6 +7,9 @@ import {
   signInAnonymously,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  linkWithPopup,
+  linkWithCredential,
+  EmailAuthProvider,
   User
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '@/firebase/config';
@@ -29,6 +32,10 @@ interface AuthContextType {
   signUpWithEmail: (email: string, pass: string) => Promise<void>;
   continueAsGuest: () => Promise<void>;
   signOut: () => Promise<void>;
+  linkWithGoogle: () => Promise<void>;
+  linkAccountWithGoogle: () => Promise<void>;
+  linkWithEmail: (email: string, pass: string) => Promise<void>;
+  linkAccountWithEmail: (email: string, pass: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -148,6 +155,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Helper to gather all guest identifiers to guarantee zero data loss during migration
+  const gatherGuestIds = (activeUid?: string | null): string[] => {
+    const ids = new Set<string>();
+    if (activeUid) ids.add(activeUid);
+    if (user?.uid) ids.add(user.uid);
+    ids.add('guest-default');
+    const localGuestRaw = localStorage.getItem('superapps_local_guest');
+    if (localGuestRaw) {
+      try {
+        const parsed = JSON.parse(localGuestRaw);
+        if (parsed?.uid) ids.add(parsed.uid);
+      } catch {
+        // ignore parse error
+      }
+    }
+    return Array.from(ids);
+  };
+
   useEffect(() => {
     if (!isFirebaseConfigured || !auth) {
       setLoading(false);
@@ -184,6 +209,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isAnonymous: firebaseUser.isAnonymous,
           role: userRole,
         };
+        
+        // Migrate data from previous guest session if transitioning to an authenticated account
+        const localGuestRaw = localStorage.getItem('superapps_local_guest');
+        const guestIds = new Set<string>(['guest-default']);
+        if (localGuestRaw) {
+          try {
+            const guestObj = JSON.parse(localGuestRaw);
+            if (guestObj?.uid) guestIds.add(guestObj.uid);
+          } catch {
+            // ignore
+          }
+        }
+        if (!firebaseUser.isAnonymous) {
+          const sourceIds = Array.from(guestIds).filter((id) => id !== firebaseUser.uid);
+          if (sourceIds.length > 0) {
+            await dataService.migrateGuestData(sourceIds, firebaseUser.uid);
+          }
+        }
+
         setUser(profile);
         localStorage.removeItem('superapps_local_user');
         localStorage.removeItem('superapps_local_guest');
@@ -218,12 +262,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!isFirebaseConfigured || !auth) {
       throw new Error('Firebase configuration not set. Please add Firebase credentials to your .env or GitHub Secrets.');
     }
+    const guestIds = gatherGuestIds(user?.uid);
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    if (result?.user?.uid) {
+      const sourceIds = guestIds.filter((id) => id !== result.user.uid);
+      if (sourceIds.length > 0) {
+        await dataService.migrateGuestData(sourceIds, result.user.uid);
+      }
+    }
   };
 
   const signInWithEmail = async (email: string, pass: string) => {
     const trimmedEmail = email.trim().toLowerCase();
+    const prevGuestId = (user && (user.isAnonymous || user.uid.startsWith('guest-'))) ? user.uid : null;
 
     // Check offline default superadmin credentials
     if (
@@ -241,6 +293,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('superapps_local_user', JSON.stringify(superadminUser));
       localStorage.removeItem('superapps_local_guest');
       localStorage.setItem('superapps_admin_claimed', 'true');
+      if (prevGuestId && prevGuestId !== 'local-superadmin') {
+        await dataService.migrateGuestData(prevGuestId, 'local-superadmin');
+      }
       setUser(superadminUser);
       return;
     }
@@ -270,6 +325,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         localStorage.setItem('superapps_local_user', JSON.stringify(profile));
         localStorage.removeItem('superapps_local_guest');
+        if (prevGuestId && prevGuestId !== found.uid) {
+          await dataService.migrateGuestData(prevGuestId, found.uid);
+        }
         setUser(profile);
         return;
       }
@@ -296,6 +354,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         localStorage.setItem('superapps_local_user', JSON.stringify(superadminUser));
         localStorage.removeItem('superapps_local_guest');
+        if (prevGuestId && prevGuestId !== 'local-superadmin') {
+          await dataService.migrateGuestData(prevGuestId, 'local-superadmin');
+        }
         setUser(superadminUser);
         return;
       }
@@ -310,6 +371,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const trimmedEmail = email.trim().toLowerCase();
+    const prevGuestId = (user && (user.isAnonymous || user.uid.startsWith('guest-'))) ? user.uid : null;
 
     if (!isFirebaseConfigured || !auth) {
       // Offline local registration
@@ -357,12 +419,248 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       localStorage.setItem('superapps_local_user', JSON.stringify(profile));
       localStorage.removeItem('superapps_local_guest');
+      if (prevGuestId && prevGuestId !== newUserRecord.uid) {
+        await dataService.migrateGuestData(prevGuestId, newUserRecord.uid);
+      }
       setUser(profile);
       return;
     }
 
     // Firebase Online Registration
-    await createUserWithEmailAndPassword(auth, trimmedEmail, pass);
+    const cred = await createUserWithEmailAndPassword(auth, trimmedEmail, pass);
+    if (prevGuestId && prevGuestId !== cred.user.uid) {
+      await dataService.migrateGuestData(prevGuestId, cred.user.uid);
+    }
+  };
+
+  const linkWithGoogle = async () => {
+    if (!isFirebaseConfigured || !auth) {
+      throw new Error('Firebase configuration not set. Please add Firebase credentials to your .env or GitHub Secrets to enable Google account linking.');
+    }
+    const provider = new GoogleAuthProvider();
+    const guestIds = gatherGuestIds(user?.uid);
+    let targetUid: string | null = null;
+    let targetProfile: UserProfile | null = null;
+
+    if (auth.currentUser && auth.currentUser.isAnonymous) {
+      // In-place linking for Firebase anonymous sessions
+      try {
+        const result = await linkWithPopup(auth.currentUser, provider);
+        targetUid = result.user.uid;
+        targetProfile = {
+          uid: result.user.uid,
+          email: result.user.email,
+          displayName: result.user.displayName || 'Google User',
+          photoURL: result.user.photoURL,
+          isAnonymous: false,
+          role: 'user',
+        };
+      } catch (err: any) {
+        // Handle auth/credential-already-in-use: catch, sign in with existing credential, and migrate guest items
+        if (err?.code === 'auth/credential-already-in-use' || err?.code === 'auth/email-already-in-use') {
+          const result = await signInWithPopup(auth, provider);
+          targetUid = result.user.uid;
+          targetProfile = {
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName || 'Google User',
+            photoURL: result.user.photoURL,
+            isAnonymous: false,
+            role: 'user',
+          };
+        } else {
+          throw err;
+        }
+      }
+    } else {
+      // Fallback/offline guest sessions (when auth.currentUser is not anonymous or not configured):
+      // Authenticate/sign-in and capture new UID
+      const result = await signInWithPopup(auth, provider);
+      targetUid = result.user.uid;
+      targetProfile = {
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName || 'Google User',
+        photoURL: result.user.photoURL,
+        isAnonymous: false,
+        role: 'user',
+      };
+    }
+
+    if (targetUid) {
+      const settings = await dataService.getSystemSettings();
+      if (
+        targetProfile &&
+        targetProfile.email &&
+        (targetProfile.email.toLowerCase() === settings.superadminEmail.toLowerCase() ||
+         targetProfile.email.toLowerCase() === DEFAULT_SUPERADMIN_CREDENTIALS.email.toLowerCase())
+      ) {
+        targetProfile.role = 'superadmin';
+      }
+
+      // Automatically execute data migration for all gathered guest IDs
+      const sourceIds = guestIds.filter((id) => id !== targetUid);
+      if (sourceIds.length > 0) {
+        await dataService.migrateGuestData(sourceIds, targetUid);
+      }
+
+      if (targetProfile) {
+        setUser(targetProfile);
+        localStorage.removeItem('superapps_local_guest');
+      }
+    }
+  };
+
+  const linkWithEmail = async (email: string, pass: string) => {
+    if (!email || !pass) {
+      throw new Error('Please provide both email and password to link your account.');
+    }
+    const trimmedEmail = email.trim().toLowerCase();
+    const guestIds = gatherGuestIds(user?.uid);
+
+    // In-place linking for Firebase anonymous sessions:
+    // linkWithCredential(auth.currentUser, EmailAuthProvider.credential(email, password))
+    if (isFirebaseConfigured && auth && auth.currentUser && auth.currentUser.isAnonymous) {
+      const credential = EmailAuthProvider.credential(trimmedEmail, pass);
+      let targetUid: string | null = null;
+      let targetProfile: UserProfile | null = null;
+
+      try {
+        const result = await linkWithCredential(auth.currentUser, credential);
+        targetUid = result.user.uid;
+        targetProfile = {
+          uid: result.user.uid,
+          email: result.user.email || trimmedEmail,
+          displayName: result.user.displayName || trimmedEmail.split('@')[0],
+          photoURL: result.user.photoURL,
+          isAnonymous: false,
+          role: 'user',
+        };
+      } catch (err: any) {
+        // Handle auth/credential-already-in-use: catch, sign in with existing credential, and migrate guest items to that account
+        if (err?.code === 'auth/credential-already-in-use' || err?.code === 'auth/email-already-in-use') {
+          const result = await signInWithEmailAndPassword(auth, trimmedEmail, pass);
+          targetUid = result.user.uid;
+          targetProfile = {
+            uid: result.user.uid,
+            email: result.user.email || trimmedEmail,
+            displayName: result.user.displayName || trimmedEmail.split('@')[0],
+            photoURL: result.user.photoURL,
+            isAnonymous: false,
+            role: 'user',
+          };
+        } else {
+          throw err;
+        }
+      }
+
+      if (targetUid) {
+        const settings = await dataService.getSystemSettings();
+        if (
+          targetProfile &&
+          (targetProfile.email?.toLowerCase() === settings.superadminEmail.toLowerCase() ||
+           targetProfile.email?.toLowerCase() === DEFAULT_SUPERADMIN_CREDENTIALS.email.toLowerCase())
+        ) {
+          targetProfile.role = 'superadmin';
+        }
+
+        const sourceIds = guestIds.filter((id) => id !== targetUid);
+        if (sourceIds.length > 0) {
+          await dataService.migrateGuestData(sourceIds, targetUid);
+        }
+
+        if (targetProfile) {
+          setUser(targetProfile);
+          localStorage.removeItem('superapps_local_guest');
+        }
+      }
+      return;
+    }
+
+    // Handle fallback/offline guest sessions when Firebase is configured (e.g. offline visitor promoted to cloud)
+    if (isFirebaseConfigured && auth) {
+      let targetUid: string | null = null;
+      let targetProfile: UserProfile | null = null;
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, trimmedEmail, pass);
+        targetUid = cred.user.uid;
+        targetProfile = {
+          uid: cred.user.uid,
+          email: cred.user.email || trimmedEmail,
+          displayName: cred.user.displayName || trimmedEmail.split('@')[0],
+          photoURL: cred.user.photoURL,
+          isAnonymous: false,
+          role: 'user',
+        };
+      } catch (err: any) {
+        if (err?.code === 'auth/email-already-in-use' || err?.code === 'auth/credential-already-in-use') {
+          const cred = await signInWithEmailAndPassword(auth, trimmedEmail, pass);
+          targetUid = cred.user.uid;
+          targetProfile = {
+            uid: cred.user.uid,
+            email: cred.user.email || trimmedEmail,
+            displayName: cred.user.displayName || trimmedEmail.split('@')[0],
+            photoURL: cred.user.photoURL,
+            isAnonymous: false,
+            role: 'user',
+          };
+        } else {
+          throw err;
+        }
+      }
+
+      if (targetUid) {
+        const settings = await dataService.getSystemSettings();
+        if (
+          targetProfile &&
+          (targetProfile.email?.toLowerCase() === settings.superadminEmail.toLowerCase() ||
+           targetProfile.email?.toLowerCase() === DEFAULT_SUPERADMIN_CREDENTIALS.email.toLowerCase())
+        ) {
+          targetProfile.role = 'superadmin';
+        }
+
+        const sourceIds = guestIds.filter((id) => id !== targetUid);
+        if (sourceIds.length > 0) {
+          await dataService.migrateGuestData(sourceIds, targetUid);
+        }
+
+        if (targetProfile) {
+          setUser(targetProfile);
+          localStorage.removeItem('superapps_local_guest');
+        }
+      }
+      return;
+    }
+
+    // Offline / unconfigured mode
+    try {
+      await signUpWithEmail(trimmedEmail, pass);
+    } catch (err: any) {
+      if (err?.message === 'This email is already registered.') {
+        await signInWithEmail(trimmedEmail, pass);
+      } else {
+        throw err;
+      }
+    }
+
+    // Automatically execute data migration for all gathered guest IDs
+    const currentStoredUser = localStorage.getItem('superapps_local_user');
+    if (currentStoredUser) {
+      try {
+        const parsed = JSON.parse(currentStoredUser);
+        if (parsed?.uid) {
+          const sourceIds = guestIds.filter((id) => id !== parsed.uid);
+          if (sourceIds.length > 0) {
+            await dataService.migrateGuestData(sourceIds, parsed.uid);
+          }
+          setUser(parsed);
+          localStorage.removeItem('superapps_local_guest');
+        }
+      } catch {
+        // ignore
+      }
+    }
   };
 
   const continueAsGuest = async () => {
@@ -419,6 +717,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUpWithEmail,
         continueAsGuest,
         signOut,
+        linkWithGoogle,
+        linkAccountWithGoogle: linkWithGoogle,
+        linkWithEmail,
+        linkAccountWithEmail: linkWithEmail,
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   FileText, 
   Plus, 
@@ -31,17 +31,8 @@ export const NotesPage: React.FC = () => {
   const [activeTags, setActiveTags] = useState('');
   const [activePinned, setActivePinned] = useState(false);
 
-  const loadNotes = async () => {
-    const data = await dataService.getNotes(userId);
-    setNotes(data);
-    if (data.length > 0 && !selectedNoteId) {
-      selectNote(data[0]);
-    }
-  };
-
-  useEffect(() => {
-    loadNotes();
-  }, [userId]);
+  const selectedNoteIdRef = useRef<string | null>(null);
+  selectedNoteIdRef.current = selectedNoteId;
 
   const selectNote = (note: NoteItem) => {
     setSelectedNoteId(note.id);
@@ -50,6 +41,34 @@ export const NotesPage: React.FC = () => {
     setActiveTags(note.tags.join(', '));
     setActivePinned(note.isPinned);
   };
+
+  useEffect(() => {
+    const unsubscribe = dataService.subscribeToNotes(userId, (data) => {
+      setNotes(data);
+      const currentId = selectedNoteIdRef.current;
+      // Auto-select initial note if none is currently selected
+      if (!currentId && data.length > 0) {
+        selectNote(data[0]);
+      } else if (currentId && !data.some((n) => n.id === currentId)) {
+        // Active note was removed externally; fallback to first available or reset
+        if (data.length > 0) {
+          selectNote(data[0]);
+        } else {
+          setSelectedNoteId(null);
+          setActiveTitle('');
+          setActiveContent('');
+          setActiveTags('');
+          setActivePinned(false);
+        }
+      }
+      // Note: If currentId is still present in data, activeTitle/activeContent
+      // are deliberately NOT overwritten to preserve active typing state!
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [userId]);
 
   const handleCreateNote = async () => {
     const newNote: NoteItem = {

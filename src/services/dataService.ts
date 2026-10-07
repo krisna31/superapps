@@ -8,7 +8,8 @@ import {
   updateDoc, 
   query, 
   where,
-  increment
+  increment,
+  onSnapshot
 } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage, isFirebaseConfigured } from '@/firebase/config';
@@ -23,6 +24,27 @@ import {
   SystemSettings 
 } from '@/types';
 
+export type Unsubscribe = () => void;
+
+/* ==================== REAL-TIME MULTI-TAB SYNC BUS ==================== */
+export const LOCAL_SYNC_EVENT = 'superapps_local_sync';
+export const localBus = new EventTarget();
+
+export const notifyLocalChange = (key: string): void => {
+  try {
+    localBus.dispatchEvent(new CustomEvent(LOCAL_SYNC_EVENT, { detail: { key } }));
+  } catch {
+    // fallback
+  }
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    try {
+      window.dispatchEvent(new CustomEvent(LOCAL_SYNC_EVENT, { detail: { key } }));
+    } catch {
+      // fallback
+    }
+  }
+};
+
 // Helper for local storage persistence fallback
 const getLocalData = <T>(key: string): T[] => {
   try {
@@ -36,10 +58,112 @@ const getLocalData = <T>(key: string): T[] => {
 const setLocalData = <T>(key: string, data: T[]): void => {
   try {
     localStorage.setItem(key, JSON.stringify(data));
+    notifyLocalChange(key);
   } catch (err) {
     console.error('Failed to write to localStorage:', err);
   }
 };
+
+/**
+ * Creates a reactive subscription branching between Cloud Firestore onSnapshot
+ * (when online & authenticated) and local multi-tab storage/localBus events
+ * (when offline or in guest mode).
+ */
+function createSubscriber<T>(
+  collectionName: string,
+  userId: string,
+  fetcher: (userId: string) => Promise<T[]>,
+  callback: (items: T[]) => void,
+  customQuery?: (database: any, userId: string) => any
+): Unsubscribe {
+  let isActive = true;
+  let updateScheduled = false;
+  let fetchSeq = 0;
+  const isCloud = isFirebaseConfigured && db && !userId.startsWith('guest-');
+  const localKey = `superapps_${collectionName}_${userId}`;
+
+  const triggerUpdate = () => {
+    if (!isActive) return;
+    if (updateScheduled) return;
+    updateScheduled = true;
+    queueMicrotask(() => {
+      updateScheduled = false;
+      if (!isActive) return;
+      const currentSeq = ++fetchSeq;
+      fetcher(userId).then((data) => {
+        if (isActive && currentSeq === fetchSeq) {
+          callback(data);
+        }
+      });
+    });
+  };
+
+  if (isCloud) {
+    try {
+      const targetQuery = customQuery 
+        ? customQuery(db!, userId) 
+        : collection(db!, 'users', userId, collectionName);
+
+      const unsubscribeFirestore = onSnapshot(
+        targetQuery,
+        (snapshot: any) => {
+          if (!isActive) return;
+          const items = snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() } as T));
+          callback(items);
+        },
+        (error: any) => {
+          console.warn(`Firestore onSnapshot [${collectionName}] error:`, error);
+          if (isActive) {
+            triggerUpdate();
+          }
+        }
+      );
+
+      return () => {
+        isActive = false;
+        unsubscribeFirestore();
+      };
+    } catch (err) {
+      console.warn(`Failed to initialize Firestore onSnapshot for [${collectionName}]:`, err);
+    }
+  }
+
+  // Local / Guest / Offline fallback:
+  // 1. Initial emission
+  triggerUpdate();
+
+  // 2. Storage event handler for cross-tab updates
+  const handleStorage = (e: StorageEvent) => {
+    if (!isActive) return;
+    if (e.key === localKey || e.key === null) {
+      triggerUpdate();
+    }
+  };
+
+  // 3. Local bus handler for same-tab updates
+  const handleLocalSync = (e: Event) => {
+    if (!isActive) return;
+    const custom = e as CustomEvent<{ key?: string }>;
+    if (!custom.detail || custom.detail.key === localKey) {
+      triggerUpdate();
+    }
+  };
+
+  localBus.addEventListener(LOCAL_SYNC_EVENT, handleLocalSync);
+  if (typeof window !== 'undefined') {
+    window.addEventListener(LOCAL_SYNC_EVENT, handleLocalSync);
+    window.addEventListener('storage', handleStorage);
+  }
+
+  return () => {
+    isActive = false;
+    localBus.removeEventListener(LOCAL_SYNC_EVENT, handleLocalSync);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener(LOCAL_SYNC_EVENT, handleLocalSync);
+      window.removeEventListener('storage', handleStorage);
+    }
+  };
+}
 
 /* ==================== SYSTEM SETTINGS CONFIG & HELPERS ==================== */
 export const SYSTEM_SETTINGS_KEY = 'superapps_system_settings';
@@ -159,6 +283,10 @@ export const dataService = {
     setLocalData(key, items);
   },
 
+  subscribeToTasks(userId: string, callback: (tasks: TaskItem[]) => void): Unsubscribe {
+    return createSubscriber<TaskItem>('tasks', userId, (uId) => dataService.getTasks(uId), callback);
+  },
+
   /* ==================== NOTES SERVICE ==================== */
   async getNotes(userId: string): Promise<NoteItem[]> {
     if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
@@ -225,6 +353,10 @@ export const dataService = {
     const key = `superapps_notes_${userId}`;
     const items = getLocalData<NoteItem>(key).filter(i => i.id !== noteId);
     setLocalData(key, items);
+  },
+
+  subscribeToNotes(userId: string, callback: (notes: NoteItem[]) => void): Unsubscribe {
+    return createSubscriber<NoteItem>('notes', userId, (uId) => dataService.getNotes(uId), callback);
   },
 
   /* ==================== HABITS SERVICE ==================== */
@@ -306,6 +438,10 @@ export const dataService = {
     setLocalData(key, items);
   },
 
+  subscribeToHabits(userId: string, callback: (habits: HabitItem[]) => void): Unsubscribe {
+    return createSubscriber<HabitItem>('habits', userId, (uId) => dataService.getHabits(uId), callback);
+  },
+
   /* ==================== EXPENSES SERVICE ==================== */
   async getExpenses(userId: string): Promise<ExpenseItem[]> {
     if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
@@ -385,6 +521,10 @@ export const dataService = {
     setLocalData(key, items);
   },
 
+  subscribeToExpenses(userId: string, callback: (expenses: ExpenseItem[]) => void): Unsubscribe {
+    return createSubscriber<ExpenseItem>('expenses', userId, (uId) => dataService.getExpenses(uId), callback);
+  },
+
   /* ==================== SNIPPETS SERVICE ==================== */
   async getSnippets(userId: string): Promise<SnippetItem[]> {
     if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
@@ -451,6 +591,10 @@ export const dataService = {
     const key = `superapps_snippets_${userId}`;
     const items = getLocalData<SnippetItem>(key).filter(i => i.id !== snippetId);
     setLocalData(key, items);
+  },
+
+  subscribeToSnippets(userId: string, callback: (snippets: SnippetItem[]) => void): Unsubscribe {
+    return createSubscriber<SnippetItem>('snippets', userId, (uId) => dataService.getSnippets(uId), callback);
   },
 
   /* ==================== SHORTLINKS SERVICE ==================== */
@@ -538,6 +682,16 @@ export const dataService = {
     setLocalData(key, items);
   },
 
+  subscribeToShortlinks(userId: string, callback: (links: ShortlinkItem[]) => void): Unsubscribe {
+    return createSubscriber<ShortlinkItem>(
+      'shortlinks',
+      userId,
+      (uId) => dataService.getShortlinks(uId),
+      callback,
+      (database, uId) => query(collection(database, 'shortlinks'), where('userId', '==', uId))
+    );
+  },
+
   /* ==================== DROPZONE SERVICE ==================== */
   async getDropzoneItems(userId: string): Promise<DropzoneItem[]> {
     const key = `superapps_dropzone_${userId}`;
@@ -605,6 +759,10 @@ export const dataService = {
     setLocalData(key, items);
   },
 
+  subscribeToDropzone(userId: string, callback: (items: DropzoneItem[]) => void): Unsubscribe {
+    return createSubscriber<DropzoneItem>('dropzone', userId, (uId) => dataService.getDropzoneItems(uId), callback);
+  },
+
   /* ==================== SYSTEM SETTINGS SERVICE ==================== */
   async getSystemSettings(): Promise<SystemSettings> {
     if (isFirebaseConfigured && db) {
@@ -656,6 +814,7 @@ export const dataService = {
   async saveSystemSettings(settings: SystemSettings): Promise<void> {
     try {
       localStorage.setItem(SYSTEM_SETTINGS_KEY, JSON.stringify(settings));
+      notifyLocalChange(SYSTEM_SETTINGS_KEY);
     } catch (err) {
       console.error('Failed to save system settings to localStorage:', err);
     }
@@ -668,5 +827,90 @@ export const dataService = {
         console.warn('Firestore saveSystemSettings fallback:', err);
       }
     }
+  },
+
+  /* ==================== GUEST DATA MIGRATION ==================== */
+  async migrateGuestData(fromGuestIds: string | string[], toUserId: string): Promise<{ success: boolean; migratedCount: number }> {
+    if (!fromGuestIds || !toUserId) {
+      return { success: true, migratedCount: 0 };
+    }
+
+    const ids = Array.isArray(fromGuestIds) ? fromGuestIds : [fromGuestIds];
+    let count = 0;
+
+    try {
+      for (const fromGuestId of ids) {
+        if (!fromGuestId || fromGuestId === toUserId) continue;
+
+        // 1. Tasks
+        const guestTasks = await dataService.getTasks(fromGuestId);
+        for (const t of guestTasks) {
+          await dataService.saveTask(toUserId, { ...t, userId: toUserId });
+          count++;
+        }
+
+        // 2. Notes
+        const guestNotes = await dataService.getNotes(fromGuestId);
+        for (const n of guestNotes) {
+          await dataService.saveNote(toUserId, { ...n, userId: toUserId });
+          count++;
+        }
+
+        // 3. Habits
+        const guestHabits = await dataService.getHabits(fromGuestId);
+        for (const h of guestHabits) {
+          await dataService.saveHabit(toUserId, { ...h, userId: toUserId });
+          count++;
+        }
+
+        // 4. Expenses
+        const guestExpenses = await dataService.getExpenses(fromGuestId);
+        for (const e of guestExpenses) {
+          await dataService.saveExpense(toUserId, { ...e, userId: toUserId });
+          count++;
+        }
+
+        // 5. Snippets
+        const guestSnippets = await dataService.getSnippets(fromGuestId);
+        for (const s of guestSnippets) {
+          await dataService.saveSnippet(toUserId, { ...s, userId: toUserId });
+          count++;
+        }
+
+        // 6. Shortlinks
+        const guestLinks = await dataService.getShortlinks(fromGuestId);
+        for (const l of guestLinks) {
+          await dataService.saveShortlink(toUserId, { ...l, userId: toUserId });
+          count++;
+        }
+
+        // Clear guest local data to avoid duplicate state
+        try {
+          localStorage.removeItem(`superapps_tasks_${fromGuestId}`);
+          localStorage.removeItem(`superapps_notes_${fromGuestId}`);
+          localStorage.removeItem(`superapps_habits_${fromGuestId}`);
+          localStorage.removeItem(`superapps_expenses_${fromGuestId}`);
+          localStorage.removeItem(`superapps_snippets_${fromGuestId}`);
+          localStorage.removeItem(`superapps_shortlinks_${fromGuestId}`);
+          localStorage.removeItem(`superapps_dropzone_${fromGuestId}`);
+        } catch {
+          // ignore
+        }
+      }
+
+      notifyLocalChange(`superapps_tasks_${toUserId}`);
+      notifyLocalChange(`superapps_notes_${toUserId}`);
+      notifyLocalChange(`superapps_habits_${toUserId}`);
+      notifyLocalChange(`superapps_expenses_${toUserId}`);
+      notifyLocalChange(`superapps_snippets_${toUserId}`);
+      notifyLocalChange(`superapps_shortlinks_${toUserId}`);
+      notifyLocalChange(`superapps_dropzone_${toUserId}`);
+
+      return { success: true, migratedCount: count };
+    } catch (err) {
+      console.warn('Error during guest data migration:', err);
+      return { success: false, migratedCount: count };
+    }
   }
 };
+

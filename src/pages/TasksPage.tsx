@@ -27,13 +27,13 @@ export const TasksPage: React.FC = () => {
   const [status, setStatus] = useState<TaskStatus>('todo');
   const [dueDate, setDueDate] = useState('');
 
-  const loadTasks = async () => {
-    const data = await dataService.getTasks(userId);
-    setTasks(data);
-  };
-
   useEffect(() => {
-    loadTasks();
+    const unsubscribe = dataService.subscribeToTasks(userId, (data) => {
+      setTasks(data);
+    });
+    return () => {
+      unsubscribe();
+    };
   }, [userId]);
 
   const handleCreateTask = async (e: React.FormEvent) => {
