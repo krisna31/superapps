@@ -9,7 +9,9 @@ import {
   query, 
   where,
   increment,
-  onSnapshot
+  onSnapshot,
+  writeBatch,
+  runTransaction
 } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage, isFirebaseConfigured } from '@/firebase/config';
@@ -23,29 +25,67 @@ import {
   DropzoneItem,
   SystemSettings 
 } from '@/types';
+import { reportSyncError } from '@/services/syncErrors';
+import { LOCAL_SYNC_EVENT, localBus, notifyLocalChange } from '@/services/localBus';
+import { 
+  SAMPLE_TASK_TITLES, 
+  SAMPLE_NOTE_TITLES, 
+  SAMPLE_HABIT_TITLES, 
+  SAMPLE_EXPENSE_DESCRIPTIONS, 
+  SAMPLE_SNIPPET_TITLES,
+  isUnchangedSample,
+  seedGuestSamples
+} from '@/services/samples';
+import { createCollectionRepo, isCloudUser, Unsubscribe } from '@/services/repo/createCollectionRepo';
 
-export type Unsubscribe = () => void;
+export type { Unsubscribe };
+export { LOCAL_SYNC_EVENT, localBus, notifyLocalChange };
+export { seedGuestSamples };
 
-/* ==================== REAL-TIME MULTI-TAB SYNC BUS ==================== */
-export const LOCAL_SYNC_EVENT = 'superapps_local_sync';
-export const localBus = new EventTarget();
+export class SlugTakenError extends Error {
+  constructor(slug: string) {
+    super(`The shortlink slug "${slug}" is already taken by another user.`);
+    this.name = 'SlugTakenError';
+  }
+}
 
-export const notifyLocalChange = (key: string): void => {
+export const SYSTEM_SETTINGS_KEY = 'superapps_system_settings';
+
+export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
+  allowGuestAccess: true,
+  allowUserRegistration: true,
+  superadminEmail: 'jelvinkrisnaputra31@gmail.com',
+};
+
+export const getCachedSystemSettings = (): SystemSettings => {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return { ...DEFAULT_SYSTEM_SETTINGS };
+  }
   try {
-    localBus.dispatchEvent(new CustomEvent(LOCAL_SYNC_EVENT, { detail: { key } }));
+    const raw = localStorage.getItem(SYSTEM_SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        allowGuestAccess: parsed.allowGuestAccess !== undefined ? Boolean(parsed.allowGuestAccess) : DEFAULT_SYSTEM_SETTINGS.allowGuestAccess,
+        allowUserRegistration: parsed.allowUserRegistration !== undefined ? Boolean(parsed.allowUserRegistration) : DEFAULT_SYSTEM_SETTINGS.allowUserRegistration,
+        superadminEmail: parsed.superadminEmail || DEFAULT_SYSTEM_SETTINGS.superadminEmail,
+      };
+    }
   } catch {
     // fallback
   }
-  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
-    try {
-      window.dispatchEvent(new CustomEvent(LOCAL_SYNC_EVENT, { detail: { key } }));
-    } catch {
-      // fallback
-    }
-  }
+  return { ...DEFAULT_SYSTEM_SETTINGS };
 };
 
-// Helper for local storage persistence fallback
+// Generic Collection Repositories (tasks, notes, habits, expenses, snippets, dropzone)
+const taskRepo = createCollectionRepo<TaskItem>({ name: 'tasks' });
+const noteRepo = createCollectionRepo<NoteItem>({ name: 'notes' });
+const habitRepo = createCollectionRepo<HabitItem>({ name: 'habits' });
+const expenseRepo = createCollectionRepo<ExpenseItem>({ name: 'expenses' });
+const snippetRepo = createCollectionRepo<SnippetItem>({ name: 'snippets' });
+const dropzoneRepo = createCollectionRepo<DropzoneItem>({ name: 'dropzone' });
+
+// Local storage helper for shortlinks
 const getLocalData = <T>(key: string): T[] => {
   try {
     const data = localStorage.getItem(key);
@@ -64,549 +104,53 @@ const setLocalData = <T>(key: string, data: T[]): void => {
   }
 };
 
-/**
- * Creates a reactive subscription branching between Cloud Firestore onSnapshot
- * (when online & authenticated) and local multi-tab storage/localBus events
- * (when offline or in guest mode).
- */
-function createSubscriber<T>(
-  collectionName: string,
-  userId: string,
-  fetcher: (userId: string) => Promise<T[]>,
-  callback: (items: T[]) => void,
-  customQuery?: (database: any, userId: string) => any
-): Unsubscribe {
-  let isActive = true;
-  let updateScheduled = false;
-  let fetchSeq = 0;
-  const isCloud = isFirebaseConfigured && db && !userId.startsWith('guest-');
-  const localKey = `superapps_${collectionName}_${userId}`;
-
-  const triggerUpdate = () => {
-    if (!isActive) return;
-    if (updateScheduled) return;
-    updateScheduled = true;
-    queueMicrotask(() => {
-      updateScheduled = false;
-      if (!isActive) return;
-      const currentSeq = ++fetchSeq;
-      fetcher(userId).then((data) => {
-        if (isActive && currentSeq === fetchSeq) {
-          callback(data);
-        }
-      });
-    });
-  };
-
-  if (isCloud) {
-    try {
-      const targetQuery = customQuery 
-        ? customQuery(db!, userId) 
-        : collection(db!, 'users', userId, collectionName);
-
-      const unsubscribeFirestore = onSnapshot(
-        targetQuery,
-        (snapshot: any) => {
-          if (!isActive) return;
-          const items = snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() } as T));
-          callback(items);
-        },
-        (error: any) => {
-          console.warn(`Firestore onSnapshot [${collectionName}] error:`, error);
-          if (isActive) {
-            triggerUpdate();
-          }
-        }
-      );
-
-      return () => {
-        isActive = false;
-        unsubscribeFirestore();
-      };
-    } catch (err) {
-      console.warn(`Failed to initialize Firestore onSnapshot for [${collectionName}]:`, err);
-    }
-  }
-
-  // Local / Guest / Offline fallback:
-  // 1. Initial emission
-  triggerUpdate();
-
-  // 2. Storage event handler for cross-tab updates
-  const handleStorage = (e: StorageEvent) => {
-    if (!isActive) return;
-    if (e.key === localKey || e.key === null) {
-      triggerUpdate();
-    }
-  };
-
-  // 3. Local bus handler for same-tab updates
-  const handleLocalSync = (e: Event) => {
-    if (!isActive) return;
-    const custom = e as CustomEvent<{ key?: string }>;
-    if (!custom.detail || custom.detail.key === localKey) {
-      triggerUpdate();
-    }
-  };
-
-  localBus.addEventListener(LOCAL_SYNC_EVENT, handleLocalSync);
-  if (typeof window !== 'undefined') {
-    window.addEventListener(LOCAL_SYNC_EVENT, handleLocalSync);
-    window.addEventListener('storage', handleStorage);
-  }
-
-  return () => {
-    isActive = false;
-    localBus.removeEventListener(LOCAL_SYNC_EVENT, handleLocalSync);
-    if (typeof window !== 'undefined') {
-      window.removeEventListener(LOCAL_SYNC_EVENT, handleLocalSync);
-      window.removeEventListener('storage', handleStorage);
-    }
-  };
-}
-
-/* ==================== SYSTEM SETTINGS CONFIG & HELPERS ==================== */
-export const SYSTEM_SETTINGS_KEY = 'superapps_system_settings';
-
-export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
-  allowGuestAccess: true,
-  allowUserRegistration: true,
-  superadminEmail: 'admin@k31.my.id',
-};
-
-export const getCachedSystemSettings = (): SystemSettings => {
-  try {
-    const raw = localStorage.getItem(SYSTEM_SETTINGS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        allowGuestAccess: parsed.allowGuestAccess !== undefined ? Boolean(parsed.allowGuestAccess) : DEFAULT_SYSTEM_SETTINGS.allowGuestAccess,
-        allowUserRegistration: parsed.allowUserRegistration !== undefined ? Boolean(parsed.allowUserRegistration) : DEFAULT_SYSTEM_SETTINGS.allowUserRegistration,
-        superadminEmail: parsed.superadminEmail || DEFAULT_SYSTEM_SETTINGS.superadminEmail,
-      };
-    }
-  } catch {
-    // fallback
-  }
-  return { ...DEFAULT_SYSTEM_SETTINGS };
-};
-
-/* ==================== TASKS SERVICE ==================== */
 export const dataService = {
-  // Tasks
-  async getTasks(userId: string): Promise<TaskItem[]> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const colRef = collection(db, 'users', userId, 'tasks');
-        const snap = await getDocs(colRef);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as TaskItem));
-      } catch (err) {
-        console.warn('Firestore getTasks fallback:', err);
-      }
-    }
-    const key = `superapps_tasks_${userId}`;
-    const local = getLocalData<TaskItem>(key);
-    if (local.length === 0) {
-      // Seed sample tasks
-      const sample: TaskItem[] = [
-        {
-          id: 'task-1',
-          userId,
-          title: 'Welcome to Superapps Workspace!',
-          description: 'Try dragging or changing the status of this task. Everything is synced.',
-          status: 'todo',
-          priority: 'high',
-          dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        },
-        {
-          id: 'task-2',
-          userId,
-          title: 'Explore SwissKnife Dev Tools',
-          description: 'Check out the Password Generator, UUID, Base64, and JSON tools.',
-          status: 'in_progress',
-          priority: 'medium',
-          createdAt: Date.now() - 3600000,
-          updatedAt: Date.now(),
-        },
-        {
-          id: 'task-3',
-          userId,
-          title: 'Setup Custom Domain DNS',
-          description: 'Add CNAME apps.k31.my.id in Cloudflare / DNS Provider.',
-          status: 'done',
-          priority: 'urgent',
-          createdAt: Date.now() - 7200000,
-          updatedAt: Date.now(),
-        }
-      ];
-      setLocalData(key, sample);
-      return sample;
-    }
-    return local;
-  },
-
-  async saveTask(userId: string, task: TaskItem): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const docRef = doc(db, 'users', userId, 'tasks', task.id);
-        await setDoc(docRef, task, { merge: true });
-        return;
-      } catch (err) {
-        console.warn('Firestore saveTask fallback:', err);
-      }
-    }
-    const key = `superapps_tasks_${userId}`;
-    const items = getLocalData<TaskItem>(key);
-    const index = items.findIndex(i => i.id === task.id);
-    if (index >= 0) {
-      items[index] = task;
-    } else {
-      items.unshift(task);
-    }
-    setLocalData(key, items);
-  },
-
-  async deleteTask(userId: string, taskId: string): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const docRef = doc(db, 'users', userId, 'tasks', taskId);
-        await deleteDoc(docRef);
-        return;
-      } catch (err) {
-        console.warn('Firestore deleteTask fallback:', err);
-      }
-    }
-    const key = `superapps_tasks_${userId}`;
-    const items = getLocalData<TaskItem>(key).filter(i => i.id !== taskId);
-    setLocalData(key, items);
-  },
-
-  subscribeToTasks(userId: string, callback: (tasks: TaskItem[]) => void): Unsubscribe {
-    return createSubscriber<TaskItem>('tasks', userId, (uId) => dataService.getTasks(uId), callback);
-  },
+  /* ==================== TASKS SERVICE ==================== */
+  getTasks: (userId: string): Promise<TaskItem[]> => taskRepo.list(userId),
+  saveTask: (userId: string, task: TaskItem): Promise<void> => taskRepo.save(userId, task),
+  deleteTask: (userId: string, taskId: string): Promise<void> => taskRepo.remove(userId, taskId),
+  subscribeToTasks: (userId: string, callback: (tasks: TaskItem[]) => void): Unsubscribe =>
+    taskRepo.subscribe(userId, callback),
 
   /* ==================== NOTES SERVICE ==================== */
-  async getNotes(userId: string): Promise<NoteItem[]> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const colRef = collection(db, 'users', userId, 'notes');
-        const snap = await getDocs(colRef);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as NoteItem));
-      } catch (err) {
-        console.warn('Firestore getNotes fallback:', err);
-      }
-    }
-    const key = `superapps_notes_${userId}`;
-    const local = getLocalData<NoteItem>(key);
-    if (local.length === 0) {
-      const sample: NoteItem[] = [
-        {
-          id: 'note-1',
-          userId,
-          title: 'Getting Started with Superapps',
-          content: `# Welcome to Superapps Notes\n\nThis is a full-featured markdown notes vault with **live preview**, tags, and offline caching.\n\n### Features\n- 📝 Real-time markdown formatting\n- 🏷️ Searchable tags\n- 📌 Pinned notes support\n- ⚡ Instant offline caching`,
-          tags: ['guide', 'welcome'],
-          isPinned: true,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        }
-      ];
-      setLocalData(key, sample);
-      return sample;
-    }
-    return local;
-  },
-
-  async saveNote(userId: string, note: NoteItem): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const docRef = doc(db, 'users', userId, 'notes', note.id);
-        await setDoc(docRef, note, { merge: true });
-        return;
-      } catch (err) {
-        console.warn('Firestore saveNote fallback:', err);
-      }
-    }
-    const key = `superapps_notes_${userId}`;
-    const items = getLocalData<NoteItem>(key);
-    const index = items.findIndex(i => i.id === note.id);
-    if (index >= 0) {
-      items[index] = note;
-    } else {
-      items.unshift(note);
-    }
-    setLocalData(key, items);
-  },
-
-  async deleteNote(userId: string, noteId: string): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const docRef = doc(db, 'users', userId, 'notes', noteId);
-        await deleteDoc(docRef);
-        return;
-      } catch (err) {
-        console.warn('Firestore deleteNote fallback:', err);
-      }
-    }
-    const key = `superapps_notes_${userId}`;
-    const items = getLocalData<NoteItem>(key).filter(i => i.id !== noteId);
-    setLocalData(key, items);
-  },
-
-  subscribeToNotes(userId: string, callback: (notes: NoteItem[]) => void): Unsubscribe {
-    return createSubscriber<NoteItem>('notes', userId, (uId) => dataService.getNotes(uId), callback);
-  },
+  getNotes: (userId: string): Promise<NoteItem[]> => noteRepo.list(userId),
+  saveNote: (userId: string, note: NoteItem): Promise<void> => noteRepo.save(userId, note),
+  deleteNote: (userId: string, noteId: string): Promise<void> => noteRepo.remove(userId, noteId),
+  subscribeToNotes: (userId: string, callback: (notes: NoteItem[]) => void): Unsubscribe =>
+    noteRepo.subscribe(userId, callback),
 
   /* ==================== HABITS SERVICE ==================== */
-  async getHabits(userId: string): Promise<HabitItem[]> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const colRef = collection(db, 'users', userId, 'habits');
-        const snap = await getDocs(colRef);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as HabitItem));
-      } catch (err) {
-        console.warn('Firestore getHabits fallback:', err);
-      }
-    }
-    const key = `superapps_habits_${userId}`;
-    const local = getLocalData<HabitItem>(key);
-    if (local.length === 0) {
-      const today = new Date().toISOString().split('T')[0];
-      const sample: HabitItem[] = [
-        {
-          id: 'habit-1',
-          userId,
-          title: 'Drink 2L Water',
-          description: 'Stay hydrated throughout the workday',
-          frequency: 'daily',
-          completedDates: [today],
-          streak: 1,
-          createdAt: Date.now(),
-        },
-        {
-          id: 'habit-2',
-          userId,
-          title: 'Read 20 Pages',
-          description: 'Tech articles, books, or documentation',
-          frequency: 'daily',
-          completedDates: [],
-          streak: 0,
-          createdAt: Date.now(),
-        }
-      ];
-      setLocalData(key, sample);
-      return sample;
-    }
-    return local;
-  },
-
-  async saveHabit(userId: string, habit: HabitItem): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const docRef = doc(db, 'users', userId, 'habits', habit.id);
-        await setDoc(docRef, habit, { merge: true });
-        return;
-      } catch (err) {
-        console.warn('Firestore saveHabit fallback:', err);
-      }
-    }
-    const key = `superapps_habits_${userId}`;
-    const items = getLocalData<HabitItem>(key);
-    const index = items.findIndex(i => i.id === habit.id);
-    if (index >= 0) {
-      items[index] = habit;
-    } else {
-      items.unshift(habit);
-    }
-    setLocalData(key, items);
-  },
-
-  async deleteHabit(userId: string, habitId: string): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const docRef = doc(db, 'users', userId, 'habits', habitId);
-        await deleteDoc(docRef);
-        return;
-      } catch (err) {
-        console.warn('Firestore deleteHabit fallback:', err);
-      }
-    }
-    const key = `superapps_habits_${userId}`;
-    const items = getLocalData<HabitItem>(key).filter(i => i.id !== habitId);
-    setLocalData(key, items);
-  },
-
-  subscribeToHabits(userId: string, callback: (habits: HabitItem[]) => void): Unsubscribe {
-    return createSubscriber<HabitItem>('habits', userId, (uId) => dataService.getHabits(uId), callback);
-  },
+  getHabits: (userId: string): Promise<HabitItem[]> => habitRepo.list(userId),
+  saveHabit: (userId: string, habit: HabitItem): Promise<void> => habitRepo.save(userId, habit),
+  deleteHabit: (userId: string, habitId: string): Promise<void> => habitRepo.remove(userId, habitId),
+  subscribeToHabits: (userId: string, callback: (habits: HabitItem[]) => void): Unsubscribe =>
+    habitRepo.subscribe(userId, callback),
 
   /* ==================== EXPENSES SERVICE ==================== */
-  async getExpenses(userId: string): Promise<ExpenseItem[]> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const colRef = collection(db, 'users', userId, 'expenses');
-        const snap = await getDocs(colRef);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as ExpenseItem));
-      } catch (err) {
-        console.warn('Firestore getExpenses fallback:', err);
-      }
-    }
-    const key = `superapps_expenses_${userId}`;
-    const local = getLocalData<ExpenseItem>(key);
-    if (local.length === 0) {
-      const today = new Date().toISOString().split('T')[0];
-      const sample: ExpenseItem[] = [
-        {
-          id: 'exp-1',
-          userId,
-          type: 'income',
-          amount: 5000000,
-          category: 'Salary',
-          description: 'Monthly Allowance / Salary',
-          date: today,
-          createdAt: Date.now(),
-        },
-        {
-          id: 'exp-2',
-          userId,
-          type: 'expense',
-          amount: 45000,
-          category: 'Food',
-          description: 'Lunch & Coffee',
-          date: today,
-          createdAt: Date.now(),
-        }
-      ];
-      setLocalData(key, sample);
-      return sample;
-    }
-    return local;
-  },
-
-  async saveExpense(userId: string, expense: ExpenseItem): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const docRef = doc(db, 'users', userId, 'expenses', expense.id);
-        await setDoc(docRef, expense, { merge: true });
-        return;
-      } catch (err) {
-        console.warn('Firestore saveExpense fallback:', err);
-      }
-    }
-    const key = `superapps_expenses_${userId}`;
-    const items = getLocalData<ExpenseItem>(key);
-    const index = items.findIndex(i => i.id === expense.id);
-    if (index >= 0) {
-      items[index] = expense;
-    } else {
-      items.unshift(expense);
-    }
-    setLocalData(key, items);
-  },
-
-  async deleteExpense(userId: string, expenseId: string): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const docRef = doc(db, 'users', userId, 'expenses', expenseId);
-        await deleteDoc(docRef);
-        return;
-      } catch (err) {
-        console.warn('Firestore deleteExpense fallback:', err);
-      }
-    }
-    const key = `superapps_expenses_${userId}`;
-    const items = getLocalData<ExpenseItem>(key).filter(i => i.id !== expenseId);
-    setLocalData(key, items);
-  },
-
-  subscribeToExpenses(userId: string, callback: (expenses: ExpenseItem[]) => void): Unsubscribe {
-    return createSubscriber<ExpenseItem>('expenses', userId, (uId) => dataService.getExpenses(uId), callback);
-  },
+  getExpenses: (userId: string): Promise<ExpenseItem[]> => expenseRepo.list(userId),
+  saveExpense: (userId: string, expense: ExpenseItem): Promise<void> => expenseRepo.save(userId, expense),
+  deleteExpense: (userId: string, expenseId: string): Promise<void> => expenseRepo.remove(userId, expenseId),
+  subscribeToExpenses: (userId: string, callback: (expenses: ExpenseItem[]) => void): Unsubscribe =>
+    expenseRepo.subscribe(userId, callback),
 
   /* ==================== SNIPPETS SERVICE ==================== */
-  async getSnippets(userId: string): Promise<SnippetItem[]> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const colRef = collection(db, 'users', userId, 'snippets');
-        const snap = await getDocs(colRef);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as SnippetItem));
-      } catch (err) {
-        console.warn('Firestore getSnippets fallback:', err);
-      }
-    }
-    const key = `superapps_snippets_${userId}`;
-    const local = getLocalData<SnippetItem>(key);
-    if (local.length === 0) {
-      const sample: SnippetItem[] = [
-        {
-          id: 'snip-1',
-          userId,
-          title: 'Debounce Function in TypeScript',
-          code: `export function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {\n  let timer: ReturnType<typeof setTimeout>;\n  return (...args: Parameters<T>) => {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn(...args), delay);\n  };\n}`,
-          language: 'typescript',
-          tags: ['utility', 'javascript', 'typescript'],
-          description: 'Standard debouncing utility for search inputs and resize events.',
-          createdAt: Date.now(),
-        }
-      ];
-      setLocalData(key, sample);
-      return sample;
-    }
-    return local;
-  },
-
-  async saveSnippet(userId: string, snippet: SnippetItem): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const docRef = doc(db, 'users', userId, 'snippets', snippet.id);
-        await setDoc(docRef, snippet, { merge: true });
-        return;
-      } catch (err) {
-        console.warn('Firestore saveSnippet fallback:', err);
-      }
-    }
-    const key = `superapps_snippets_${userId}`;
-    const items = getLocalData<SnippetItem>(key);
-    const index = items.findIndex(i => i.id === snippet.id);
-    if (index >= 0) {
-      items[index] = snippet;
-    } else {
-      items.unshift(snippet);
-    }
-    setLocalData(key, items);
-  },
-
-  async deleteSnippet(userId: string, snippetId: string): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
-      try {
-        const docRef = doc(db, 'users', userId, 'snippets', snippetId);
-        await deleteDoc(docRef);
-        return;
-      } catch (err) {
-        console.warn('Firestore deleteSnippet fallback:', err);
-      }
-    }
-    const key = `superapps_snippets_${userId}`;
-    const items = getLocalData<SnippetItem>(key).filter(i => i.id !== snippetId);
-    setLocalData(key, items);
-  },
-
-  subscribeToSnippets(userId: string, callback: (snippets: SnippetItem[]) => void): Unsubscribe {
-    return createSubscriber<SnippetItem>('snippets', userId, (uId) => dataService.getSnippets(uId), callback);
-  },
+  getSnippets: (userId: string): Promise<SnippetItem[]> => snippetRepo.list(userId),
+  saveSnippet: (userId: string, snippet: SnippetItem): Promise<void> => snippetRepo.save(userId, snippet),
+  deleteSnippet: (userId: string, snippetId: string): Promise<void> => snippetRepo.remove(userId, snippetId),
+  subscribeToSnippets: (userId: string, callback: (snippets: SnippetItem[]) => void): Unsubscribe =>
+    snippetRepo.subscribe(userId, callback),
 
   /* ==================== SHORTLINKS SERVICE ==================== */
   async getShortlinks(userId: string): Promise<ShortlinkItem[]> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
+    if (isCloudUser(userId)) {
       try {
-        const colRef = collection(db, 'shortlinks');
+        const colRef = collection(db!, 'shortlinks');
         const q = query(colRef, where('userId', '==', userId));
         const snap = await getDocs(q);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as ShortlinkItem));
+        return snap.docs.map((d) => ({ id: d.id, ...d.data() } as ShortlinkItem));
       } catch (err) {
-        console.warn('Firestore getShortlinks fallback:', err);
+        reportSyncError('list', 'shortlinks', err);
+        return [];
       }
     }
     const key = `superapps_shortlinks_${userId}`;
@@ -614,18 +158,34 @@ export const dataService = {
   },
 
   async saveShortlink(userId: string, shortlink: ShortlinkItem): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
+    if (isCloudUser(userId)) {
+      const docRef = doc(db!, 'shortlinks', shortlink.slug);
+      // Atomic verification and creation using Firestore transaction (Finding H3)
       try {
-        const docRef = doc(db, 'shortlinks', shortlink.slug);
-        await setDoc(docRef, shortlink, { merge: true });
+        await runTransaction(db!, async (transaction) => {
+          const snap = await transaction.get(docRef);
+          if (snap.exists()) {
+            const data = snap.data() as Partial<ShortlinkItem>;
+            if (data.userId && data.userId !== userId) {
+              throw new SlugTakenError(shortlink.slug);
+            }
+          }
+          transaction.set(docRef, { ...shortlink, userId }, { merge: true });
+        });
+        return;
       } catch (err) {
-        console.warn('Firestore saveShortlink fallback:', err);
+        if (err instanceof SlugTakenError) {
+          throw err;
+        }
+        reportSyncError('save', 'shortlinks', err);
+        throw err;
       }
     }
-    // Also save locally for instant UI update
+
+    // Guest / local mode
     const key = `superapps_shortlinks_${userId}`;
     const items = getLocalData<ShortlinkItem>(key);
-    const index = items.findIndex(i => i.slug === shortlink.slug);
+    const index = items.findIndex((i) => i.slug === shortlink.slug);
     if (index >= 0) {
       items[index] = shortlink;
     } else {
@@ -640,24 +200,23 @@ export const dataService = {
         const docRef = doc(db, 'shortlinks', slug);
         const snap = await getDoc(docRef);
         if (snap.exists()) {
-          // Increment click count asynchronously
-          try {
-            await updateDoc(docRef, { clicks: increment(1) });
-          } catch {
-            // Ignore click increment failure
-          }
+          // Increment click count asynchronously (Finding H2)
+          updateDoc(docRef, { clicks: increment(1) }).catch((err) => {
+            console.warn('Click counter increment non-fatal error:', err);
+          });
           return snap.data() as ShortlinkItem;
         }
       } catch (err) {
         console.warn('Firestore resolveShortlink fallback:', err);
       }
     }
-    // Search across local storages
+
+    // Fallback: search across local storages
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (k && k.startsWith('superapps_shortlinks_')) {
         const list = getLocalData<ShortlinkItem>(k);
-        const found = list.find(s => s.slug === slug);
+        const found = list.find((s) => s.slug === slug);
         if (found) {
           found.clicks += 1;
           setLocalData(k, list);
@@ -669,39 +228,86 @@ export const dataService = {
   },
 
   async deleteShortlink(userId: string, slug: string): Promise<void> {
-    if (isFirebaseConfigured && db && !userId.startsWith('guest-')) {
+    if (isCloudUser(userId)) {
       try {
-        const docRef = doc(db, 'shortlinks', slug);
-        await deleteDoc(docRef);
+        const docRef = doc(db!, 'shortlinks', slug);
+        const p = deleteDoc(docRef);
+        p.catch((err) => reportSyncError('delete', 'shortlinks', err));
+        return Promise.resolve();
       } catch (err) {
-        console.warn('Firestore deleteShortlink fallback:', err);
+        reportSyncError('delete', 'shortlinks', err);
+        return Promise.resolve();
       }
     }
     const key = `superapps_shortlinks_${userId}`;
-    const items = getLocalData<ShortlinkItem>(key).filter(i => i.slug !== slug);
+    const items = getLocalData<ShortlinkItem>(key).filter((i) => i.slug !== slug);
     setLocalData(key, items);
   },
 
   subscribeToShortlinks(userId: string, callback: (links: ShortlinkItem[]) => void): Unsubscribe {
-    return createSubscriber<ShortlinkItem>(
-      'shortlinks',
-      userId,
-      (uId) => dataService.getShortlinks(uId),
-      callback,
-      (database, uId) => query(collection(database, 'shortlinks'), where('userId', '==', uId))
-    );
+    let isActive = true;
+
+    if (isCloudUser(userId)) {
+      try {
+        const targetQuery = query(collection(db!, 'shortlinks'), where('userId', '==', userId));
+        const unsubscribeFirestore = onSnapshot(
+          targetQuery,
+          (snapshot) => {
+            if (!isActive) return;
+            const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as ShortlinkItem));
+            callback(items);
+          },
+          (error) => {
+            reportSyncError('subscribe', 'shortlinks', error);
+          }
+        );
+        return () => {
+          isActive = false;
+          unsubscribeFirestore();
+        };
+      } catch (err) {
+        reportSyncError('subscribe', 'shortlinks', err);
+        return () => {
+          isActive = false;
+        };
+      }
+    }
+
+    // Guest / local mode
+    const key = `superapps_shortlinks_${userId}`;
+    callback(getLocalData<ShortlinkItem>(key));
+
+    const handleUpdate = () => {
+      if (!isActive) return;
+      callback(getLocalData<ShortlinkItem>(key));
+    };
+
+    const handleLocalEvent = (e: Event) => {
+      const detail = (e as CustomEvent<{ key?: string }>).detail;
+      if (!detail || detail.key === key) handleUpdate();
+    };
+
+    localBus.addEventListener(LOCAL_SYNC_EVENT, handleLocalEvent);
+    if (typeof window !== 'undefined') {
+      window.addEventListener(LOCAL_SYNC_EVENT, handleLocalEvent);
+      window.addEventListener('storage', (e) => {
+        if (!e.key || e.key === key) handleUpdate();
+      });
+    }
+
+    return () => {
+      isActive = false;
+      localBus.removeEventListener(LOCAL_SYNC_EVENT, handleLocalEvent);
+    };
   },
 
   /* ==================== DROPZONE SERVICE ==================== */
-  async getDropzoneItems(userId: string): Promise<DropzoneItem[]> {
-    const key = `superapps_dropzone_${userId}`;
-    return getLocalData<DropzoneItem>(key);
-  },
+  getDropzoneItems: (userId: string): Promise<DropzoneItem[]> => dropzoneRepo.list(userId),
 
   async uploadFile(userId: string, file: File): Promise<DropzoneItem> {
     const fileId = 'drop-' + Math.random().toString(36).substring(2, 9);
-    
-    if (isFirebaseConfigured && storage && !userId.startsWith('guest-')) {
+
+    if (isCloudUser(userId) && storage) {
       const storagePath = `dropzone/${userId}/${Date.now()}_${file.name}`;
       const storageReference = ref(storage, storagePath);
       const snapshot = await uploadBytesResumable(storageReference, file);
@@ -718,14 +324,12 @@ export const dataService = {
         uploadedAt: Date.now(),
       };
 
-      const key = `superapps_dropzone_${userId}`;
-      const items = getLocalData<DropzoneItem>(key);
-      items.unshift(dropItem);
-      setLocalData(key, items);
+      // Save dropzone metadata to Firestore users/{uid}/dropzone/{id} (Finding H4)
+      await dropzoneRepo.save(userId, dropItem);
       return dropItem;
     }
 
-    // Local / In-memory blob fallback for guest or unconfigured mode
+    // Guest / local fallback
     const blobUrl = URL.createObjectURL(file);
     const dropItem: DropzoneItem = {
       id: fileId,
@@ -738,15 +342,12 @@ export const dataService = {
       uploadedAt: Date.now(),
     };
 
-    const key = `superapps_dropzone_${userId}`;
-    const items = getLocalData<DropzoneItem>(key);
-    items.unshift(dropItem);
-    setLocalData(key, items);
+    await dropzoneRepo.save(userId, dropItem);
     return dropItem;
   },
 
   async deleteDropzoneItem(userId: string, item: DropzoneItem): Promise<void> {
-    if (isFirebaseConfigured && storage && item.storagePath !== 'local-blob') {
+    if (isCloudUser(userId) && storage && item.storagePath !== 'local-blob') {
       try {
         const fileRef = ref(storage, item.storagePath);
         await deleteObject(fileRef);
@@ -754,14 +355,11 @@ export const dataService = {
         console.warn('Storage deleteObject fallback:', err);
       }
     }
-    const key = `superapps_dropzone_${userId}`;
-    const items = getLocalData<DropzoneItem>(key).filter(i => i.id !== item.id);
-    setLocalData(key, items);
+    await dropzoneRepo.remove(userId, item.id);
   },
 
-  subscribeToDropzone(userId: string, callback: (items: DropzoneItem[]) => void): Unsubscribe {
-    return createSubscriber<DropzoneItem>('dropzone', userId, (uId) => dataService.getDropzoneItems(uId), callback);
-  },
+  subscribeToDropzone: (userId: string, callback: (items: DropzoneItem[]) => void): Unsubscribe =>
+    dropzoneRepo.subscribe(userId, callback),
 
   /* ==================== SYSTEM SETTINGS SERVICE ==================== */
   async getSystemSettings(): Promise<SystemSettings> {
@@ -772,8 +370,14 @@ export const dataService = {
         if (snap.exists()) {
           const data = snap.data() as Partial<SystemSettings>;
           const settings: SystemSettings = {
-            allowGuestAccess: data.allowGuestAccess !== undefined ? Boolean(data.allowGuestAccess) : DEFAULT_SYSTEM_SETTINGS.allowGuestAccess,
-            allowUserRegistration: data.allowUserRegistration !== undefined ? Boolean(data.allowUserRegistration) : DEFAULT_SYSTEM_SETTINGS.allowUserRegistration,
+            allowGuestAccess:
+              data.allowGuestAccess !== undefined
+                ? Boolean(data.allowGuestAccess)
+                : DEFAULT_SYSTEM_SETTINGS.allowGuestAccess,
+            allowUserRegistration:
+              data.allowUserRegistration !== undefined
+                ? Boolean(data.allowUserRegistration)
+                : DEFAULT_SYSTEM_SETTINGS.allowUserRegistration,
             superadminEmail: data.superadminEmail || DEFAULT_SYSTEM_SETTINGS.superadminEmail,
           };
           try {
@@ -788,27 +392,7 @@ export const dataService = {
       }
     }
 
-    try {
-      const raw = localStorage.getItem(SYSTEM_SETTINGS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        return {
-          allowGuestAccess: parsed.allowGuestAccess !== undefined ? Boolean(parsed.allowGuestAccess) : DEFAULT_SYSTEM_SETTINGS.allowGuestAccess,
-          allowUserRegistration: parsed.allowUserRegistration !== undefined ? Boolean(parsed.allowUserRegistration) : DEFAULT_SYSTEM_SETTINGS.allowUserRegistration,
-          superadminEmail: parsed.superadminEmail || DEFAULT_SYSTEM_SETTINGS.superadminEmail,
-        };
-      }
-    } catch (err) {
-      console.error('Failed to parse system settings from localStorage:', err);
-    }
-
-    // Default initialization
-    try {
-      localStorage.setItem(SYSTEM_SETTINGS_KEY, JSON.stringify(DEFAULT_SYSTEM_SETTINGS));
-    } catch {
-      // ignore
-    }
-    return { ...DEFAULT_SYSTEM_SETTINGS };
+    return getCachedSystemSettings();
   },
 
   async saveSystemSettings(settings: SystemSettings): Promise<void> {
@@ -824,13 +408,90 @@ export const dataService = {
         const docRef = doc(db, 'system', 'settings');
         await setDoc(docRef, settings, { merge: true });
       } catch (err) {
-        console.warn('Firestore saveSystemSettings fallback:', err);
+        reportSyncError('save', 'system', err);
+        console.warn('Firestore saveSystemSettings warning:', err);
       }
     }
   },
 
+  /* ==================== ONE-TIME CLEANUP OF LEGACY SAMPLE ITEMS (Q3) ==================== */
+  async cleanupLegacySamples(uid: string): Promise<void> {
+    if (!isCloudUser(uid)) return;
+    const flagKey = `superapps_legacy_samples_cleaned_${uid}`;
+    if (typeof window !== 'undefined' && localStorage.getItem(flagKey) === 'true') {
+      return;
+    }
+
+    try {
+      const batch = writeBatch(db!);
+      let ops = 0;
+
+      // Check all collections concurrently with Promise.all for fast execution
+      const checkTasks = Object.entries(SAMPLE_TASK_TITLES).map(async ([id, title]) => {
+        const snap = await getDoc(doc(db!, 'users', uid, 'tasks', id));
+        if (snap.exists() && snap.data().title === title) {
+          batch.delete(snap.ref);
+          ops++;
+        }
+      });
+
+      const checkNotes = Object.entries(SAMPLE_NOTE_TITLES).map(async ([id, title]) => {
+        const snap = await getDoc(doc(db!, 'users', uid, 'notes', id));
+        if (snap.exists() && snap.data().title === title) {
+          batch.delete(snap.ref);
+          ops++;
+        }
+      });
+
+      const checkHabits = Object.entries(SAMPLE_HABIT_TITLES).map(async ([id, title]) => {
+        const snap = await getDoc(doc(db!, 'users', uid, 'habits', id));
+        if (snap.exists() && snap.data().title === title) {
+          batch.delete(snap.ref);
+          ops++;
+        }
+      });
+
+      const checkExpenses = Object.entries(SAMPLE_EXPENSE_DESCRIPTIONS).map(async ([id, desc]) => {
+        const snap = await getDoc(doc(db!, 'users', uid, 'expenses', id));
+        if (snap.exists() && snap.data().description === desc) {
+          batch.delete(snap.ref);
+          ops++;
+        }
+      });
+
+      const checkSnippets = Object.entries(SAMPLE_SNIPPET_TITLES).map(async ([id, title]) => {
+        const snap = await getDoc(doc(db!, 'users', uid, 'snippets', id));
+        if (snap.exists() && snap.data().title === title) {
+          batch.delete(snap.ref);
+          ops++;
+        }
+      });
+
+      await Promise.all([
+        ...checkTasks,
+        ...checkNotes,
+        ...checkHabits,
+        ...checkExpenses,
+        ...checkSnippets,
+      ]);
+
+      if (ops > 0) {
+        await batch.commit();
+      }
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(flagKey, 'true');
+      }
+    } catch (err) {
+      console.warn('cleanupLegacySamples non-fatal warning:', err);
+    }
+  },
+
   /* ==================== GUEST DATA MIGRATION ==================== */
-  async migrateGuestData(fromGuestIds: string | string[], toUserId: string): Promise<{ success: boolean; migratedCount: number }> {
+  async migrateGuestData(
+    fromGuestIds: string | string[],
+    toUserId: string
+  ): Promise<{ success: boolean; migratedCount: number }> {
     if (!fromGuestIds || !toUserId) {
       return { success: true, migratedCount: 0 };
     }
@@ -838,79 +499,202 @@ export const dataService = {
     const ids = Array.isArray(fromGuestIds) ? fromGuestIds : [fromGuestIds];
     let count = 0;
 
+    // Helper to generate a new unique ID for edited sample items so they never collide with cloud docs
+    const getMigratedId = (col: string, originalId: string): string => {
+      const isSampleId =
+        (col === 'tasks' && SAMPLE_TASK_TITLES[originalId]) ||
+        (col === 'notes' && SAMPLE_NOTE_TITLES[originalId]) ||
+        (col === 'habits' && SAMPLE_HABIT_TITLES[originalId]) ||
+        (col === 'expenses' && SAMPLE_EXPENSE_DESCRIPTIONS[originalId]) ||
+        (col === 'snippets' && SAMPLE_SNIPPET_TITLES[originalId]);
+
+      return isSampleId
+        ? `${col}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
+        : originalId;
+    };
+
     try {
+      const isTargetCloud = isCloudUser(toUserId);
+
       for (const fromGuestId of ids) {
         if (!fromGuestId || fromGuestId === toUserId) continue;
 
-        // 1. Tasks
-        const guestTasks = await dataService.getTasks(fromGuestId);
-        for (const t of guestTasks) {
-          await dataService.saveTask(toUserId, { ...t, userId: toUserId });
-          count++;
+        // Read raw localStorage keys directly so get* is never called and cannot seed (C3, M4)
+        const rawTasks = getLocalData<TaskItem>(`superapps_tasks_${fromGuestId}`);
+        const rawNotes = getLocalData<NoteItem>(`superapps_notes_${fromGuestId}`);
+        const rawHabits = getLocalData<HabitItem>(`superapps_habits_${fromGuestId}`);
+        const rawExpenses = getLocalData<ExpenseItem>(`superapps_expenses_${fromGuestId}`);
+        const rawSnippets = getLocalData<SnippetItem>(`superapps_snippets_${fromGuestId}`);
+        const rawLinks = getLocalData<ShortlinkItem>(`superapps_shortlinks_${fromGuestId}`);
+        const rawDropzone = getLocalData<DropzoneItem>(`superapps_dropzone_${fromGuestId}`);
+
+        // Filter out unchanged sample documents
+        const filteredTasks = rawTasks.filter((t) => !isUnchangedSample('tasks', t));
+        const filteredNotes = rawNotes.filter((n) => !isUnchangedSample('notes', n));
+        const filteredHabits = rawHabits.filter((h) => !isUnchangedSample('habits', h));
+        const filteredExpenses = rawExpenses.filter((e) => !isUnchangedSample('expenses', e));
+        const filteredSnippets = rawSnippets.filter((s) => !isUnchangedSample('snippets', s));
+        const filteredLinks = rawLinks;
+        const filteredDropzone = rawDropzone;
+
+        const totalItems =
+          filteredTasks.length +
+          filteredNotes.length +
+          filteredHabits.length +
+          filteredExpenses.length +
+          filteredSnippets.length +
+          filteredLinks.length +
+          filteredDropzone.length;
+
+        if (totalItems === 0) {
+          // Clear empty or sample-only guest keys
+          this.clearGuestStorage(fromGuestId);
+          continue;
         }
 
-        // 2. Notes
-        const guestNotes = await dataService.getNotes(fromGuestId);
-        for (const n of guestNotes) {
-          await dataService.saveNote(toUserId, { ...n, userId: toUserId });
-          count++;
+        if (isTargetCloud) {
+          // 1. Chunked atomic Firestore batch writes for user-isolated private collections (tasks, notes, habits, expenses, snippets, dropzone)
+          let currentBatch = writeBatch(db!);
+          let opsInBatch = 0;
+
+          const commitBatchIfFull = async () => {
+            if (opsInBatch >= 450) {
+              await currentBatch.commit();
+              currentBatch = writeBatch(db!);
+              opsInBatch = 0;
+            }
+          };
+
+          for (const item of filteredTasks) {
+            const newId = getMigratedId('tasks', item.id);
+            const docRef = doc(db!, 'users', toUserId, 'tasks', newId);
+            currentBatch.set(docRef, { ...item, id: newId, userId: toUserId }, { merge: true });
+            opsInBatch++;
+            count++;
+            await commitBatchIfFull();
+          }
+
+          for (const item of filteredNotes) {
+            const newId = getMigratedId('notes', item.id);
+            const docRef = doc(db!, 'users', toUserId, 'notes', newId);
+            currentBatch.set(docRef, { ...item, id: newId, userId: toUserId }, { merge: true });
+            opsInBatch++;
+            count++;
+            await commitBatchIfFull();
+          }
+
+          for (const item of filteredHabits) {
+            const newId = getMigratedId('habits', item.id);
+            const docRef = doc(db!, 'users', toUserId, 'habits', newId);
+            currentBatch.set(docRef, { ...item, id: newId, userId: toUserId }, { merge: true });
+            opsInBatch++;
+            count++;
+            await commitBatchIfFull();
+          }
+
+          for (const item of filteredExpenses) {
+            const newId = getMigratedId('expenses', item.id);
+            const docRef = doc(db!, 'users', toUserId, 'expenses', newId);
+            currentBatch.set(docRef, { ...item, id: newId, userId: toUserId }, { merge: true });
+            opsInBatch++;
+            count++;
+            await commitBatchIfFull();
+          }
+
+          for (const item of filteredSnippets) {
+            const newId = getMigratedId('snippets', item.id);
+            const docRef = doc(db!, 'users', toUserId, 'snippets', newId);
+            currentBatch.set(docRef, { ...item, id: newId, userId: toUserId }, { merge: true });
+            opsInBatch++;
+            count++;
+            await commitBatchIfFull();
+          }
+
+          for (const item of filteredDropzone) {
+            const docRef = doc(db!, 'users', toUserId, 'dropzone', item.id);
+            currentBatch.set(docRef, { ...item, userId: toUserId }, { merge: true });
+            opsInBatch++;
+            count++;
+            await commitBatchIfFull();
+          }
+
+          if (opsInBatch > 0) {
+            await currentBatch.commit();
+          }
+
+          // 2. Shortlinks migration: isolated transaction checks so taken slugs never fail the user private data batch
+          for (const item of filteredLinks) {
+            try {
+              const docRef = doc(db!, 'shortlinks', item.slug);
+              await runTransaction(db!, async (tx) => {
+                const snap = await tx.get(docRef);
+                if (snap.exists()) {
+                  const data = snap.data();
+                  if (data?.userId && data.userId !== toUserId) {
+                    // Slug taken by another user; skip to avoid overwriting or permission denial
+                    return;
+                  }
+                }
+                tx.set(docRef, { ...item, userId: toUserId }, { merge: true });
+                count++;
+              });
+            } catch (linkErr) {
+              console.warn(`Shortlink migration conflict for slug "${item.slug}":`, linkErr);
+            }
+          }
+        } else {
+          // Merge into target guest localStorage
+          const mergeItems = <T extends { id: string }>(col: string, source: T[]) => {
+            const key = `superapps_${col}_${toUserId}`;
+            const target = getLocalData<T>(key);
+            for (const item of source) {
+              const idx = target.findIndex((t) => t.id === item.id);
+              if (idx >= 0) {
+                target[idx] = { ...item, userId: toUserId } as unknown as T;
+              } else {
+                target.unshift({ ...item, userId: toUserId } as unknown as T);
+              }
+              count++;
+            }
+            setLocalData(key, target);
+          };
+
+          mergeItems('tasks', filteredTasks);
+          mergeItems('notes', filteredNotes);
+          mergeItems('habits', filteredHabits);
+          mergeItems('expenses', filteredExpenses);
+          mergeItems('snippets', filteredSnippets);
+          mergeItems('shortlinks', filteredLinks);
+          mergeItems('dropzone', filteredDropzone);
         }
 
-        // 3. Habits
-        const guestHabits = await dataService.getHabits(fromGuestId);
-        for (const h of guestHabits) {
-          await dataService.saveHabit(toUserId, { ...h, userId: toUserId });
-          count++;
-        }
-
-        // 4. Expenses
-        const guestExpenses = await dataService.getExpenses(fromGuestId);
-        for (const e of guestExpenses) {
-          await dataService.saveExpense(toUserId, { ...e, userId: toUserId });
-          count++;
-        }
-
-        // 5. Snippets
-        const guestSnippets = await dataService.getSnippets(fromGuestId);
-        for (const s of guestSnippets) {
-          await dataService.saveSnippet(toUserId, { ...s, userId: toUserId });
-          count++;
-        }
-
-        // 6. Shortlinks
-        const guestLinks = await dataService.getShortlinks(fromGuestId);
-        for (const l of guestLinks) {
-          await dataService.saveShortlink(toUserId, { ...l, userId: toUserId });
-          count++;
-        }
-
-        // Clear guest local data to avoid duplicate state
-        try {
-          localStorage.removeItem(`superapps_tasks_${fromGuestId}`);
-          localStorage.removeItem(`superapps_notes_${fromGuestId}`);
-          localStorage.removeItem(`superapps_habits_${fromGuestId}`);
-          localStorage.removeItem(`superapps_expenses_${fromGuestId}`);
-          localStorage.removeItem(`superapps_snippets_${fromGuestId}`);
-          localStorage.removeItem(`superapps_shortlinks_${fromGuestId}`);
-          localStorage.removeItem(`superapps_dropzone_${fromGuestId}`);
-        } catch {
-          // ignore
-        }
+        // Clean up transferred guest items
+        this.clearGuestStorage(fromGuestId);
       }
-
-      notifyLocalChange(`superapps_tasks_${toUserId}`);
-      notifyLocalChange(`superapps_notes_${toUserId}`);
-      notifyLocalChange(`superapps_habits_${toUserId}`);
-      notifyLocalChange(`superapps_expenses_${toUserId}`);
-      notifyLocalChange(`superapps_snippets_${toUserId}`);
-      notifyLocalChange(`superapps_shortlinks_${toUserId}`);
-      notifyLocalChange(`superapps_dropzone_${toUserId}`);
 
       return { success: true, migratedCount: count };
     } catch (err) {
-      console.warn('Error during guest data migration:', err);
+      reportSyncError('migrate', 'guest', err);
       return { success: false, migratedCount: count };
     }
-  }
-};
+  },
 
+  clearGuestStorage(guestId: string): void {
+    try {
+      localStorage.removeItem(`superapps_tasks_${guestId}`);
+      localStorage.removeItem(`superapps_notes_${guestId}`);
+      localStorage.removeItem(`superapps_habits_${guestId}`);
+      localStorage.removeItem(`superapps_expenses_${guestId}`);
+      localStorage.removeItem(`superapps_snippets_${guestId}`);
+      localStorage.removeItem(`superapps_shortlinks_${guestId}`);
+      localStorage.removeItem(`superapps_dropzone_${guestId}`);
+      localStorage.removeItem(`superapps_seeded_${guestId}`);
+    } catch {
+      // ignore
+    }
+  },
+
+  seedGuestSamples(guestId: string, force = false): void {
+    seedGuestSamples(guestId, force);
+  },
+};

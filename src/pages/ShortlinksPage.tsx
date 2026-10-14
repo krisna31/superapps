@@ -26,13 +26,11 @@ export const ShortlinksPage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const loadLinks = async () => {
-    const data = await dataService.getShortlinks(userId);
-    setLinks(data);
-  };
-
   useEffect(() => {
-    loadLinks();
+    const unsubscribe = dataService.subscribeToShortlinks(userId, (data) => {
+      setLinks(data);
+    });
+    return () => unsubscribe();
   }, [userId]);
 
   const generateRandomSlug = () => {
@@ -65,12 +63,16 @@ export const ShortlinksPage: React.FC = () => {
       updatedAt: Date.now(),
     };
 
-    await dataService.saveShortlink(userId, newLink);
-    setLinks((prev) => [newLink, ...prev]);
-    setIsModalOpen(false);
-    setOriginalUrl('');
-    setCustomSlug('');
-    setTitle('');
+    try {
+      await dataService.saveShortlink(userId, newLink);
+      setIsModalOpen(false);
+      setOriginalUrl('');
+      setCustomSlug('');
+      setTitle('');
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      setError(e?.message || 'Failed to create shortlink');
+    }
   };
 
   const handleDeleteLink = async (slug: string) => {

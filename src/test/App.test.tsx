@@ -38,7 +38,7 @@ describe('Superapps Main Application Component', () => {
       'superapps_local_user',
       JSON.stringify({
         uid: 'local-superadmin',
-        email: 'admin@k31.my.id',
+        email: 'jelvinkrisnaputra31@gmail.com',
         displayName: 'Superadmin',
         photoURL: null,
         isAnonymous: false,
@@ -114,7 +114,7 @@ describe('Superapps Main Application Component', () => {
       'superapps_local_user',
       JSON.stringify({
         uid: 'local-superadmin',
-        email: 'admin@k31.my.id',
+        email: 'jelvinkrisnaputra31@gmail.com',
         displayName: 'Superadmin',
         photoURL: null,
         isAnonymous: false,
@@ -134,13 +134,13 @@ describe('Superapps Main Application Component', () => {
     expect(screen.getByText('Admin Settings')).toBeInTheDocument();
   });
 
-  it('allows unlocking from AuthLockPage via autofill superadmin and form submission', async () => {
+  it('locks workspace when guest access is disabled and displays locked screen', async () => {
     localStorage.setItem(
       'superapps_system_settings',
       JSON.stringify({
         allowGuestAccess: false,
         allowUserRegistration: true,
-        superadminEmail: 'admin@k31.my.id',
+        superadminEmail: 'jelvinkrisnaputra31@gmail.com',
       })
     );
 
@@ -149,21 +149,7 @@ describe('Superapps Main Application Component', () => {
     });
 
     expect(screen.getByText(/Private Workspace Locked/i)).toBeInTheDocument();
-
-    // Click autofill superadmin
-    await act(async () => {
-      fireEvent.click(screen.getByText(/Autofill Default Superadmin/i));
-    });
-
-    // Submit form
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Authenticate & Unlock/i }));
-    });
-
-    // Workspace should now be unlocked
-    expect(screen.queryByText(/Private Workspace Locked/i)).toBeNull();
-    expect(screen.getAllByText('Tasks (Kanban)').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Admin Settings')).toBeInTheDocument();
+    expect(screen.getByText(/Authorized Authentication Required/i)).toBeInTheDocument();
   });
 
   it('hides guest access button and shows closed notice in AuthModal when policies are disabled', async () => {

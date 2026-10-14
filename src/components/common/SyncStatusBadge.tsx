@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Cloud, CloudOff, RefreshCw, UserCheck, Sparkles, Check } from 'lucide-react';
+import { Cloud, CloudOff, RefreshCw, UserCheck, Sparkles, Check, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { subscribeSyncErrors, getLastSyncError, clearLastSyncError, SyncErrorEvent } from '@/services/syncErrors';
 
 interface SyncStatusBadgeProps {
   onOpenAuthModal: () => void;
@@ -11,6 +12,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
   const { user } = useAuth();
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<SyncErrorEvent | null>(() => getLastSyncError());
   const [showPopover, setShowPopover] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date>(() => new Date());
@@ -42,10 +44,15 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
     window.addEventListener('offline', handleOffline);
     window.addEventListener('superapps_local_sync', handleSync);
 
+    const unsubscribeError = subscribeSyncErrors((event) => {
+      setSyncError(event);
+    });
+
     return () => {
       if (syncTimer) {
         clearTimeout(syncTimer);
       }
+      unsubscribeError();
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('superapps_local_sync', handleSync);
@@ -197,6 +204,29 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                 : 'Synced'}
             </span>
           </div>
+
+          {syncError && (
+            <div className="mb-3 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-[11px] flex items-start justify-between space-x-2">
+              <div className="flex items-start space-x-2">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold block">Sync Error ({syncError.collection})</span>
+                  <span className="text-[10px] opacity-90">{syncError.message}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  clearLastSyncError();
+                  setSyncError(null);
+                }}
+                className="text-rose-500 hover:text-rose-700 text-xs font-bold px-1"
+                title="Dismiss"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
           {/* Detailed status metrics */}
           <div className="space-y-2 mb-3 py-2 px-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-[11px]">

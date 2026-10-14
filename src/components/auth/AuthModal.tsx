@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth, DEFAULT_SUPERADMIN_CREDENTIALS } from '@/context/AuthContext';
-import { X, LogIn, UserPlus, Sparkles, AlertCircle, Shield, UserCheck } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { X, LogIn, UserPlus, Sparkles, AlertCircle, UserCheck } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -93,12 +93,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleFillSuperadmin = () => {
-    setEmail(DEFAULT_SUPERADMIN_CREDENTIALS.email);
-    setPassword(DEFAULT_SUPERADMIN_CREDENTIALS.password);
-    setIsSignUp(false);
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl">
@@ -143,18 +137,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <div className="flex items-start space-x-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold">Local / Offline Setup Mode</p>
-                <p className="mt-0.5">Firebase environment keys not found. You can sign in using default administrator credentials or continue as guest if permitted.</p>
+                <p className="font-semibold">Local / Guest Mode Active</p>
+                <p className="mt-0.5">Firebase configuration not detected. Cloud synchronization and accounts require Firebase credentials. You can continue using all modules locally in Guest Mode.</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleFillSuperadmin}
-              className="inline-flex items-center space-x-1.5 self-start px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 rounded font-mono text-[11px] transition"
-            >
-              <Shield className="w-3 h-3" />
-              <span>Autofill Superadmin ({DEFAULT_SUPERADMIN_CREDENTIALS.email})</span>
-            </button>
           </div>
         )}
 

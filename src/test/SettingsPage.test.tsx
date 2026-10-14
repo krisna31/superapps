@@ -48,7 +48,7 @@ describe('SettingsPage Component', () => {
       'superapps_local_user',
       JSON.stringify({
         uid: 'local-superadmin',
-        email: 'admin@k31.my.id',
+        email: 'jelvinkrisnaputra31@gmail.com',
         displayName: 'Superadmin',
         role: 'superadmin',
         isAnonymous: false,
@@ -71,7 +71,7 @@ describe('SettingsPage Component', () => {
       'superapps_local_user',
       JSON.stringify({
         uid: 'local-superadmin',
-        email: 'admin@k31.my.id',
+        email: 'jelvinkrisnaputra31@gmail.com',
         displayName: 'Superadmin',
         role: 'superadmin',
         isAnonymous: false,
@@ -98,12 +98,12 @@ describe('SettingsPage Component', () => {
     expect(updatedSettings.allowGuestAccess).toBe(false);
   });
 
-  it('validates email format and allows superadmin to update superadmin email', async () => {
+  it('displays superadmin email as read-only and shows server-side rules enforcement notice', async () => {
     localStorage.setItem(
       'superapps_local_user',
       JSON.stringify({
         uid: 'local-superadmin',
-        email: 'admin@k31.my.id',
+        email: 'jelvinkrisnaputra31@gmail.com',
         displayName: 'Superadmin',
         role: 'superadmin',
         isAnonymous: false,
@@ -114,25 +114,10 @@ describe('SettingsPage Component', () => {
       renderSettingsPage();
     });
 
-    const emailInput = screen.getByPlaceholderText('admin@k31.my.id');
-    const form = emailInput.closest('form')!;
-
-    // Try invalid email
-    await act(async () => {
-      fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-      fireEvent.submit(form);
-    });
-
-    expect(screen.getByText('Please enter a valid email address.')).toBeInTheDocument();
-
-    // Enter valid new email
-    await act(async () => {
-      fireEvent.change(emailInput, { target: { value: 'lead@k31.my.id' } });
-      fireEvent.submit(form);
-    });
-
-    expect(screen.getByText('Superadmin primary email updated successfully.')).toBeInTheDocument();
-    const updatedSettings = await dataService.getSystemSettings();
-    expect(updatedSettings.superadminEmail).toBe('lead@k31.my.id');
+    const emailInput = screen.getByPlaceholderText('jelvinkrisnaputra31@gmail.com') as HTMLInputElement;
+    expect(emailInput).toHaveAttribute('readonly');
+    expect(emailInput.value).toBe('jelvinkrisnaputra31@gmail.com');
+    expect(screen.getByText('Enforced in Security Rules')).toBeInTheDocument();
+    expect(screen.getByText(/cryptographically verified in/i)).toBeInTheDocument();
   });
 });

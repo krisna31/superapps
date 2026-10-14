@@ -21,13 +21,11 @@ export const DropZonePage: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const loadFiles = async () => {
-    const data = await dataService.getDropzoneItems(userId);
-    setFiles(data);
-  };
-
   useEffect(() => {
-    loadFiles();
+    const unsubscribe = dataService.subscribeToDropzone(userId, (data) => {
+      setFiles(data);
+    });
+    return () => unsubscribe();
   }, [userId]);
 
   const handleFileUpload = async (fileList: FileList | null) => {

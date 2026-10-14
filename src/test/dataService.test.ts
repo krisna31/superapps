@@ -131,7 +131,7 @@ describe('dataService Tests', () => {
     expect(settings).toBeDefined();
     expect(settings.allowGuestAccess).toBe(true);
     expect(settings.allowUserRegistration).toBe(true);
-    expect(settings.superadminEmail).toBe('admin@k31.my.id');
+    expect(settings.superadminEmail).toBe('jelvinkrisnaputra31@gmail.com');
   });
 
   it('should update and persist system settings', async () => {

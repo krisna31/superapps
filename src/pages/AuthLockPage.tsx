@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth, DEFAULT_SUPERADMIN_CREDENTIALS } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { 
   LogIn, 
@@ -68,12 +68,6 @@ export const AuthLockPage: React.FC = () => {
     }
   };
 
-  const handleUseDefaultAdmin = () => {
-    setEmail(DEFAULT_SUPERADMIN_CREDENTIALS.email);
-    setPassword(DEFAULT_SUPERADMIN_CREDENTIALS.password);
-    setIsSignUp(false);
-  };
-
   return (
     <div className="min-h-screen w-full flex flex-col justify-between bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors">
       {/* Top Header */}
@@ -126,24 +120,14 @@ export const AuthLockPage: React.FC = () => {
           </div>
 
           <div className="rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xl backdrop-blur-md">
-            {/* Offline default credentials helper */}
+            {/* Authentication requirements helper */}
             <div className="mb-5 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 text-xs">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center space-x-1">
-                  <KeyRound className="w-3.5 h-3.5 text-emerald-500 inline mr-1" />
-                  Administrator Access
-                </span>
-                <button
-                  type="button"
-                  onClick={handleUseDefaultAdmin}
-                  className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
-                >
-                  Autofill Default Superadmin
-                </button>
+              <div className="flex items-center space-x-1 mb-1 font-semibold text-slate-700 dark:text-slate-300">
+                <KeyRound className="w-3.5 h-3.5 text-emerald-500 inline mr-1" />
+                <span>Authorized Authentication Required</span>
               </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono space-y-0.5">
-                <div>Email: <span className="text-slate-800 dark:text-slate-200">{DEFAULT_SUPERADMIN_CREDENTIALS.email}</span></div>
-                <div>Password: <span className="text-slate-800 dark:text-slate-200">{DEFAULT_SUPERADMIN_CREDENTIALS.password}</span></div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Enter your verified credentials to access this private workspace.
               </div>
             </div>
 

@@ -34,6 +34,10 @@ if (isFirebaseConfigured) {
     auth = getAuth(app);
     // Initialize Firestore with persistent multi-tab offline cache
     db = initializeFirestore(app, {
+      // Pages send optional fields (description, dueDate, title...) as `undefined`.
+      // Without this flag Firestore rejects the WHOLE write with
+      // "Unsupported field value: undefined" (finding C2).
+      ignoreUndefinedProperties: true,
       localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager()
       })
