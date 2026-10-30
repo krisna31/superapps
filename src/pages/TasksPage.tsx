@@ -17,6 +17,8 @@ export const TasksPage: React.FC = () => {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPriority, setSelectedPriority] = useState<string>('all');
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -168,10 +170,36 @@ export const TasksPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {columns.map((col) => {
           const colTasks = filteredTasks.filter((t) => t.status === col.id);
+          const isOver = dragOverColumn === col.id;
           return (
             <div
               key={col.id}
-              className={`rounded-lg bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 border-t-2 ${col.color} p-2.5 flex flex-col`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (dragOverColumn !== col.id) {
+                  setDragOverColumn(col.id);
+                }
+              }}
+              onDragLeave={() => {
+                if (dragOverColumn === col.id) {
+                  setDragOverColumn(null);
+                }
+              }}
+              onDrop={async (e) => {
+                e.preventDefault();
+                setDragOverColumn(null);
+                const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId;
+                if (!taskId) return;
+                const taskToMove = tasks.find((t) => t.id === taskId);
+                if (taskToMove && taskToMove.status !== col.id) {
+                  await handleStatusChange(taskToMove, col.id);
+                }
+                setDraggedTaskId(null);
+              }}
+              className={`rounded-lg bg-slate-50/70 dark:bg-slate-900/60 border ${
+                isOver ? 'border-sky-500 ring-1 ring-sky-500/20' : 'border-slate-200 dark:border-slate-800'
+              } border-t-2 ${col.color} p-2.5 flex flex-col transition-colors min-h-[300px]`}
             >
               <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-200/60 dark:border-slate-800">
                 <span className="font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
@@ -184,14 +212,26 @@ export const TasksPage: React.FC = () => {
 
               <div className="space-y-2 flex-1 overflow-y-auto max-h-[600px] pr-0.5">
                 {colTasks.length === 0 ? (
-                  <div className="py-6 text-center text-slate-400 text-xs font-mono">
-                    No tasks
+                  <div className="py-8 text-center text-slate-400 text-xs font-mono border border-dashed border-slate-200 dark:border-slate-800 rounded-md">
+                    Drop tasks here
                   </div>
                 ) : (
                   colTasks.map((t) => (
                     <div
                       key={t.id}
-                      className="p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition flex flex-col justify-between space-y-2"
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', t.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                        setDraggedTaskId(t.id);
+                      }}
+                      onDragEnd={() => {
+                        setDraggedTaskId(null);
+                        setDragOverColumn(null);
+                      }}
+                      className={`p-2.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition flex flex-col justify-between space-y-2 cursor-grab active:cursor-grabbing ${
+                        draggedTaskId === t.id ? 'opacity-40 border-dashed' : ''
+                      }`}
                     >
                       <div>
                         <div className="flex items-center justify-between gap-1.5 mb-1.5">

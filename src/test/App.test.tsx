@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
 import App from '@/App';
 
 describe('Superapps Main Application Component', () => {
@@ -22,12 +22,16 @@ describe('Superapps Main Application Component', () => {
       fireEvent.click(screen.getByText('Unlock Vault'));
     });
 
+    // Wait for async unlock and route resolution
+    await waitFor(() => {
+      expect(screen.getAllByText('Tasks (Kanban)').length).toBeGreaterThanOrEqual(1);
+    });
+
     // Brand title
     const brandElements = screen.getAllByText(/Superapps/i);
     expect(brandElements.length).toBeGreaterThan(0);
 
     // Nav & module elements (use getAllByText as they appear in sidebar and dashboard)
-    expect(screen.getAllByText('Tasks (Kanban)').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Notes Vault').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Daily Habits').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Expenses & Budget').length).toBeGreaterThanOrEqual(1);

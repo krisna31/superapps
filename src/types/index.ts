@@ -95,3 +95,20 @@ export interface DropzoneItem {
   storagePath: string;
   uploadedAt: number;
 }
+
+
+export interface WorkspaceBackup {
+  version: string;
+  exportedAt: number;
+  userId: string;
+  data: {
+    tasks: TaskItem[];
+    notes: NoteItem[];
+    habits: HabitItem[];
+    expenses: ExpenseItem[];
+    snippets: SnippetItem[];
+    shortlinks: ShortlinkItem[];
+    dropzone: DropzoneItem[];
+    systemSettings?: SystemSettings;
+  };
+}

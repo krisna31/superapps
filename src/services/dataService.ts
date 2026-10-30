@@ -23,7 +23,8 @@ import {
   SnippetItem, 
   ShortlinkItem, 
   DropzoneItem,
-  SystemSettings 
+  SystemSettings,
+  WorkspaceBackup 
 } from '@/types';
 import { reportSyncError } from '@/services/syncErrors';
 import { LOCAL_SYNC_EVENT, localBus, notifyLocalChange } from '@/services/localBus';
@@ -696,5 +697,134 @@ export const dataService = {
 
   seedGuestSamples(guestId: string, force = false): void {
     seedGuestSamples(guestId, force);
+  },
+
+  /* ==================== WORKSPACE BACKUP & PORTABILITY (MILESTONE 4) ==================== */
+  async exportWorkspaceBackup(userId: string): Promise<WorkspaceBackup> {
+    const [tasks, notes, habits, expenses, snippets, shortlinks, dropzone, systemSettings] = await Promise.all([
+      this.getTasks(userId),
+      this.getNotes(userId),
+      this.getHabits(userId),
+      this.getExpenses(userId),
+      this.getSnippets(userId),
+      this.getShortlinks(userId),
+      this.getDropzoneItems(userId),
+      this.getSystemSettings(),
+    ]);
+
+    return {
+      version: '1.0.0',
+      exportedAt: Date.now(),
+      userId,
+      data: {
+        tasks,
+        notes,
+        habits,
+        expenses,
+        snippets,
+        shortlinks,
+        dropzone,
+        systemSettings,
+      },
+    };
+  },
+
+  async importWorkspaceBackup(userId: string, backup: WorkspaceBackup): Promise<{ success: boolean; importedCount: number; errors?: string[] }> {
+    if (!backup || !backup.data || typeof backup.data !== 'object') {
+      throw new Error('Invalid workspace backup format.');
+    }
+
+    let count = 0;
+    const errors: string[] = [];
+
+    // Import tasks
+    if (Array.isArray(backup.data.tasks)) {
+      for (const t of backup.data.tasks) {
+        try {
+          await this.saveTask(userId, { ...t, userId });
+          count++;
+        } catch (err: any) {
+          errors.push(`Task "${t.title}": ${err?.message}`);
+        }
+      }
+    }
+
+    // Import notes
+    if (Array.isArray(backup.data.notes)) {
+      for (const n of backup.data.notes) {
+        try {
+          await this.saveNote(userId, { ...n, userId });
+          count++;
+        } catch (err: any) {
+          errors.push(`Note "${n.title}": ${err?.message}`);
+        }
+      }
+    }
+
+    // Import habits
+    if (Array.isArray(backup.data.habits)) {
+      for (const h of backup.data.habits) {
+        try {
+          await this.saveHabit(userId, { ...h, userId });
+          count++;
+        } catch (err: any) {
+          errors.push(`Habit "${h.title}": ${err?.message}`);
+        }
+      }
+    }
+
+    // Import expenses
+    if (Array.isArray(backup.data.expenses)) {
+      for (const e of backup.data.expenses) {
+        try {
+          await this.saveExpense(userId, { ...e, userId });
+          count++;
+        } catch (err: any) {
+          errors.push(`Expense "${e.description}": ${err?.message}`);
+        }
+      }
+    }
+
+    // Import snippets
+    if (Array.isArray(backup.data.snippets)) {
+      for (const s of backup.data.snippets) {
+        try {
+          await this.saveSnippet(userId, { ...s, userId });
+          count++;
+        } catch (err: any) {
+          errors.push(`Snippet "${s.title}": ${err?.message}`);
+        }
+      }
+    }
+
+    // Import shortlinks
+    if (Array.isArray(backup.data.shortlinks)) {
+      for (const l of backup.data.shortlinks) {
+        try {
+          await this.saveShortlink(userId, { ...l, userId });
+          count++;
+        } catch (err: any) {
+          errors.push(`Shortlink "${l.slug}": ${err?.message}`);
+        }
+      }
+    }
+
+    // Import dropzone metadata
+    if (Array.isArray(backup.data.dropzone)) {
+      for (const d of backup.data.dropzone) {
+        try {
+          await dropzoneRepo.save(userId, { ...d, userId });
+          count++;
+        } catch (err: any) {
+          errors.push(`Dropzone "${d.fileName}": ${err?.message}`);
+        }
+      }
+    }
+
+    return {
+      success: errors.length === 0,
+      importedCount: count,
+      errors: errors.length > 0 ? errors : undefined,
+    };
   },
 };

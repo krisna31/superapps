@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   ShieldCheck, 
   Lock, 
@@ -10,18 +10,73 @@ import {
   Server, 
   Globe, 
   Mail, 
-  ShieldAlert 
+  ShieldAlert,
+  Download,
+  Upload,
+  Database
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { isFirebaseConfigured } from '@/firebase/config';
+import { dataService } from '@/services/dataService';
 
 export const SettingsPage: React.FC = () => {
   const { user, systemSettings, updateSystemSettings } = useAuth();
   const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Superadmin authorization guard check
   const isSuperadmin = user?.role === 'superadmin';
+  const userId = user?.uid || 'vault-owner';
+
+  const handleExportWorkspace = async () => {
+    try {
+      setIsExporting(true);
+      const backup = await dataService.exportWorkspaceBackup(userId);
+      const jsonStr = JSON.stringify(backup, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `superapps-backup-${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setSaveSuccessMessage('Workspace backup exported successfully.');
+      setTimeout(() => setSaveSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to export workspace backup.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportWorkspace = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsImporting(true);
+      setErrorMessage(null);
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const res = await dataService.importWorkspaceBackup(userId, parsed);
+      if (res.success) {
+        setSaveSuccessMessage(`Workspace backup restored: ${res.importedCount} items imported.`);
+      } else {
+        setErrorMessage(`Partial import completed (${res.importedCount} items). Errors: ${res.errors?.join(', ')}`);
+      }
+      setTimeout(() => setSaveSuccessMessage(null), 4000);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Invalid backup JSON file.');
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   if (!isSuperadmin) {
     return (
@@ -240,6 +295,47 @@ export const SettingsPage: React.FC = () => {
             <span className="font-semibold">Security Notice: </span>
             <span>The superadmin identity (jelvinkrisnaputra31@gmail.com) is hardcoded and cryptographically verified in firestore.rules.</span>
           </div>
+        </div>
+      </div>
+
+      {/* Workspace Data Portability & Backup Center (Milestone 4) */}
+      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <div className="flex items-center space-x-2 mb-2">
+          <Database className="w-4 h-4 text-slate-500" />
+          <h2 className="text-xs font-semibold font-mono uppercase tracking-wider text-slate-900 dark:text-white">
+            Workspace Data Portability & Backup
+          </h2>
+        </div>
+        <p className="text-xs text-slate-500 mb-3.5">
+          Full data snapshot export and migration across all 8 modules (Tasks, Notes, Habits, Expenses, Snippets, Shortlinks, Dropzone, and Settings).
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <button
+            onClick={handleExportWorkspace}
+            disabled={isExporting}
+            className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium transition disabled:opacity-50"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>{isExporting ? 'Exporting...' : 'Export Workspace JSON'}</span>
+          </button>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".json"
+            onChange={handleImportWorkspace}
+            className="hidden"
+          />
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isImporting}
+            className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium transition disabled:opacity-50"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>{isImporting ? 'Importing...' : 'Import Workspace Backup'}</span>
+          </button>
         </div>
       </div>
 

@@ -570,4 +570,113 @@ describe('dataService.migrateGuestData', () => {
     const result = await dataService.migrateGuestData('guest-empty', 'user-dest');
     expect(result.success).toBe(true);
   });
+
+  /* ==================== WORKSPACE BACKUP & RESTORE TESTS ==================== */
+  it('exports complete workspace snapshot across all modules', async () => {
+    const userId = 'backup-export-user';
+
+    await dataService.saveTask(userId, {
+      id: 'task-bk-1',
+      userId,
+      title: 'Backup Task',
+      status: 'todo',
+      priority: 'high',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    await dataService.saveNote(userId, {
+      id: 'note-bk-1',
+      userId,
+      title: 'Backup Note',
+      content: 'Important info',
+      tags: ['backup'],
+      isPinned: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    const backup = await dataService.exportWorkspaceBackup(userId);
+    expect(backup.version).toBe('1.0.0');
+    expect(backup.userId).toBe(userId);
+    expect(backup.exportedAt).toBeGreaterThan(0);
+    expect(backup.data.tasks.some((t) => t.id === 'task-bk-1')).toBe(true);
+    expect(backup.data.notes.some((n) => n.id === 'note-bk-1')).toBe(true);
+    expect(backup.data.systemSettings).toBeDefined();
+  });
+
+  it('restores workspace snapshot and merges data into target user repository', async () => {
+    const userId = 'backup-import-user';
+
+    const testBackup = {
+      version: '1.0.0',
+      exportedAt: Date.now(),
+      userId: 'source-user',
+      data: {
+        tasks: [
+          {
+            id: 'task-imported-1',
+            userId: 'source-user',
+            title: 'Imported Task',
+            status: 'done' as const,
+            priority: 'urgent' as const,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          },
+        ],
+        notes: [
+          {
+            id: 'note-imported-1',
+            userId: 'source-user',
+            title: 'Imported Note',
+            content: 'Recovered content',
+            tags: ['restored'],
+            isPinned: false,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          },
+        ],
+        habits: [
+          {
+            id: 'habit-imported-1',
+            userId: 'source-user',
+            title: 'Imported Habit',
+            frequency: 'daily' as const,
+            completedDates: ['2026-10-30'],
+            streak: 5,
+            createdAt: Date.now(),
+          },
+        ],
+        expenses: [
+          {
+            id: 'exp-imported-1',
+            userId: 'source-user',
+            type: 'expense' as const,
+            amount: 50000,
+            category: 'Tech/SaaS',
+            description: 'Cloud storage',
+            date: '2026-10-30',
+            createdAt: Date.now(),
+          },
+        ],
+        snippets: [],
+        shortlinks: [],
+        dropzone: [],
+      },
+    };
+
+    const res = await dataService.importWorkspaceBackup(userId, testBackup);
+    expect(res.success).toBe(true);
+    expect(res.importedCount).toBe(4);
+
+    const tasks = await dataService.getTasks(userId);
+    const notes = await dataService.getNotes(userId);
+    const habits = await dataService.getHabits(userId);
+    const expenses = await dataService.getExpenses(userId);
+
+    expect(tasks.some((t) => t.id === 'task-imported-1' && t.userId === userId)).toBe(true);
+    expect(notes.some((n) => n.id === 'note-imported-1' && n.userId === userId)).toBe(true);
+    expect(habits.some((h) => h.id === 'habit-imported-1' && h.userId === userId)).toBe(true);
+    expect(expenses.some((e) => e.id === 'exp-imported-1' && e.userId === userId)).toBe(true);
+  });
 });

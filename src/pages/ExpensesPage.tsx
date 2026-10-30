@@ -6,7 +6,8 @@ import {
   ArrowUpRight, 
   ArrowDownLeft, 
   Trash2, 
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
@@ -93,6 +94,38 @@ export const ExpensesPage: React.FC = () => {
 
   const netBalance = totalIncome - totalExpense;
 
+  const categoryTotals = expenses
+    .filter((e) => e.type === 'expense')
+    .reduce<Record<string, number>>((acc, e) => {
+      acc[e.category] = (acc[e.category] || 0) + e.amount;
+      return acc;
+    }, {});
+
+  const sortedCategories = Object.entries(categoryTotals)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5);
+
+  const exportCsv = () => {
+    const headers = ['Date', 'Type', 'Category', 'Description', 'Amount'];
+    const rows = expenses.map((e) => [
+      e.date,
+      e.type,
+      `"${e.category.replace(/"/g, '""')}"`,
+      `"${(e.description || '').replace(/"/g, '""')}"`,
+      e.amount,
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `expenses-ledger-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       {/* Top Header */}
@@ -106,13 +139,25 @@ export const ExpensesPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs transition self-start sm:self-auto"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>New Transaction</span>
-        </button>
+        <div className="flex items-center space-x-2 self-start sm:self-auto">
+          <button
+            onClick={exportCsv}
+            disabled={expenses.length === 0}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs transition disabled:opacity-50"
+            title="Download CSV ledger"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-400" />
+            <span>Export CSV</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs transition"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Transaction</span>
+          </button>
+        </div>
       </div>
 
       {/* Financial Summary Cards */}
@@ -156,6 +201,42 @@ export const ExpensesPage: React.FC = () => {
           <div className="text-[10px] text-slate-400 mt-0.5 font-mono">Net remaining surplus</div>
         </div>
       </div>
+
+      {/* Categorical Spend Distribution */}
+      {sortedCategories.length > 0 && totalExpense > 0 && (
+        <div className="p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
+            <span className="font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              Top Expenditure Categories
+            </span>
+            <span className="font-mono text-[10px] text-slate-400">
+              Distribution of Rp {totalExpense.toLocaleString('id-ID')}
+            </span>
+          </div>
+
+          <div className="space-y-2 pt-1">
+            {sortedCategories.map(([cat, amount]) => {
+              const pct = Math.round((amount / totalExpense) * 100);
+              return (
+                <div key={cat} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-slate-700 dark:text-slate-300">{cat}</span>
+                    <span className="text-slate-500 tabular-nums">
+                      Rp {amount.toLocaleString('id-ID')} ({pct}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-slate-600 dark:bg-slate-400 h-full transition-all duration-300"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Filter row */}
       <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">

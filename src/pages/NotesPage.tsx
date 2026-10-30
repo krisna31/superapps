@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   FileText, 
@@ -10,7 +10,15 @@ import {
   Check, 
   Eye, 
   Edit3,
-  Tag
+  Tag,
+  Bold,
+  Italic,
+  Heading1,
+  Heading2,
+  Code,
+  Quote,
+  CheckSquare,
+  List
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
@@ -31,6 +39,25 @@ export const NotesPage: React.FC = () => {
   const [activeContent, setActiveContent] = useState('');
   const [activeTags, setActiveTags] = useState('');
   const [activePinned, setActivePinned] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertMarkdown = (prefix: string, suffix = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = activeContent.substring(start, end);
+    const replacement = prefix + (selectedText || 'text') + suffix;
+
+    const nextContent = activeContent.substring(0, start) + replacement + activeContent.substring(end);
+    setActiveContent(nextContent);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, start + replacement.length - suffix.length);
+    }, 0);
+  };
 
   useEffect(() => {
     const unsubscribe = dataService.subscribeToNotes(userId, (data) => {
@@ -308,14 +335,88 @@ export const NotesPage: React.FC = () => {
             </div>
 
             {/* Content area */}
-            <div className="flex-1 overflow-y-auto pt-3">
+            <div className="flex-1 overflow-y-auto pt-2 flex flex-col">
               {mode === 'edit' ? (
-                <textarea
-                  value={activeContent}
-                  onChange={(e) => setActiveContent(e.target.value)}
-                  placeholder="Start writing markdown notes..."
-                  className="w-full h-full bg-transparent text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none resize-none leading-relaxed"
-                />
+                <>
+                  {/* Markdown Quick Formatting Toolbar */}
+                  <div className="flex items-center flex-wrap gap-1 pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 text-slate-500">
+                    <button
+                      type="button"
+                      onClick={() => insertMarkdown('**', '**')}
+                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      title="Bold (**text**)"
+                    >
+                      <Bold className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertMarkdown('*', '*')}
+                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      title="Italic (*text*)"
+                    >
+                      <Italic className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="w-px h-3.5 bg-slate-200 dark:bg-slate-800 mx-0.5" />
+                    <button
+                      type="button"
+                      onClick={() => insertMarkdown('# ')}
+                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      title="Heading 1 (# )"
+                    >
+                      <Heading1 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertMarkdown('## ')}
+                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      title="Heading 2 (## )"
+                    >
+                      <Heading2 className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="w-px h-3.5 bg-slate-200 dark:bg-slate-800 mx-0.5" />
+                    <button
+                      type="button"
+                      onClick={() => insertMarkdown('- [ ] ')}
+                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      title="Checklist item (- [ ] )"
+                    >
+                      <CheckSquare className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertMarkdown('- ')}
+                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      title="Bullet list (- )"
+                    >
+                      <List className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="w-px h-3.5 bg-slate-200 dark:bg-slate-800 mx-0.5" />
+                    <button
+                      type="button"
+                      onClick={() => insertMarkdown('`', '`')}
+                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      title="Inline Code (`code`)"
+                    >
+                      <Code className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertMarkdown('> ')}
+                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                      title="Blockquote (> )"
+                    >
+                      <Quote className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <textarea
+                    ref={textareaRef}
+                    value={activeContent}
+                    onChange={(e) => setActiveContent(e.target.value)}
+                    placeholder="Start writing markdown notes..."
+                    className="w-full flex-1 bg-transparent text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none resize-none leading-relaxed"
+                  />
+                </>
               ) : (
                 <div className="prose dark:prose-invert max-w-none">
                   {renderMarkdown(activeContent)}

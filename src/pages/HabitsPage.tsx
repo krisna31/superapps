@@ -98,7 +98,19 @@ export const HabitsPage: React.FC = () => {
     return days;
   };
 
+  // Generate last 30 days strings for consistency heatmap
+  const getLast30Days = () => {
+    const days: string[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      days.push(d.toISOString().split('T')[0]);
+    }
+    return days;
+  };
+
   const daysList = getLast7Days();
+  const days30List = getLast30Days();
   const completedTodayCount = habits.filter((h) => h.completedDates.includes(todayStr)).length;
   const completionPercentage = habits.length > 0 ? Math.round((completedTodayCount / habits.length) * 100) : 0;
 
@@ -251,6 +263,57 @@ export const HabitsPage: React.FC = () => {
               );
             })
           )}
+        </div>
+      </div>
+
+      {/* 30-Day Routine Consistency Matrix */}
+      <div className="rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4">
+        <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 className="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+              30-Day Routine Execution Heatmap
+            </h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Cumulative daily habit completion density across active benchmarks
+            </p>
+          </div>
+          <div className="flex items-center space-x-1.5 text-[10px] font-mono text-slate-400">
+            <span>Less</span>
+            <span className="w-2.5 h-2.5 rounded-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
+            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500/30 border border-emerald-500/40" />
+            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500/70 border border-emerald-500/80" />
+            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500 border border-emerald-600" />
+            <span>More</span>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {days30List.map((d) => {
+            const count = habits.filter((h) => h.completedDates.includes(d)).length;
+            const ratio = habits.length > 0 ? count / habits.length : 0;
+            const isToday = d === todayStr;
+
+            let colorClass = 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400';
+            if (ratio === 1 && habits.length > 0) {
+              colorClass = 'bg-emerald-500 border-emerald-600 text-white font-bold';
+            } else if (ratio >= 0.5) {
+              colorClass = 'bg-emerald-500/70 border-emerald-500/80 text-white';
+            } else if (ratio > 0) {
+              colorClass = 'bg-emerald-500/30 border-emerald-500/40 text-emerald-800 dark:text-emerald-300';
+            }
+
+            return (
+              <div
+                key={d}
+                title={`${d}: ${count}/${habits.length} habits completed (${Math.round(ratio * 100)}%)`}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md border flex flex-col items-center justify-center text-[10px] font-mono tabular-nums transition-colors cursor-default ${colorClass} ${
+                  isToday ? 'ring-2 ring-emerald-500 ring-offset-1 dark:ring-offset-slate-900' : ''
+                }`}
+              >
+                <span>{d.slice(8)}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
