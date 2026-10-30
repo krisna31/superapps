@@ -60,7 +60,7 @@ flowchart LR
 | Command Palette (`Ctrl+K`) | `src/components/palette/CommandPaletteModal.tsx` |
 | Application Shell & Navigation | `src/components/layout/AppShell.tsx` |
 | Unit Tests | `src/test/dataService.test.ts` & `src/test/App.test.tsx` |
-| CI/CD Deployment | `deploy/deploy.yml` |
+| CI/CD Deployment | `.github/workflows/deploy.yml` |
 
 ---
 
