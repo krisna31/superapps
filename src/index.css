@@ -27,6 +27,12 @@
   }
 }
 
+/* Institutional high-utility typography */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

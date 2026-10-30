@@ -64,7 +64,7 @@ export const createSampleNotes = (userId: string): NoteItem[] => [
     id: 'note-1',
     userId,
     title: 'Getting Started with Superapps',
-    content: `# Welcome to Superapps Notes\n\nThis is a full-featured markdown notes vault with **live preview**, tags, and offline caching.\n\n### Features\n- 📝 Real-time markdown formatting\n- 🏷️ Searchable tags\n- 📌 Pinned notes support\n- ⚡ Instant offline caching`,
+    content: `# Welcome to Superapps Notes\n\nThis is a full-featured markdown notes vault with **live preview**, tags, and offline caching.\n\n### Features\n- Real-time markdown formatting\n- Searchable tags\n- Pinned notes support\n- Instant offline caching`,
     tags: ['guide', 'welcome'],
     isPinned: true,
     createdAt: Date.now(),

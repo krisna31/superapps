@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Plus, 
-  Trash2, 
+  ExternalLink, 
   Copy, 
   Check, 
-  ExternalLink, 
+  Trash2, 
   BarChart2, 
-  X
+  X 
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
@@ -15,10 +16,10 @@ import { ShortlinkItem } from '@/types';
 export const ShortlinksPage: React.FC = () => {
   const { user } = useAuth();
   const userId = user?.uid || 'vault-owner';
-
+  const [searchParams] = useSearchParams();
   const [links, setLinks] = useState<ShortlinkItem[]>([]);
-  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
   // Form state
   const [originalUrl, setOriginalUrl] = useState('');
@@ -30,140 +31,136 @@ export const ShortlinksPage: React.FC = () => {
     const unsubscribe = dataService.subscribeToShortlinks(userId, (data) => {
       setLinks(data);
     });
-    return () => unsubscribe();
-  }, [userId]);
-
-  const generateRandomSlug = () => {
-    return Math.random().toString(36).substring(2, 8);
-  };
+    if (searchParams.get('create') === 'true') {
+      setIsModalOpen(true);
+    }
+    return () => {
+      unsubscribe();
+    };
+  }, [userId, searchParams]);
 
   const handleCreateShortlink = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    let cleanUrl = originalUrl.trim();
-    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-      cleanUrl = 'https://' + cleanUrl;
-    }
+    if (!originalUrl.trim()) return;
 
-    const slug = (customSlug.trim() || generateRandomSlug()).toLowerCase().replace(/[^a-z0-9-_]/g, '');
-    if (!slug) {
-      setError('Please provide a valid slug (alphanumeric, hyphens)');
-      return;
+    let targetUrl = originalUrl.trim();
+    if (!/^https?:\/\//i.test(targetUrl)) {
+      targetUrl = 'https://' + targetUrl;
     }
-
-    const newLink: ShortlinkItem = {
-      id: slug,
-      userId,
-      slug,
-      originalUrl: cleanUrl,
-      title: title.trim() || slug,
-      clicks: 0,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
 
     try {
-      await dataService.saveShortlink(userId, newLink);
-      setIsModalOpen(false);
+      const generatedSlug = customSlug.trim() || Math.random().toString(36).substring(2, 8);
+      const newShortlink: ShortlinkItem = {
+        id: 'link-' + Date.now(),
+        userId,
+        slug: generatedSlug,
+        originalUrl: targetUrl,
+        title: title.trim() || undefined,
+        clicks: 0,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      await dataService.saveShortlink(userId, newShortlink);
+
       setOriginalUrl('');
       setCustomSlug('');
       setTitle('');
-    } catch (err: unknown) {
-      const e = err as { message?: string };
-      setError(e?.message || 'Failed to create shortlink');
+      setIsModalOpen(false);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to create shortlink');
     }
   };
 
   const handleDeleteLink = async (slug: string) => {
-    await dataService.deleteShortlink(userId, slug);
-    setLinks((prev) => prev.filter((l) => l.slug !== slug));
-  };
-
-  const getFullShortUrl = (slug: string) => {
-    return `${window.location.origin}/r/${slug}`;
+    if (confirm(`Delete shortlink /r/${slug}?`)) {
+      await dataService.deleteShortlink(userId, slug);
+    }
   };
 
   const handleCopyLink = (slug: string) => {
-    navigator.clipboard.writeText(getFullShortUrl(slug));
+    const fullUrl = `${window.location.origin}/r/${slug}`;
+    navigator.clipboard.writeText(fullUrl);
     setCopiedSlug(slug);
     setTimeout(() => setCopiedSlug(null), 2000);
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3.5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            URL Shortlinks & Analytics
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            URL Shortlinks
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Create branded redirect links with click tracking and client-side routing
+          <p className="text-xs text-slate-500 mt-0.5">
+            Client-side slug redirection engine with hit tracking and analytics
           </p>
         </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs shadow-sm transition"
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs transition self-start sm:self-auto"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           <span>New Shortlink</span>
         </button>
       </div>
 
       {/* Shortlink List Table */}
-      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <span className="font-semibold text-xs text-slate-500 uppercase tracking-wider">
+      <div className="rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="p-2.5 px-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-mono">
+          <span className="font-semibold text-slate-500 uppercase tracking-wider">
             Active Links ({links.length})
           </span>
-          <span className="text-xs text-slate-400">
+          <span className="text-slate-400 tabular-nums">
             Total Clicks: {links.reduce((acc, l) => acc + l.clicks, 0)}
           </span>
         </div>
 
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {links.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-400">
+            <div className="py-8 text-center text-xs text-slate-400 font-mono">
               No shortlinks created yet. Click "New Shortlink" to create your first link.
             </div>
           ) : (
             links.map((link) => (
               <div
                 key={link.slug}
-                className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition"
+                className="py-2.5 px-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
               >
-                <div className="space-y-1">
+                <div className="space-y-0.5 min-w-0">
                   <div className="flex items-center space-x-2">
-                    <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                    <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
                       /r/{link.slug}
                     </span>
-                    <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                    <span className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">
                       {link.title || link.slug}
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-slate-400 max-w-lg truncate">
-                    Destination: <span className="hover:underline">{link.originalUrl}</span>
+                  <p className="text-[11px] font-mono text-slate-400 max-w-lg truncate">
+                    {link.originalUrl}
                   </p>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium">
-                    <BarChart2 className="w-3.5 h-3.5 text-sky-500" />
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <div className="flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-mono tabular-nums">
+                    <BarChart2 className="w-3 h-3 text-sky-500" />
                     <span>{link.clicks} clicks</span>
                   </div>
 
                   <button
                     onClick={() => handleCopyLink(link.slug)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    className="p-1 rounded text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                     title="Copy full shortlink"
                   >
                     {copiedSlug === link.slug ? (
-                      <Check className="w-4 h-4 text-emerald-500" />
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3.5 h-3.5" />
                     )}
                   </button>
 
@@ -171,18 +168,18 @@ export const ShortlinksPage: React.FC = () => {
                     href={`/r/${link.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    className="p-1 rounded text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                     title="Test redirect"
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </a>
 
                   <button
                     onClick={() => handleDeleteLink(link.slug)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                     title="Delete link"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -193,27 +190,27 @@ export const ShortlinksPage: React.FC = () => {
 
       {/* New Shortlink Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-base text-slate-900 dark:text-white">Create Shortlink</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="w-full max-w-sm rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg">
+            <div className="flex items-center justify-between mb-3.5">
+              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">Create Shortlink</h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {error && (
-              <div className="mb-4 p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs">
+              <div className="mb-3.5 p-2 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-mono">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleCreateShortlink} className="space-y-4">
+            <form onSubmit={handleCreateShortlink} className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Destination URL *
                 </label>
                 <input
@@ -222,16 +219,16 @@ export const ShortlinksPage: React.FC = () => {
                   value={originalUrl}
                   onChange={(e) => setOriginalUrl(e.target.value)}
                   placeholder="https://example.com/very/long/url"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Custom Slug / Alias (Optional)
                 </label>
                 <div className="flex items-center">
-                  <span className="px-3 py-2 text-xs bg-slate-100 dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 text-slate-400 rounded-l-xl font-mono">
+                  <span className="px-2.5 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 text-slate-400 rounded-l-md font-mono">
                     /r/
                   </span>
                   <input
@@ -239,13 +236,13 @@ export const ShortlinksPage: React.FC = () => {
                     value={customSlug}
                     onChange={(e) => setCustomSlug(e.target.value)}
                     placeholder="my-link (leave empty to randomize)"
-                    className="w-full px-3 py-2 text-xs rounded-r-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-r-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Title / Description
                 </label>
                 <input
@@ -253,21 +250,21 @@ export const ShortlinksPage: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Portfolio Website"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-3 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm"
+                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 transition"
                 >
                   Create Link
                 </button>

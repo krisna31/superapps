@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
+  LayoutDashboard, 
   CheckSquare, 
   FileText, 
   Flame, 
@@ -9,13 +10,11 @@ import {
   Code2, 
   Wrench, 
   CloudUpload, 
-  Link2, 
-  LayoutDashboard,
-  Sun, 
-  Moon, 
-  PlusCircle, 
-  KeyRound,
-  ShieldCheck
+  Link2,
+  Moon,
+  Sun,
+  ShieldCheck,
+  Plus
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -28,10 +27,9 @@ interface CommandPaletteModalProps {
 interface CommandItem {
   id: string;
   title: string;
-  category: 'Navigation' | 'Actions' | 'Tools';
+  category: 'Navigation' | 'Actions' | 'Appearance';
   icon: React.ComponentType<{ className?: string }>;
   action: () => void;
-  keywords?: string[];
 }
 
 export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen, onClose }) => {
@@ -39,18 +37,16 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { toggleTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const { user } = useAuth();
 
   const commands: CommandItem[] = [
-    // Navigation
     {
-      id: 'nav-dash',
+      id: 'nav-dashboard',
       title: 'Go to Dashboard',
       category: 'Navigation',
       icon: LayoutDashboard,
       action: () => navigate('/'),
-      keywords: ['home', 'overview', 'dashboard', 'stats']
     },
     {
       id: 'nav-tasks',
@@ -58,7 +54,6 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       category: 'Navigation',
       icon: CheckSquare,
       action: () => navigate('/tasks'),
-      keywords: ['tasks', 'kanban', 'todo', 'board']
     },
     {
       id: 'nav-notes',
@@ -66,7 +61,6 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       category: 'Navigation',
       icon: FileText,
       action: () => navigate('/notes'),
-      keywords: ['notes', 'markdown', 'vault', 'memo']
     },
     {
       id: 'nav-habits',
@@ -74,7 +68,6 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       category: 'Navigation',
       icon: Flame,
       action: () => navigate('/habits'),
-      keywords: ['habits', 'streaks', 'daily', 'routine']
     },
     {
       id: 'nav-expenses',
@@ -82,7 +75,6 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       category: 'Navigation',
       icon: Wallet,
       action: () => navigate('/expenses'),
-      keywords: ['expenses', 'budget', 'money', 'finance', 'income']
     },
     {
       id: 'nav-snippets',
@@ -90,15 +82,13 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       category: 'Navigation',
       icon: Code2,
       action: () => navigate('/snippets'),
-      keywords: ['snippets', 'code', 'syntax', 'gist']
     },
     {
       id: 'nav-swissknife',
-      title: 'Go to SwissKnife Utilities',
+      title: 'Go to SwissKnife Dev Tools',
       category: 'Navigation',
       icon: Wrench,
       action: () => navigate('/swissknife'),
-      keywords: ['tools', 'swissknife', 'developer', 'utilities']
     },
     {
       id: 'nav-dropzone',
@@ -106,7 +96,6 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       category: 'Navigation',
       icon: CloudUpload,
       action: () => navigate('/dropzone'),
-      keywords: ['dropzone', 'file', 'upload', 'share', 'storage']
     },
     {
       id: 'nav-shortlinks',
@@ -114,60 +103,50 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       category: 'Navigation',
       icon: Link2,
       action: () => navigate('/shortlinks'),
-      keywords: ['shortlinks', 'url', 'redirect', 'link']
     },
-    ...(user?.role === 'superadmin' ? [{
-      id: 'nav-settings',
-      title: 'Go to Admin Settings',
-      category: 'Navigation' as const,
-      icon: ShieldCheck,
-      action: () => navigate('/settings'),
-      keywords: ['settings', 'admin', 'superadmin', 'security', 'guest', 'registration']
-    }] : []),
-    // Quick Actions
+    ...(user?.role === 'superadmin' ? [
+      {
+        id: 'nav-settings',
+        title: 'Go to Admin Settings & Security',
+        category: 'Navigation' as const,
+        icon: ShieldCheck,
+        action: () => navigate('/settings'),
+      }
+    ] : []),
     {
-      id: 'act-new-task',
+      id: 'action-new-task',
       title: 'Create New Task',
       category: 'Actions',
-      icon: PlusCircle,
+      icon: Plus,
       action: () => navigate('/tasks?create=true'),
-      keywords: ['new task', 'add todo']
     },
     {
-      id: 'act-new-note',
+      id: 'action-new-note',
       title: 'Create New Note',
       category: 'Actions',
-      icon: PlusCircle,
+      icon: Plus,
       action: () => navigate('/notes?create=true'),
-      keywords: ['new note', 'write']
     },
     {
-      id: 'act-gen-password',
-      title: 'Generate Strong Password',
-      category: 'Tools',
-      icon: KeyRound,
-      action: () => navigate('/swissknife?tab=password'),
-      keywords: ['password', 'generator', 'security']
-    },
-    {
-      id: 'act-theme',
-      title: `Switch to ${resolvedTheme === 'dark' ? 'Light' : 'Dark'} Mode`,
+      id: 'action-new-expense',
+      title: 'Add New Expense/Income',
       category: 'Actions',
+      icon: Plus,
+      action: () => navigate('/expenses?create=true'),
+    },
+    {
+      id: 'theme-toggle',
+      title: `Switch to ${resolvedTheme === 'dark' ? 'Light' : 'Dark'} Mode`,
+      category: 'Appearance',
       icon: resolvedTheme === 'dark' ? Sun : Moon,
-      action: () => toggleTheme(),
-      keywords: ['theme', 'dark', 'light', 'mode']
+      action: () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark'),
     },
   ];
 
-  const filteredCommands = commands.filter((cmd) => {
-    if (!query.trim()) return true;
-    const q = query.toLowerCase();
-    return (
-      cmd.title.toLowerCase().includes(q) ||
-      cmd.category.toLowerCase().includes(q) ||
-      cmd.keywords?.some((k) => k.toLowerCase().includes(q))
-    );
-  });
+  const filteredCommands = commands.filter((cmd) =>
+    cmd.title.toLowerCase().includes(query.toLowerCase()) ||
+    cmd.category.toLowerCase().includes(query.toLowerCase())
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -178,9 +157,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
   }, [isOpen]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
+    if (!isOpen) return;
 
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSelectedIndex((prev) => (prev + 1) % (filteredCommands.length || 1));
@@ -207,15 +186,15 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60"
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-scale-up"
+        className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center px-4 py-3 border-b border-slate-200 dark:border-slate-800">
-          <Search className="w-5 h-5 text-slate-400 mr-3" />
+        <div className="flex items-center px-3 py-2 border-b border-slate-200 dark:border-slate-800">
+          <Search className="w-4 h-4 text-slate-400 mr-2.5 flex-shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -224,17 +203,17 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
-            placeholder="Type a command or search tools..."
-            className="w-full bg-transparent text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none"
+            placeholder="Type a command or jump to tool..."
+            className="w-full bg-transparent text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none"
           />
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 rounded">
+          <kbd className="hidden sm:inline-block px-1 py-0.5 text-[9px] font-mono bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 rounded">
             ESC
           </kbd>
         </div>
 
-        <div className="max-h-80 overflow-y-auto p-2 space-y-1">
+        <div className="max-h-72 overflow-y-auto p-1.5 space-y-0.5">
           {filteredCommands.length === 0 ? (
-            <div className="py-8 text-center text-sm text-slate-400">
+            <div className="py-6 text-center text-xs text-slate-400">
               No matching commands found.
             </div>
           ) : (
@@ -249,17 +228,17 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
                     onClose();
                   }}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-sm transition ${
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-left text-xs transition ${
                     isSelected
-                      ? 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-medium'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-medium'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <Icon className={`w-4 h-4 ${isSelected ? 'text-emerald-500' : 'text-slate-400'}`} />
+                  <div className="flex items-center space-x-2.5">
+                    <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-emerald-500' : 'text-slate-400'}`} />
                     <span>{cmd.title}</span>
                   </div>
-                  <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
                     {cmd.category}
                   </span>
                 </button>
@@ -268,9 +247,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
           )}
         </div>
 
-        <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 text-[11px] text-slate-400">
-          <span>Navigate with <kbd className="font-mono">↑</kbd> <kbd className="font-mono">↓</kbd></span>
-          <span>Select with <kbd className="font-mono">↵ Enter</kbd></span>
+        <div className="flex items-center justify-between px-3 py-1.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-[10px] font-mono text-slate-400">
+          <span>Navigate <kbd>↑</kbd> <kbd>↓</kbd></span>
+          <span>Select <kbd>↵</kbd></span>
         </div>
       </div>
     </div>
