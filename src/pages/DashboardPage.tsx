@@ -21,7 +21,7 @@ import { TaskItem, NoteItem, HabitItem, ExpenseItem } from '@/types';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
-  const currentUserId = user?.uid || 'guest-default';
+  const currentUserId = user?.uid || 'vault-owner';
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [notes, setNotes] = useState<NoteItem[]>([]);
@@ -94,10 +94,10 @@ export const DashboardPage: React.FC = () => {
             <span>Workspace Overview</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Welcome, {user?.displayName || (user?.isAnonymous ? 'Guest Explorer' : 'Guest')}!
+            Welcome, {user?.displayName || 'Workspace Owner'}!
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-            All your personal tools, synced to Firebase Spark and hosted on GitHub Pages.
+            All your personal tools, secured with your private master password and local biometrics.
           </p>
         </div>
 

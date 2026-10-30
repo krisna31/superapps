@@ -7,9 +7,19 @@ describe('Superapps Main Application Component', () => {
     localStorage.clear();
   });
 
-  it('renders application shell, brand logo, and navigation links in default guest mode', async () => {
+  it('gates unauthenticated visitor behind Private Workspace Locked and unlocks with master password', async () => {
     await act(async () => {
       render(<App />);
+    });
+
+    // Vault lock screen is presented on initial launch
+    expect(screen.getByText(/Private Workspace Locked/i)).toBeInTheDocument();
+
+    // Unlock with master password
+    const pwInput = screen.getByPlaceholderText('Enter master password...');
+    await act(async () => {
+      fireEvent.change(pwInput, { target: { value: 'superapps-private-vault' } });
+      fireEvent.click(screen.getByText('Unlock Vault'));
     });
 
     // Brand title
@@ -28,9 +38,6 @@ describe('Superapps Main Application Component', () => {
 
     // Domain display in sidebar footer
     expect(screen.getByText('apps.k31.my.id')).toBeInTheDocument();
-
-    // Admin Settings link should NOT appear for unauthenticated guest
-    expect(screen.queryByText('Admin Settings')).toBeNull();
   });
 
   it('renders Admin Settings navigation link and admin badge when logged in as superadmin', async () => {

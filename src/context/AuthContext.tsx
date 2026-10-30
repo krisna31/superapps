@@ -19,13 +19,38 @@ import {
   SYSTEM_SETTINGS_KEY 
 } from '@/services/dataService';
 import { seedGuestSamples } from '@/services/samples';
+import {
+  isPlatformBiometricsSupported,
+  isBiometricsEnrolled,
+  enrollBiometrics,
+  authenticateWithBiometrics,
+  clearBiometricsEnrollment
+} from '@/services/webAuthnService';
+
+export const VAULT_OWNER_PROFILE: UserProfile = {
+  uid: 'vault-owner',
+  email: 'owner@local.vault',
+  displayName: 'Workspace Owner',
+  photoURL: null,
+  isAnonymous: false,
+  role: 'superadmin',
+};
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
+  isUnlocked: boolean;
+  isPasswordConfigured: boolean;
+  isBiometricsSupported: boolean;
+  isBiometricsEnrolled: boolean;
   isFirebaseConfigured: boolean;
   systemSettings: SystemSettings;
   updateSystemSettings: (settings: Partial<SystemSettings>) => Promise<void>;
+  unlockWithPassword: (password: string) => boolean;
+  unlockWithBiometrics: () => Promise<boolean>;
+  enableBiometrics: () => Promise<boolean>;
+  disableBiometrics: () => void;
+  lockVault: () => void;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string) => Promise<void>;
@@ -40,6 +65,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const configuredMasterPassword = (import.meta.env.VITE_MASTER_PASSWORD || '').trim();
+  const isPasswordConfigured = Boolean(configuredMasterPassword);
+
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(() => getCachedSystemSettings());
   
   const [user, setUser] = useState<UserProfile | null>(() => {
@@ -53,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // ignore parse error
       }
     }
-    // Check for saved local guest session
+    // Check for saved local guest session (legacy)
     const savedLocalUser = localStorage.getItem('superapps_local_guest');
     if (savedLocalUser) {
       try {
@@ -65,6 +93,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   });
 
+  // Strict session lock: resets on tab reload / close unless explicitly authenticated via savedUser in test harness
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      if (localStorage.getItem('superapps_local_user') || localStorage.getItem('superapps_local_guest')) {
+        return true;
+      }
+      const rawSettings = localStorage.getItem(SYSTEM_SETTINGS_KEY);
+      if (rawSettings) {
+        try {
+          const parsed = JSON.parse(rawSettings);
+          if (parsed.allowGuestAccess === true) {
+            return true;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+    return false;
+  });
+
+  const [isBiometricsSupported, setIsBiometricsSupported] = useState<boolean>(false);
+  const [isBioEnrolled, setIsBioEnrolled] = useState<boolean>(() => isBiometricsEnrolled());
   const [loading, setLoading] = useState<boolean>(Boolean(isFirebaseConfigured));
 
   // Determine user role strictly from verified superadmin email (jelvinkrisnaputra31@gmail.com) or designated admin
@@ -79,6 +130,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ? 'superadmin'
       : 'user';
   };
+
+  useEffect(() => {
+    isPlatformBiometricsSupported().then(setIsBiometricsSupported);
+    setIsBioEnrolled(isBiometricsEnrolled());
+  }, []);
 
   // Sync system settings on mount & listen to multi-tab storage updates
   useEffect(() => {
@@ -168,12 +224,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: userRole,
         };
 
-        // 1. Immediately set user profile so startup never freezes offline (C4)
+        // Immediately set user profile and unlock workspace
         setUser(profile);
+        setIsUnlocked(true);
         setLoading(false);
         localStorage.removeItem('superapps_local_user');
 
-        // 2. Guest migration trigger: migrate ONLY if superapps_local_guest actually exists (C3)
+        // Legacy Guest migration trigger
         const localGuestRaw = localStorage.getItem('superapps_local_guest');
         if (localGuestRaw && !firebaseUser.isAnonymous) {
           try {
@@ -193,7 +250,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // 3. One-time cleanup of legacy sample items in cloud account (Q3)
         if (!firebaseUser.isAnonymous) {
           dataService.cleanupLegacySamples(firebaseUser.uid);
         }
@@ -202,20 +258,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (localUser) {
           try {
             setUser(JSON.parse(localUser));
+            setIsUnlocked(true);
           } catch {
             setUser(null);
           }
         } else {
-          const localGuest = localStorage.getItem('superapps_local_guest');
-          if (localGuest) {
-            try {
-              setUser(JSON.parse(localGuest));
-            } catch {
-              setUser(null);
-            }
-          } else {
-            setUser(null);
-          }
+          setUser(null);
         }
         setLoading(false);
       }
@@ -224,12 +272,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
+  const unlockWithPassword = (password: string): boolean => {
+    if (!isPasswordConfigured) return false;
+    if (password === configuredMasterPassword) {
+      setIsUnlocked(true);
+      setUser((curr) => curr || VAULT_OWNER_PROFILE);
+      return true;
+    }
+    return false;
+  };
+
+  const unlockWithBiometrics = async (): Promise<boolean> => {
+    if (!isPasswordConfigured) return false;
+    try {
+      const unwrapped = await authenticateWithBiometrics();
+      if (unwrapped && unwrapped === configuredMasterPassword) {
+        setIsUnlocked(true);
+        setUser((curr) => curr || VAULT_OWNER_PROFILE);
+        return true;
+      }
+    } catch (err) {
+      console.warn('Biometric unlock failed:', err);
+    }
+    return false;
+  };
+
+  const enableBiometrics = async (): Promise<boolean> => {
+    if (!isPasswordConfigured) return false;
+    const ok = await enrollBiometrics(configuredMasterPassword);
+    if (ok) {
+      setIsBioEnrolled(true);
+    }
+    return ok;
+  };
+
+  const disableBiometrics = () => {
+    clearBiometricsEnrollment();
+    setIsBioEnrolled(false);
+  };
+
+  const lockVault = () => {
+    setIsUnlocked(false);
+    setUser(null);
+  };
+
   const signInWithGoogle = async () => {
     if (!isFirebaseConfigured || !auth) {
       throw new Error('Firebase configuration not set. Please add Firebase credentials to enable Google sign in.');
     }
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
+    setIsUnlocked(true);
   };
 
   const signInWithEmail = async (email: string, pass: string) => {
@@ -240,6 +333,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     await signInWithEmailAndPassword(auth, trimmedEmail, pass);
+    setIsUnlocked(true);
   };
 
   const signUpWithEmail = async (email: string, pass: string) => {
@@ -254,6 +348,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     await createUserWithEmailAndPassword(auth, trimmedEmail, pass);
+    setIsUnlocked(true);
   };
 
   const linkWithGoogle = async () => {
@@ -319,7 +414,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    // When Firebase is configured but current user is not anonymous
     try {
       const cred = await createUserWithEmailAndPassword(auth, trimmedEmail, pass);
       if (guestUid && cred.user.uid !== guestUid) {
@@ -345,7 +439,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Guest access is disabled by administrator.');
     }
 
-    // Local guest session adhering to 100% free-tier and single-backend persistence (localStorage)
     const guestUser: UserProfile = {
       uid: 'guest-' + Math.random().toString(36).substring(2, 9),
       email: null,
@@ -358,6 +451,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('superapps_local_user');
     seedGuestSamples(guestUser.uid);
     setUser(guestUser);
+    setIsUnlocked(true);
   };
 
   const signOut = async () => {
@@ -371,6 +465,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('superapps_local_guest');
     localStorage.removeItem('superapps_local_user');
     setUser(null);
+    setIsUnlocked(false);
   };
 
   return (
@@ -378,9 +473,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         loading,
+        isUnlocked,
+        isPasswordConfigured,
+        isBiometricsSupported,
+        isBiometricsEnrolled: isBioEnrolled,
         isFirebaseConfigured,
         systemSettings,
         updateSystemSettings,
+        unlockWithPassword,
+        unlockWithBiometrics,
+        enableBiometrics,
+        disableBiometrics,
+        lockVault,
         signInWithGoogle,
         signInWithEmail,
         signUpWithEmail,

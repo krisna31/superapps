@@ -14,7 +14,7 @@ import { DropzoneItem } from '@/types';
 
 export const DropZonePage: React.FC = () => {
   const { user, isFirebaseConfigured } = useAuth();
-  const userId = user?.uid || 'guest-default';
+  const userId = user?.uid || 'vault-owner';
 
   const [files, setFiles] = useState<DropzoneItem[]>([]);
   const [uploading, setUploading] = useState(false);

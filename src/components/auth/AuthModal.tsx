@@ -15,7 +15,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     signUpWithEmail, 
     linkWithGoogle,
     linkWithEmail,
-    continueAsGuest,
     isFirebaseConfigured,
     systemSettings
   } = useAuth();
@@ -77,21 +76,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleGuest = async () => {
-    if (!systemSettings.allowGuestAccess) {
-      setError('Guest access is disabled by administrator.');
-      return;
-    }
-    setLoading(true);
-    try {
-      await continueAsGuest();
-      onClose();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to start guest session.');
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -248,21 +233,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </span>
           )}
         </div>
-
-        {/* Guest Access Option (hidden if already guest or allowGuestAccess is false) */}
-        {!isGuest && systemSettings.allowGuestAccess && (
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={handleGuest}
-              disabled={loading}
-              className="w-full flex items-center justify-center space-x-2 py-2 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs transition"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Continue as Guest (Instant Access)</span>
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

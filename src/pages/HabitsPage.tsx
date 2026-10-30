@@ -13,7 +13,7 @@ import { HabitItem } from '@/types';
 
 export const HabitsPage: React.FC = () => {
   const { user } = useAuth();
-  const userId = user?.uid || 'guest-default';
+  const userId = user?.uid || 'vault-owner';
 
   const [habits, setHabits] = useState<HabitItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);

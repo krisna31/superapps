@@ -13,7 +13,7 @@ import { TaskItem, TaskStatus, TaskPriority } from '@/types';
 
 export const TasksPage: React.FC = () => {
   const { user } = useAuth();
-  const userId = user?.uid || 'guest-default';
+  const userId = user?.uid || 'vault-owner';
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [search, setSearch] = useState('');

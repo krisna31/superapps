@@ -7,7 +7,9 @@ import {
   Moon, 
   Monitor, 
   User, 
-  LogOut
+  LogOut,
+  Lock,
+  Fingerprint
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -24,8 +26,24 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAuthModal,
   onToggleSidebar,
 }) => {
-  const { user, signOut } = useAuth();
+  const { 
+    user, 
+    signOut, 
+    lockVault, 
+    isBiometricsSupported, 
+    isBiometricsEnrolled, 
+    enableBiometrics, 
+    disableBiometrics 
+  } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
+
+  const handleBiometricToggle = async () => {
+    if (isBiometricsEnrolled) {
+      disableBiometrics();
+    } else {
+      await enableBiometrics();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-30 h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between transition-colors">
@@ -83,6 +101,36 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Live Cloud Sync Status Badge */}
         <SyncStatusBadge onOpenAuthModal={onOpenAuthModal} />
 
+        {/* Biometrics Enroll / Toggle Button (shown when platform supports WebAuthn) */}
+        {isBiometricsSupported && (
+          <button
+            onClick={handleBiometricToggle}
+            className={`p-2 rounded-lg transition ${
+              isBiometricsEnrolled
+                ? 'text-emerald-500 hover:bg-emerald-500/10'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+            title={
+              isBiometricsEnrolled
+                ? 'Fingerprint unlock is enrolled on this device (click to remove)'
+                : 'Enable fingerprint unlock for this device'
+            }
+            aria-label="Toggle fingerprint unlock"
+          >
+            <Fingerprint className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Instant Vault Lock Button */}
+        <button
+          onClick={lockVault}
+          className="p-2 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          title="Lock Private Vault"
+          aria-label="Lock Private Vault"
+        >
+          <Lock className="w-4 h-4" />
+        </button>
+
         {/* Theme Mode Toggle Button */}
         <div className="relative group">
           <button
@@ -107,16 +155,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               {user.photoURL ? (
                 <img
                   src={user.photoURL}
-                  alt={user.displayName || 'User'}
+                  alt={user.displayName || 'Owner'}
                   className="w-7 h-7 rounded-full border border-slate-300 dark:border-slate-700 object-cover"
                 />
               ) : (
                 <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs border border-emerald-500/30">
-                  {user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
+                  {user.displayName ? user.displayName.charAt(0).toUpperCase() : 'O'}
                 </div>
               )}
               <span className="hidden lg:inline-block text-xs font-medium text-slate-700 dark:text-slate-200 max-w-[120px] truncate">
-                {user.displayName || (user.isAnonymous ? 'Guest' : 'User')}
+                {user.displayName || 'Owner'}
               </span>
               {user.role === 'superadmin' && (
                 <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded">

@@ -154,7 +154,9 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
         {status === 'guest' && (
           <>
             <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span className="hidden sm:inline">Guest (Local)</span>
+            <span className="hidden sm:inline">
+              {user?.uid === 'vault-owner' ? 'Private (Local)' : 'Guest (Local)'}
+            </span>
           </>
         )}
         {status === 'syncing' && (
@@ -200,7 +202,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                 : status === 'syncing'
                 ? 'Syncing'
                 : status === 'guest'
-                ? 'Guest Mode'
+                ? 'Private Vault'
                 : 'Synced'}
             </span>
           </div>
@@ -238,7 +240,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                   : status === 'syncing'
                   ? 'Syncing...'
                   : status === 'guest'
-                  ? 'Disconnected (Guest)'
+                  ? 'Private Local Vault'
                   : 'Connected (Firestore)'}
               </span>
             </div>

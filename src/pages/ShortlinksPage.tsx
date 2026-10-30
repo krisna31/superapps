@@ -14,7 +14,7 @@ import { ShortlinkItem } from '@/types';
 
 export const ShortlinksPage: React.FC = () => {
   const { user } = useAuth();
-  const userId = user?.uid || 'guest-default';
+  const userId = user?.uid || 'vault-owner';
 
   const [links, setLinks] = useState<ShortlinkItem[]>([]);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);

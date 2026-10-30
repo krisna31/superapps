@@ -17,7 +17,7 @@ import { NoteItem } from '@/types';
 
 export const NotesPage: React.FC = () => {
   const { user } = useAuth();
-  const userId = user?.uid || 'guest-default';
+  const userId = user?.uid || 'vault-owner';
 
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
