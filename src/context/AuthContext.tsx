@@ -46,7 +46,7 @@ interface AuthContextType {
   isFirebaseConfigured: boolean;
   systemSettings: SystemSettings;
   updateSystemSettings: (settings: Partial<SystemSettings>) => Promise<void>;
-  unlockWithPassword: (password: string) => boolean;
+  unlockWithPassword: (password: string) => Promise<boolean>;
   unlockWithBiometrics: () => Promise<boolean>;
   enableBiometrics: () => Promise<boolean>;
   disableBiometrics: () => void;
@@ -62,11 +62,19 @@ interface AuthContextType {
   linkAccountWithEmail: (email: string, pass: string) => Promise<void>;
 }
 
+export async function computeSHA256(input: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').toLowerCase();
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const configuredMasterPassword = (import.meta.env.VITE_MASTER_PASSWORD || '').trim();
-  const isPasswordConfigured = Boolean(configuredMasterPassword);
+  const configuredMasterPasswordHash = (import.meta.env.VITE_MASTER_PASSWORD_HASH || '').trim().toLowerCase();
+  const isPasswordConfigured = Boolean(configuredMasterPasswordHash);
 
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(() => getCachedSystemSettings());
   
@@ -272,12 +280,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const unlockWithPassword = (password: string): boolean => {
+  const unlockWithPassword = async (password: string): Promise<boolean> => {
     if (!isPasswordConfigured) return false;
-    if (password === configuredMasterPassword) {
-      setIsUnlocked(true);
-      setUser((curr) => curr || VAULT_OWNER_PROFILE);
-      return true;
+    try {
+      const computedHash = await computeSHA256(password);
+      if (computedHash === configuredMasterPasswordHash) {
+        setIsUnlocked(true);
+        setUser((curr) => curr || VAULT_OWNER_PROFILE);
+        return true;
+      }
+    } catch (err) {
+      console.warn('Password hash verification failed:', err);
     }
     return false;
   };
@@ -286,7 +299,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!isPasswordConfigured) return false;
     try {
       const unwrapped = await authenticateWithBiometrics();
-      if (unwrapped && unwrapped === configuredMasterPassword) {
+      if (unwrapped && unwrapped.toLowerCase() === configuredMasterPasswordHash) {
         setIsUnlocked(true);
         setUser((curr) => curr || VAULT_OWNER_PROFILE);
         return true;
@@ -299,7 +312,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const enableBiometrics = async (): Promise<boolean> => {
     if (!isPasswordConfigured) return false;
-    const ok = await enrollBiometrics(configuredMasterPassword);
+    const ok = await enrollBiometrics(configuredMasterPasswordHash);
     if (ok) {
       setIsBioEnrolled(true);
     }

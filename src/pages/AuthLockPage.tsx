@@ -24,7 +24,7 @@ export const AuthLockPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const success = unlockWithPassword(password);
+      const success = await unlockWithPassword(password);
       if (!success) {
         setError('Incorrect master password. Access denied.');
       }
@@ -69,16 +69,16 @@ export const AuthLockPage: React.FC = () => {
             </div>
 
             <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-1.5">
-              Master Password Not Configured
+              Master Password Hash Not Configured
             </h2>
 
             <p className="text-xs text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
-              This workspace is configured for strict private use. To unlock and access your tools, you must define the master password in your environment configuration:
+              This workspace is configured for strict private use. To unlock and access your tools, you must define the master password SHA-256 hash in your environment configuration:
             </p>
 
             <div className="p-2.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-xs text-left mb-4 text-slate-700 dark:text-slate-300">
               <p className="text-slate-400 mb-0.5"># .env or GitHub Secrets</p>
-              <p className="text-emerald-600 dark:text-emerald-400 font-semibold">VITE_MASTER_PASSWORD=your_secure_password</p>
+              <p className="text-emerald-600 dark:text-emerald-400 font-semibold">VITE_MASTER_PASSWORD_HASH=your_sha256_hash</p>
             </div>
 
             <p className="text-[10px] text-slate-500 font-mono">
