@@ -13,6 +13,7 @@ import {
   ChevronLeft, 
   ChevronRight,
   Download,
+  Video,
   Globe,
   ShieldCheck
 } from 'lucide-react';
@@ -57,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile })
     { name: 'SwissKnife Dev Tools', path: '/swissknife', icon: Wrench },
     { name: 'Dropzone File Sharing', path: '/dropzone', icon: CloudUpload },
     { name: 'URL Shortlinks', path: '/shortlinks', icon: Link2 },
+    { name: 'Media Downloader', path: '/downloader', icon: Video },
     ...(user?.role === 'superadmin' ? [{ name: 'Admin Settings', path: '/settings', icon: ShieldCheck }] : []),
   ];
 

@@ -96,6 +96,38 @@ export interface DropzoneItem {
   uploadedAt: number;
 }
 
+export type MediaPlatform = 'instagram' | 'facebook' | 'tiktok' | 'twitter' | 'youtube' | 'generic';
+
+export interface MediaDownloadItem {
+  id: string;
+  userId: string;
+  originalUrl: string;
+  title: string;
+  platform: MediaPlatform;
+  format: 'video' | 'audio' | 'picker';
+  quality?: string;
+  downloadUrl: string;
+  thumbnailUrl?: string;
+  filename?: string;
+  createdAt: number;
+}
+
+export interface PickerMediaItem {
+  type: 'photo' | 'video' | 'gif';
+  url: string;
+  thumb?: string;
+}
+
+export interface MediaExtractionResult {
+  status: 'single' | 'picker' | 'direct';
+  platform: MediaPlatform;
+  title?: string;
+  url?: string;
+  filename?: string;
+  audioUrl?: string;
+  audioFilename?: string;
+  picker?: PickerMediaItem[];
+}
 
 export interface WorkspaceBackup {
   version: string;
@@ -109,6 +141,7 @@ export interface WorkspaceBackup {
     snippets: SnippetItem[];
     shortlinks: ShortlinkItem[];
     dropzone: DropzoneItem[];
+    mediaHistory?: MediaDownloadItem[];
     systemSettings?: SystemSettings;
   };
 }

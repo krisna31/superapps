@@ -14,6 +14,7 @@ const SnippetsPage = React.lazy(() => import('./pages/SnippetsPage').then((m) =>
 const SwissKnifePage = React.lazy(() => import('./pages/SwissKnifePage').then((m) => ({ default: m.SwissKnifePage })));
 const DropZonePage = React.lazy(() => import('./pages/DropZonePage').then((m) => ({ default: m.DropZonePage })));
 const ShortlinksPage = React.lazy(() => import('./pages/ShortlinksPage').then((m) => ({ default: m.ShortlinksPage })));
+const MediaDownloaderPage = React.lazy(() => import('./pages/MediaDownloaderPage').then((m) => ({ default: m.MediaDownloaderPage })));
 const RedirectHandlerPage = React.lazy(() => import('./pages/RedirectHandlerPage').then((m) => ({ default: m.RedirectHandlerPage })));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 
@@ -47,6 +48,7 @@ export const App: React.FC = () => {
                 <Route path="swissknife" element={<SwissKnifePage />} />
                 <Route path="dropzone" element={<DropZonePage />} />
                 <Route path="shortlinks" element={<ShortlinksPage />} />
+                <Route path="downloader" element={<MediaDownloaderPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 {/* Catch-all redirect to Dashboard */}
                 <Route path="*" element={<Navigate to="/" replace />} />

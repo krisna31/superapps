@@ -23,6 +23,7 @@ import {
   SnippetItem, 
   ShortlinkItem, 
   DropzoneItem,
+  MediaDownloadItem,
   SystemSettings,
   WorkspaceBackup 
 } from '@/types';
@@ -85,6 +86,7 @@ const habitRepo = createCollectionRepo<HabitItem>({ name: 'habits' });
 const expenseRepo = createCollectionRepo<ExpenseItem>({ name: 'expenses' });
 const snippetRepo = createCollectionRepo<SnippetItem>({ name: 'snippets' });
 const dropzoneRepo = createCollectionRepo<DropzoneItem>({ name: 'dropzone' });
+const mediaHistoryRepo = createCollectionRepo<MediaDownloadItem>({ name: 'media_history' });
 
 // Local storage helper for shortlinks
 const getLocalData = <T>(key: string): T[] => {
@@ -361,6 +363,41 @@ export const dataService = {
 
   subscribeToDropzone: (userId: string, callback: (items: DropzoneItem[]) => void): Unsubscribe =>
     dropzoneRepo.subscribe(userId, callback),
+
+  /* ==================== MEDIA DOWNLOADER HISTORY SERVICE ==================== */
+  getMediaHistory: (userId: string): Promise<MediaDownloadItem[]> =>
+    mediaHistoryRepo.list(userId),
+
+  async saveMediaDownloadItem(userId: string, item: Omit<MediaDownloadItem, 'id' | 'createdAt' | 'userId'> & { id?: string; createdAt?: number; userId?: string }): Promise<MediaDownloadItem> {
+    const historyItem: MediaDownloadItem = {
+      id: item.id || 'media-' + Math.random().toString(36).substring(2, 9),
+      userId,
+      originalUrl: item.originalUrl,
+      title: item.title,
+      platform: item.platform,
+      format: item.format,
+      quality: item.quality,
+      downloadUrl: item.downloadUrl,
+      thumbnailUrl: item.thumbnailUrl,
+      filename: item.filename,
+      createdAt: item.createdAt || Date.now(),
+    };
+    await mediaHistoryRepo.save(userId, historyItem);
+    return historyItem;
+  },
+
+  deleteMediaDownloadItem: (userId: string, id: string): Promise<void> =>
+    mediaHistoryRepo.remove(userId, id),
+
+  async clearMediaHistory(userId: string): Promise<void> {
+    const items = await mediaHistoryRepo.list(userId);
+    for (const item of items) {
+      await mediaHistoryRepo.remove(userId, item.id);
+    }
+  },
+
+  subscribeToMediaHistory: (userId: string, callback: (items: MediaDownloadItem[]) => void): Unsubscribe =>
+    mediaHistoryRepo.subscribe(userId, callback),
 
   /* ==================== SYSTEM SETTINGS SERVICE ==================== */
   async getSystemSettings(): Promise<SystemSettings> {
@@ -701,7 +738,7 @@ export const dataService = {
 
   /* ==================== WORKSPACE BACKUP & PORTABILITY (MILESTONE 4) ==================== */
   async exportWorkspaceBackup(userId: string): Promise<WorkspaceBackup> {
-    const [tasks, notes, habits, expenses, snippets, shortlinks, dropzone, systemSettings] = await Promise.all([
+    const [tasks, notes, habits, expenses, snippets, shortlinks, dropzone, mediaHistory, systemSettings] = await Promise.all([
       this.getTasks(userId),
       this.getNotes(userId),
       this.getHabits(userId),
@@ -709,6 +746,7 @@ export const dataService = {
       this.getSnippets(userId),
       this.getShortlinks(userId),
       this.getDropzoneItems(userId),
+      mediaHistoryRepo.list(userId),
       this.getSystemSettings(),
     ]);
 
@@ -724,6 +762,7 @@ export const dataService = {
         snippets,
         shortlinks,
         dropzone,
+        mediaHistory,
         systemSettings,
       },
     };
@@ -821,6 +860,18 @@ export const dataService = {
       }
     }
 
+    // Import media history
+    if (Array.isArray(backup.data.mediaHistory)) {
+      for (const m of backup.data.mediaHistory) {
+        try {
+          await mediaHistoryRepo.save(userId, { ...m, userId });
+          count++;
+        } catch (err: any) {
+          errors.push(`Media history "${m.title}": ${err?.message}`);
+        }
+      }
+    }
+
     return {
       success: errors.length === 0,
       importedCount: count,
@@ -854,7 +905,7 @@ export const dataService = {
 
   resetWorkspaceData(userId: string): void {
     if (typeof window === 'undefined' || !window.localStorage) return;
-    const collections = ['tasks', 'notes', 'habits', 'expenses', 'snippets', 'shortlinks', 'dropzone'];
+    const collections = ['tasks', 'notes', 'habits', 'expenses', 'snippets', 'shortlinks', 'dropzone', 'media_history'];
     for (const col of collections) {
       const key = `superapps_${col}_${userId}`;
       localStorage.setItem(key, JSON.stringify([]));

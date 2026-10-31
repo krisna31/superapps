@@ -680,3 +680,82 @@ describe('dataService.migrateGuestData', () => {
     expect(expenses.some((e) => e.id === 'exp-imported-1' && e.userId === userId)).toBe(true);
   });
 });
+
+describe('dataService Media Downloader History Persistence', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('saves and retrieves media download history for a user', async () => {
+    const userId = 'media-user-1';
+    const saved = await dataService.saveMediaDownloadItem(userId, {
+      originalUrl: 'https://instagram.com/reel/123',
+      title: 'cool-reel.mp4',
+      platform: 'instagram',
+      format: 'video',
+      quality: '1080',
+      downloadUrl: 'https://cdn.example.com/reel.mp4',
+      filename: 'cool-reel.mp4',
+    });
+
+    expect(saved.id).toBeDefined();
+    expect(saved.userId).toBe(userId);
+    expect(saved.platform).toBe('instagram');
+
+    const history = await dataService.getMediaHistory(userId);
+    expect(history).toHaveLength(1);
+    expect(history[0].title).toBe('cool-reel.mp4');
+  });
+
+  it('deletes an individual media history entry', async () => {
+    const userId = 'media-user-2';
+    const item = await dataService.saveMediaDownloadItem(userId, {
+      originalUrl: 'https://tiktok.com/@u/video/1',
+      title: 'dance.mp4',
+      platform: 'tiktok',
+      format: 'video',
+      downloadUrl: 'https://cdn.example.com/dance.mp4',
+    });
+
+    await dataService.deleteMediaDownloadItem(userId, item.id);
+    const history = await dataService.getMediaHistory(userId);
+    expect(history).toHaveLength(0);
+  });
+
+  it('clears all media history entries', async () => {
+    const userId = 'media-user-3';
+    await dataService.saveMediaDownloadItem(userId, {
+      originalUrl: 'https://x.com/status/1',
+      title: 'tweet1.mp4',
+      platform: 'twitter',
+      format: 'video',
+      downloadUrl: 'https://cdn.example.com/1.mp4',
+    });
+    await dataService.saveMediaDownloadItem(userId, {
+      originalUrl: 'https://x.com/status/2',
+      title: 'tweet2.mp4',
+      platform: 'twitter',
+      format: 'video',
+      downloadUrl: 'https://cdn.example.com/2.mp4',
+    });
+
+    await dataService.clearMediaHistory(userId);
+    const history = await dataService.getMediaHistory(userId);
+    expect(history).toHaveLength(0);
+  });
+
+  it('resetWorkspaceData wipes media_history alongside other collections', async () => {
+    const userId = 'media-user-4';
+    await dataService.saveMediaDownloadItem(userId, {
+      originalUrl: 'https://youtube.com/watch?v=1',
+      title: 'yt.mp4',
+      platform: 'youtube',
+      format: 'video',
+      downloadUrl: 'https://cdn.example.com/yt.mp4',
+    });
+
+    dataService.resetWorkspaceData(userId);
+    const history = await dataService.getMediaHistory(userId);
+    expect(history).toHaveLength(0);
+  });
+});

@@ -19,7 +19,8 @@ export type SupportedCollection =
   | 'habits'
   | 'expenses'
   | 'snippets'
-  | 'dropzone';
+  | 'dropzone'
+  | 'media_history';
 
 export interface CollectionRepo<T extends { id: string }> {
   list(userId: string): Promise<T[]>;

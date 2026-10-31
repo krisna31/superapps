@@ -39,6 +39,7 @@ describe('Superapps Main Application Component', () => {
     expect(screen.getAllByText('SwissKnife Dev Tools').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Dropzone File Sharing').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('URL Shortlinks').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Media Downloader').length).toBeGreaterThanOrEqual(1);
 
     // Domain display in sidebar footer
     expect(screen.getByText('apps.k31.my.id')).toBeInTheDocument();

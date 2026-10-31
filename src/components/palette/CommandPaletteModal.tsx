@@ -11,6 +11,7 @@ import {
   Wrench, 
   CloudUpload, 
   Link2,
+  Video,
   Moon,
   Sun,
   ShieldCheck,
@@ -104,6 +105,14 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       icon: Link2,
       action: () => navigate('/shortlinks'),
     },
+    {
+      id: 'nav-downloader',
+      title: 'Go to Media Downloader',
+      category: 'Navigation',
+      icon: Video,
+      action: () => navigate('/downloader'),
+    },
+
     ...(user?.role === 'superadmin' ? [
       {
         id: 'nav-settings',
