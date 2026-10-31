@@ -8,7 +8,7 @@ import { AuthLockPage } from '@/pages/AuthLockPage';
 import { useAuth } from '@/context/AuthContext';
 
 export const AppShell: React.FC = () => {
-  const { user, isUnlocked, isPasswordConfigured, systemSettings, loading } = useAuth();
+  const { user, systemSettings, loading } = useAuth();
   const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -33,8 +33,8 @@ export const AppShell: React.FC = () => {
     );
   }
 
-  // Strict Access Control: if master password not configured, vault is locked, or guest access disabled for unauthenticated/guest
-  if (!isPasswordConfigured || !isUnlocked || (!systemSettings.allowGuestAccess && (!user || user.isAnonymous))) {
+  // Access control lock screen: if guest access is disabled and user is not authenticated or is anonymous
+  if (!systemSettings.allowGuestAccess && (!user || user.isAnonymous)) {
     return <AuthLockPage />;
   }
 

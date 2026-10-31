@@ -244,10 +244,11 @@ describe('SyncStatusBadge Component', () => {
     const button = screen.getByRole('button', { name: /cloud sync status indicator/i });
     fireEvent.click(button);
 
-    expect(screen.getByText('Connected (Firestore)')).toBeInTheDocument();
-    expect(screen.getByText('Dual Persistence')).toBeInTheDocument();
+    // In test environment without live Firebase env vars, it correctly shows Local Storage Fallback
+    expect(screen.getByText('Local Storage Fallback')).toBeInTheDocument();
+    expect(screen.getByText('Local Browser Storage')).toBeInTheDocument();
     expect(screen.getByText('Last Sync')).toBeInTheDocument();
-    expect(screen.getByText(/All changes synchronize across open tabs and devices in real-time/i)).toBeInTheDocument();
+    expect(screen.getByText(/Running in local storage fallback mode/i)).toBeInTheDocument();
   });
 
   /* ------------------------------------------------------------------------- */

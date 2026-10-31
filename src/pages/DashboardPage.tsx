@@ -21,7 +21,7 @@ import { TaskItem, HabitItem, ExpenseItem, NoteItem } from '@/types';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
-  const currentUserId = user?.uid || 'vault-owner';
+  const currentUserId = user?.uid || 'guest-default';
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [habits, setHabits] = useState<HabitItem[]>([]);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Cloud, CloudOff, RefreshCw, Check, AlertTriangle, Database } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { isFirebaseConfigured } from '@/firebase/config';
 import { subscribeSyncErrors, getLastSyncError, clearLastSyncError, SyncErrorEvent } from '@/services/syncErrors';
 
 interface SyncStatusBadgeProps {
@@ -87,7 +88,6 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
   }, [showPopover]);
 
   const isGuest = !user || user.isAnonymous || user.uid.startsWith('guest-');
-  const isVaultOwner = user?.uid === 'vault-owner' || user?.email === 'owner@local.vault';
 
   let status: 'offline' | 'guest' | 'syncing' | 'synced' = 'synced';
   if (!isOnline) {
@@ -152,9 +152,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
         {status === 'guest' && (
           <>
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            <span className="hidden sm:inline">
-              {user?.uid === 'vault-owner' ? 'Private (Local)' : 'Guest (Local)'}
-            </span>
+            <span className="hidden sm:inline">Guest (Local)</span>
           </>
         )}
         {status === 'syncing' && (
@@ -167,9 +165,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
           <>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span className="hidden sm:inline">
-              {isVaultOwner ? 'Local Vault' : 'Synced'}
-            </span>
+            <span className="hidden sm:inline">Synced</span>
           </>
         )}
       </button>
@@ -202,9 +198,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                 : status === 'syncing'
                 ? 'Syncing'
                 : status === 'guest'
-                ? 'Private Vault'
-                : isVaultOwner
-                ? 'Local Vault'
+                ? 'Guest Mode'
                 : 'Synced'}
             </span>
           </div>
@@ -242,10 +236,10 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                   : status === 'syncing'
                   ? 'Syncing...'
                   : status === 'guest'
-                  ? 'Private Local Vault'
-                  : isVaultOwner
-                  ? 'Unconfigured (Local Private Vault)'
-                  : 'Connected (Firestore)'}
+                  ? 'Disconnected (Guest)'
+                  : isFirebaseConfigured
+                  ? 'Connected (Firestore)'
+                  : 'Local Storage Fallback'}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -257,9 +251,9 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                   ? 'Uploading Mutations'
                   : status === 'guest'
                   ? 'Local-only Storage'
-                  : isVaultOwner
-                  ? 'Local Browser Storage'
-                  : 'Dual Persistence'}
+                  : isFirebaseConfigured
+                  ? 'Dual Persistence'
+                  : 'Local Browser Storage'}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -310,14 +304,14 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
           {status === 'synced' && (
             <div className="space-y-1.5">
               <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
-                {isVaultOwner
-                  ? 'All changes synchronize across open tabs in real-time with local browser storage. (Cloud Firestore is unconfigured).'
-                  : 'All changes synchronize across open tabs and devices in real-time with dual persistence to browser storage and Cloud Firestore.'}
+                {isFirebaseConfigured
+                  ? 'All changes synchronize across open tabs and devices in real-time with dual persistence to browser storage and Cloud Firestore.'
+                  : 'Running in local storage fallback mode. Configure Firebase secrets in GitHub Actions to enable cloud synchronization across devices.'}
               </p>
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800">
                 <span>Account</span>
                 <span className="font-mono text-slate-700 dark:text-slate-300 truncate max-w-[150px]">
-                  {user?.email || user?.displayName || 'Private Owner'}
+                  {user?.email || user?.displayName || 'User'}
                 </span>
               </div>
             </div>

@@ -15,7 +15,7 @@ import { ExpenseItem } from '@/types';
 
 export const ExpensesPage: React.FC = () => {
   const { user } = useAuth();
-  const userId = user?.uid || 'vault-owner';
+  const userId = user?.uid || 'guest-default';
   const [searchParams] = useSearchParams();
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [filterType, setFilterType] = useState<'all' | 'expense' | 'income'>('all');

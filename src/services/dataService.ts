@@ -54,8 +54,8 @@ export class SlugTakenError extends Error {
 export const SYSTEM_SETTINGS_KEY = 'superapps_system_settings';
 
 export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
-  allowGuestAccess: true,
-  allowUserRegistration: true,
+  allowGuestAccess: false,
+  allowUserRegistration: false,
   superadminEmail: 'jelvinkrisnaputra31@gmail.com',
 };
 

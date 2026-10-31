@@ -15,7 +15,7 @@ import { ShortlinkItem } from '@/types';
 
 export const ShortlinksPage: React.FC = () => {
   const { user } = useAuth();
-  const userId = user?.uid || 'vault-owner';
+  const userId = user?.uid || 'guest-default';
   const [searchParams] = useSearchParams();
   const [links, setLinks] = useState<ShortlinkItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);

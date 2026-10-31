@@ -129,22 +129,22 @@ describe('dataService Tests', () => {
   it('should initialize and return default system settings', async () => {
     const settings = await dataService.getSystemSettings();
     expect(settings).toBeDefined();
-    expect(settings.allowGuestAccess).toBe(true);
-    expect(settings.allowUserRegistration).toBe(true);
+    expect(settings.allowGuestAccess).toBe(false);
+    expect(settings.allowUserRegistration).toBe(false);
     expect(settings.superadminEmail).toBe('jelvinkrisnaputra31@gmail.com');
   });
 
   it('should update and persist system settings', async () => {
     const updatedSettings: SystemSettings = {
-      allowGuestAccess: false,
-      allowUserRegistration: false,
+      allowGuestAccess: true,
+      allowUserRegistration: true,
       superadminEmail: 'customadmin@k31.my.id',
     };
 
     await dataService.saveSystemSettings(updatedSettings);
     const retrieved = await dataService.getSystemSettings();
-    expect(retrieved.allowGuestAccess).toBe(false);
-    expect(retrieved.allowUserRegistration).toBe(false);
+    expect(retrieved.allowGuestAccess).toBe(true);
+    expect(retrieved.allowUserRegistration).toBe(true);
     expect(retrieved.superadminEmail).toBe('customadmin@k31.my.id');
   });
 

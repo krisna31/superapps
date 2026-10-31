@@ -12,7 +12,7 @@ import { TaskItem, TaskPriority, TaskStatus } from '@/types';
 
 export const TasksPage: React.FC = () => {
   const { user } = useAuth();
-  const userId = user?.uid || 'vault-owner';
+  const userId = user?.uid || 'guest-default';
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);

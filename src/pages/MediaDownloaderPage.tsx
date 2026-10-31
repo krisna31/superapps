@@ -34,7 +34,7 @@ import {
 
 export const MediaDownloaderPage: React.FC = () => {
   const { user } = useAuth();
-  const userId = user?.uid || 'vault-owner';
+  const userId = user?.uid || 'guest-default';
 
   // Input & Option States
   const [url, setUrl] = useState('');

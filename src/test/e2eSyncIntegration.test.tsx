@@ -948,6 +948,16 @@ describe('Milestone 2 Opaque-Box E2E Sync & Integration Test Suite', () => {
     });
 
     it('T4.2: End-to-End Reactive Application Shell - renders App and responds to cross-tab mutations live', async () => {
+      // Enable guest access for guest testing
+      localStorage.setItem(
+        'superapps_system_settings',
+        JSON.stringify({
+          allowGuestAccess: true,
+          allowUserRegistration: false,
+          superadminEmail: 'jelvinkrisnaputra31@gmail.com',
+        })
+      );
+
       // Set active guest in localStorage
       localStorage.setItem(
         'superapps_local_guest',

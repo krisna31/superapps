@@ -7,31 +7,26 @@ describe('Superapps Main Application Component', () => {
     localStorage.clear();
   });
 
-  it('gates unauthenticated visitor behind Private Workspace Locked and unlocks with master password', async () => {
+  it('renders application shell, brand logo, and navigation links when guest mode is enabled', async () => {
+    localStorage.setItem(
+      'superapps_system_settings',
+      JSON.stringify({
+        allowGuestAccess: true,
+        allowUserRegistration: false,
+        superadminEmail: 'jelvinkrisnaputra31@gmail.com',
+      })
+    );
+
     await act(async () => {
       render(<App />);
     });
 
-    // Vault lock screen is presented on initial launch
-    expect(screen.getByText(/Private Workspace Locked/i)).toBeInTheDocument();
-
-    // Unlock with master password
-    const pwInput = screen.getByPlaceholderText('Enter master password...');
-    await act(async () => {
-      fireEvent.change(pwInput, { target: { value: 'superapps-private-vault' } });
-      fireEvent.click(screen.getByText('Unlock Vault'));
-    });
-
-    // Wait for async unlock and route resolution
     await waitFor(() => {
-      expect(screen.getAllByText('Tasks (Kanban)').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Superapps/i).length).toBeGreaterThan(0);
     });
-
-    // Brand title
-    const brandElements = screen.getAllByText(/Superapps/i);
-    expect(brandElements.length).toBeGreaterThan(0);
 
     // Nav & module elements (use getAllByText as they appear in sidebar and dashboard)
+    expect(screen.getAllByText('Tasks (Kanban)').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Notes Vault').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Daily Habits').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Expenses & Budget').length).toBeGreaterThanOrEqual(1);
@@ -43,6 +38,9 @@ describe('Superapps Main Application Component', () => {
 
     // Domain display in sidebar footer
     expect(screen.getByText('apps.k31.my.id')).toBeInTheDocument();
+
+    // Admin Settings link should NOT appear for unauthenticated guest
+    expect(screen.queryByText('Admin Settings')).toBeNull();
   });
 
   it('renders Admin Settings navigation link and admin badge when logged in as superadmin', async () => {
@@ -161,7 +159,7 @@ describe('Superapps Main Application Component', () => {
     });
 
     expect(screen.getByText(/Private Workspace Locked/i)).toBeInTheDocument();
-    expect(screen.getByText(/Authorized Authentication Required/i)).toBeInTheDocument();
+    expect(screen.getByText(/Public guest access is disabled on this workspace/i)).toBeInTheDocument();
   });
 
   it('hides guest access button and shows closed notice in AuthModal when policies are disabled', async () => {

@@ -21,6 +21,13 @@ describe('AuthContext Superadmin & Access Control Tests', () => {
   });
 
   it('rejects offline email sign in and registration when Firebase is not configured with clear message', async () => {
+    localStorage.setItem(
+      'superapps_system_settings',
+      JSON.stringify({
+        ...DEFAULT_SYSTEM_SETTINGS,
+        allowUserRegistration: true,
+      })
+    );
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await expect(
@@ -33,6 +40,13 @@ describe('AuthContext Superadmin & Access Control Tests', () => {
   });
 
   it('starts guest session and seeds guest items when guest access is allowed', async () => {
+    localStorage.setItem(
+      'superapps_system_settings',
+      JSON.stringify({
+        ...DEFAULT_SYSTEM_SETTINGS,
+        allowGuestAccess: true,
+      })
+    );
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {
@@ -146,6 +160,13 @@ describe('AuthContext Superadmin & Access Control Tests', () => {
   });
 
   it('rejects linkWithEmail when email or password is empty', async () => {
+    localStorage.setItem(
+      'superapps_system_settings',
+      JSON.stringify({
+        ...DEFAULT_SYSTEM_SETTINGS,
+        allowGuestAccess: true,
+      })
+    );
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {
@@ -158,6 +179,13 @@ describe('AuthContext Superadmin & Access Control Tests', () => {
   });
 
   it('rejects linkWithGoogle when Firebase is not configured with clear guidance', async () => {
+    localStorage.setItem(
+      'superapps_system_settings',
+      JSON.stringify({
+        ...DEFAULT_SYSTEM_SETTINGS,
+        allowGuestAccess: true,
+      })
+    );
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {
@@ -170,6 +198,13 @@ describe('AuthContext Superadmin & Access Control Tests', () => {
   });
 
   it('rejects linkWithEmail when Firebase is not configured with clear guidance', async () => {
+    localStorage.setItem(
+      'superapps_system_settings',
+      JSON.stringify({
+        ...DEFAULT_SYSTEM_SETTINGS,
+        allowGuestAccess: true,
+      })
+    );
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await act(async () => {

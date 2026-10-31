@@ -15,7 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export const DropZonePage: React.FC = () => {
   const { user } = useAuth();
-  const userId = user?.uid || 'vault-owner';
+  const userId = user?.uid || 'guest-default';
 
   const [files, setFiles] = useState<DropzoneItem[]>([]);
   const [uploading, setUploading] = useState(false);

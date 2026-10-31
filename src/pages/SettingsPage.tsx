@@ -30,7 +30,7 @@ export const SettingsPage: React.FC = () => {
 
   // Superadmin authorization guard check
   const isSuperadmin = user?.role === 'superadmin';
-  const userId = user?.uid || 'vault-owner';
+  const userId = user?.uid || 'guest-default';
 
   const handleExportWorkspace = async () => {
     try {

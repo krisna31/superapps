@@ -85,17 +85,17 @@ describe('SettingsPage Component', () => {
     const switches = screen.getAllByRole('switch');
     expect(switches.length).toBe(2);
 
-    // Initial state: both are enabled (true)
-    expect(switches[0]).toHaveAttribute('aria-checked', 'true');
-    expect(switches[1]).toHaveAttribute('aria-checked', 'true');
+    // Initial default state: both are off (false) as per strict access policy
+    expect(switches[0]).toHaveAttribute('aria-checked', 'false');
+    expect(switches[1]).toHaveAttribute('aria-checked', 'false');
 
-    // Toggle guest access switch
+    // Toggle guest access switch to enabled
     await act(async () => {
       fireEvent.click(switches[0]);
     });
 
     const updatedSettings = await dataService.getSystemSettings();
-    expect(updatedSettings.allowGuestAccess).toBe(false);
+    expect(updatedSettings.allowGuestAccess).toBe(true);
   });
 
   it('displays superadmin email as read-only and shows server-side rules enforcement notice', async () => {

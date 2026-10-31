@@ -15,7 +15,7 @@ import { SnippetItem } from '@/types';
 
 export const SnippetsPage: React.FC = () => {
   const { user } = useAuth();
-  const userId = user?.uid || 'vault-owner';
+  const userId = user?.uid || 'guest-default';
   const [searchParams] = useSearchParams();
   const [snippets, setSnippets] = useState<SnippetItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
