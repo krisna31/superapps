@@ -19,6 +19,14 @@ export const DropZonePage: React.FC = () => {
 
   const [files, setFiles] = useState<DropzoneItem[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    currentFileIndex: number;
+    totalFiles: number;
+    fileName: string;
+    loaded: number;
+    total: number;
+    percent: number;
+  } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,17 +42,44 @@ export const DropZonePage: React.FC = () => {
     if (!fileList || fileList.length === 0) return;
     setError(null);
     setUploading(true);
+    setUploadProgress({
+      currentFileIndex: 1,
+      totalFiles: fileList.length,
+      fileName: fileList[0].name,
+      loaded: 0,
+      total: fileList[0].size,
+      percent: 0,
+    });
 
     try {
       for (let i = 0; i < fileList.length; i++) {
         const file = fileList[i];
-        await dataService.uploadFile(userId, file);
+        setUploadProgress({
+          currentFileIndex: i + 1,
+          totalFiles: fileList.length,
+          fileName: file.name,
+          loaded: 0,
+          total: file.size,
+          percent: 0,
+        });
+
+        await dataService.uploadFile(userId, file, (prog) => {
+          setUploadProgress({
+            currentFileIndex: i + 1,
+            totalFiles: fileList.length,
+            fileName: file.name,
+            loaded: prog.loaded,
+            total: prog.total,
+            percent: prog.percent,
+          });
+        });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'File upload failed';
       setError(message);
     } finally {
       setUploading(false);
+      setUploadProgress(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -99,13 +134,13 @@ export const DropZonePage: React.FC = () => {
 
       {/* Upload Drop Zone */}
       <div
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !uploading && fileInputRef.current?.click()}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
-          handleFileUpload(e.dataTransfer.files);
+          if (!uploading) handleFileUpload(e.dataTransfer.files);
         }}
-        className={`p-6 rounded-lg border border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center text-center ${
+        className={`p-6 rounded-lg border border-dashed transition-all cursor-pointer flex flex-col items-center justify-center text-center ${
           uploading
             ? 'border-emerald-500 bg-emerald-500/5 cursor-wait'
             : 'border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40'
@@ -115,20 +150,47 @@ export const DropZonePage: React.FC = () => {
           ref={fileInputRef}
           type="file"
           multiple
+          disabled={uploading}
           className="hidden"
           onChange={(e) => handleFileUpload(e.target.files)}
         />
 
-        <div className="w-9 h-9 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-2">
+        <div className={`w-9 h-9 rounded-md flex items-center justify-center mb-2 ${
+          uploading 
+            ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 animate-pulse'
+            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+        }`}>
           <CloudUpload className="w-4 h-4" />
         </div>
 
         <h3 className="font-semibold text-xs text-slate-800 dark:text-slate-200">
-          {uploading ? 'Uploading your files...' : 'Click or drag and drop files here to upload'}
+          {uploading ? (
+            uploadProgress ? (
+              <span>Uploading {uploadProgress.currentFileIndex} of {uploadProgress.totalFiles}: <span className="font-mono text-emerald-500">{uploadProgress.fileName}</span></span>
+            ) : 'Processing upload...'
+          ) : (
+            'Click or drag and drop files here to upload'
+          )}
         </h3>
-        <p className="text-[11px] text-slate-400 mt-0.5 max-w-sm font-mono">
-          Scoped directly to your private workspace storage bucket
-        </p>
+
+        {uploading && uploadProgress ? (
+          <div className="w-full max-w-sm mt-3 space-y-1.5">
+            <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              <div 
+                className="bg-emerald-500 h-full rounded-full transition-all duration-150 ease-out"
+                style={{ width: `${Math.max(5, uploadProgress.percent)}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+              <span>{formatSize(uploadProgress.loaded)} / {formatSize(uploadProgress.total)}</span>
+              <span className="font-semibold text-emerald-500">{uploadProgress.percent}%</span>
+            </div>
+          </div>
+        ) : (
+          <p className="text-[11px] text-slate-400 mt-0.5 max-w-sm font-mono">
+            Scoped directly to your private workspace storage bucket
+          </p>
+        )}
       </div>
 
       {/* Uploaded Files Table */}

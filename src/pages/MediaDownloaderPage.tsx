@@ -23,6 +23,7 @@ import {
   detectMediaPlatform, 
   getCustomCobaltInstance, 
   setCustomCobaltInstance,
+  getFallbackPortals,
   DEFAULT_COBALT_INSTANCES
 } from '@/services/mediaService';
 import { 
@@ -339,13 +340,63 @@ export const MediaDownloaderPage: React.FC = () => {
           </div>
         </form>
 
-        {/* Error Alert */}
+        {/* Error Alert with 1-Click Direct Resolvers */}
         {error && (
-          <div className="p-3 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-start space-x-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <span className="font-semibold">Extraction Notice:</span>
-              <p className="text-[11px]">{error}</p>
+          <div className="space-y-3">
+            <div className="p-3 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-start space-x-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-semibold">Extraction Notice:</span>
+                <p className="text-[11px]">{error}</p>
+              </div>
+            </div>
+
+            {/* Direct Resolver Bridges (Works without self-hosted Cobalt) */}
+            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                <div className="flex items-center space-x-2">
+                  <span className="text-[10px] font-mono uppercase font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                    Direct Resolver Bridges
+                  </span>
+                  <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                    1-Click web extractors (No custom server required):
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(url);
+                    setCopiedId('url-btn');
+                    setTimeout(() => setCopiedId(null), 2000);
+                  }}
+                  className="flex items-center space-x-1 text-[11px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition self-start sm:self-auto"
+                >
+                  {copiedId === 'url-btn' ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedId === 'url-btn' ? 'Copied URL!' : 'Copy Media URL'}</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {getFallbackPortals(url, detectedPlatform).map((portal) => (
+                  <a
+                    key={portal.name}
+                    href={portal.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2.5 rounded-md border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-white dark:bg-slate-950 transition flex items-center justify-between group"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <span className="font-semibold text-xs text-slate-900 dark:text-slate-100 group-hover:text-emerald-500 transition-colors block">
+                        {portal.name}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400 truncate block">
+                        {portal.description}
+                      </span>
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-500 flex-shrink-0 transition-colors" />
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -684,12 +735,12 @@ export const MediaDownloaderPage: React.FC = () => {
 
             <div className="space-y-3 text-xs">
               <p className="text-slate-500 dark:text-slate-400">
-                Superapps uses open-source Cobalt community API instances for zero-cost social media extraction. If public instances are rate-limited, you can specify your own self-hosted Cobalt instance endpoint below.
+                Superapps uses open-source Cobalt and multi-engine extractors for zero-cost media downloads. You can also connect your own self-hosted Cobalt instance or yt-dlp API server (e.g. Metube / yt-dlp-host) below for 100% private extraction.
               </p>
 
               <div className="space-y-1">
                 <label className="font-mono text-[11px] text-slate-700 dark:text-slate-300">
-                  Custom Instance URL (Optional)
+                  Custom Instance / yt-dlp Backend URL (Optional)
                 </label>
                 <input
                   type="url"

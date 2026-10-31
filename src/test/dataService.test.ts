@@ -123,6 +123,24 @@ describe('dataService Tests', () => {
     expect(resolved).not.toBeNull();
     expect(resolved?.originalUrl).toBe('https://docs.github.com');
     expect(resolved?.clicks).toBe(1);
+    expect(resolved?.recentClicks).toBeDefined();
+    expect(resolved?.recentClicks?.length).toBeGreaterThan(0);
+    expect(resolved?.recentClicks?.[0].device).toBeDefined();
+    expect(resolved?.recentClicks?.[0].timestamp).toBeGreaterThan(0);
+  });
+
+  it('should track upload progress callback during dropzone file upload', async () => {
+    const fakeFile = new File(['hello superapps'], 'test.txt', { type: 'text/plain' });
+    const progressUpdates: number[] = [];
+
+    const dropItem = await dataService.uploadFile(testUserId, fakeFile, (prog) => {
+      progressUpdates.push(prog.percent);
+    });
+
+    expect(dropItem).toBeDefined();
+    expect(dropItem.fileName).toBe('test.txt');
+    expect(progressUpdates.length).toBeGreaterThan(0);
+    expect(progressUpdates).toContain(100);
   });
 
   /* ==================== SYSTEM SETTINGS TESTS ==================== */

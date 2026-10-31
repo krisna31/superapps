@@ -1,5 +1,58 @@
 import { MediaPlatform, MediaExtractionResult, PickerMediaItem } from '@/types';
 
+export interface FallbackPortal {
+  name: string;
+  url: string;
+  description: string;
+}
+
+/**
+ * Returns prefilled 1-click fallback download portals for each platform
+ * when automated browser scrapers hit CORS or bot barriers.
+ */
+export function getFallbackPortals(targetUrl: string, platform?: MediaPlatform): FallbackPortal[] {
+  const plat = platform || detectMediaPlatform(targetUrl);
+  const encoded = encodeURIComponent(targetUrl);
+  
+  switch (plat) {
+    case 'instagram':
+      return [
+        { name: 'SaveInsta', url: `https://saveinsta.app/en?url=${encoded}`, description: 'Direct Instagram Reels & Video Downloader' },
+        { name: 'FastDl', url: `https://fastdl.app/en?url=${encoded}`, description: 'Photos, Videos, Reels & Stories' },
+        { name: 'Cobalt Web', url: 'https://cobalt.tools', description: 'Open-source clean ad-free downloader' },
+        { name: 'SnapSave', url: 'https://snapsave.app/', description: 'Full HD Instagram Downloader' },
+      ];
+    case 'tiktok':
+      return [
+        { name: 'TikWM', url: 'https://www.tikwm.com/', description: 'TikTok watermark-free video & MP3' },
+        { name: 'SnapTik', url: 'https://snaptik.app/', description: 'Fast TikTok Video Downloader' },
+        { name: 'Cobalt Web', url: 'https://cobalt.tools', description: 'Ad-free media downloader' },
+      ];
+    case 'youtube':
+      return [
+        { name: 'Cobalt Web', url: 'https://cobalt.tools', description: 'Clean ad-free YouTube & Shorts audio/video' },
+        { name: 'Y2Mate', url: 'https://www.y2mate.com/', description: 'Fast YouTube MP4/MP3 Converter' },
+        { name: 'Invidious Web', url: 'https://invidious.nerdvpn.de/', description: 'Privacy-respecting open YouTube player' },
+      ];
+    case 'twitter':
+      return [
+        { name: 'TwitterVid', url: 'https://twittervid.com/', description: 'Twitter / X Video Downloader' },
+        { name: 'Cobalt Web', url: 'https://cobalt.tools', description: 'Clean ad-free downloader' },
+      ];
+    case 'facebook':
+      return [
+        { name: 'FDownloader', url: 'https://fdown.net/', description: 'Facebook HD Video Downloader' },
+        { name: 'SnapSave', url: 'https://snapsave.app/', description: 'Facebook Video & Reel Saver' },
+        { name: 'Cobalt Web', url: 'https://cobalt.tools', description: 'Clean ad-free downloader' },
+      ];
+    default:
+      return [
+        { name: 'Cobalt Web', url: 'https://cobalt.tools', description: 'Ad-free universal video downloader' },
+        { name: 'SaveFrom', url: 'https://en.savefrom.net/', description: 'Universal online video downloader' },
+      ];
+  }
+}
+
 export interface CobaltRequestOptions {
   videoQuality?: 'max' | '2160' | '1440' | '1080' | '720' | '480' | '360';
   downloadMode?: 'auto' | 'audio' | 'mute';
@@ -211,6 +264,58 @@ export async function extractMedia(
       lastError = err;
       // If abort or rate-limit, loop continues to next instance
       console.warn(`Extraction failed on ${instance}:`, err?.message);
+    }
+  }
+
+  // 3. Fallback Multi-Engine: Platform-Specific Scrapers
+  if (platform === 'tiktok') {
+    try {
+      const tikRes = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(trimmed)}`);
+      if (tikRes.ok) {
+        const tikData = await tikRes.json();
+        if (tikData && tikData.code === 0 && tikData.data) {
+          const d = tikData.data;
+          const isAudio = options?.downloadMode === 'audio';
+          const mediaUrl = isAudio ? (d.music || d.play) : (d.play || d.wmplay);
+          const filename = `tiktok-${d.id || Date.now()}.${isAudio ? 'mp3' : 'mp4'}`;
+          return {
+            status: 'single',
+            platform: 'tiktok',
+            title: d.title || 'TikTok Video',
+            url: mediaUrl,
+            filename,
+            audioUrl: d.music,
+            audioFilename: `tiktok-${d.id || Date.now()}-audio.mp3`,
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('TikWM fallback failed:', e);
+    }
+  }
+
+  if (platform === 'twitter') {
+    try {
+      const match = trimmed.match(/(?:status|statuses)\/(\d+)/);
+      if (match) {
+        const vxRes = await fetch(`https://api.vxtwitter.com/Twitter/status/${match[1]}`);
+        if (vxRes.ok) {
+          const vxData = await vxRes.json();
+          const videoUrl = vxData.media_extended?.[0]?.url || vxData.mediaURLs?.[0];
+          if (videoUrl && /\.(mp4|webm|m3u8)/i.test(videoUrl)) {
+            const filename = `twitter-${match[1]}.mp4`;
+            return {
+              status: 'single',
+              platform: 'twitter',
+              title: vxData.text?.substring(0, 60) || 'Twitter Video',
+              url: videoUrl,
+              filename,
+            };
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('VxTwitter fallback failed:', e);
     }
   }
 

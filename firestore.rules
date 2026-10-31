@@ -39,9 +39,9 @@ service cloud.firestore {
         request.resource.data.slug is string &&
         request.resource.data.originalUrl is string;
       
-      // Anyone can increment click count by exactly 1; owner can edit other fields
+      // Anyone can increment click count by exactly 1 and record click analytics; owner can edit other fields
       allow update: if (
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clicks']) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clicks', 'recentClicks']) &&
         request.resource.data.clicks == resource.data.clicks + 1
       ) || (
         isAuthenticated() && resource.data.userId == request.auth.uid

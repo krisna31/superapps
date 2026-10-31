@@ -21,8 +21,10 @@ import {
   HabitItem, 
   ExpenseItem, 
   SnippetItem, 
-  ShortlinkItem, 
+  ShortlinkItem,
+  ShortlinkClickLog,
   DropzoneItem,
+  UploadProgressCallback,
   MediaDownloadItem,
   SystemSettings,
   WorkspaceBackup 
@@ -198,16 +200,99 @@ export const dataService = {
   },
 
   async resolveShortlink(slug: string): Promise<ShortlinkItem | null> {
+    const clickLog: ShortlinkClickLog = {
+      timestamp: Date.now(),
+      device: 'Desktop',
+      os: 'Other',
+      browser: 'Other',
+      referrer: 'Direct'
+    };
+
+    if (typeof window !== 'undefined') {
+      const ua = navigator.userAgent || '';
+      if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+        clickLog.device = 'Tablet';
+      } else if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated/i.test(ua)) {
+        clickLog.device = 'Mobile';
+      } else {
+        clickLog.device = 'Desktop';
+      }
+
+      if (/windows/i.test(ua)) clickLog.os = 'Windows';
+      else if (/macintosh|mac os x/i.test(ua)) clickLog.os = 'macOS';
+      else if (/android/i.test(ua)) clickLog.os = 'Android';
+      else if (/iphone|ipad|ipod/i.test(ua)) clickLog.os = 'iOS';
+      else if (/linux/i.test(ua)) clickLog.os = 'Linux';
+      else if (/cros/i.test(ua)) clickLog.os = 'Chrome OS';
+
+      if (/edg/i.test(ua)) clickLog.browser = 'Edge';
+      else if (/opr|opera/i.test(ua)) clickLog.browser = 'Opera';
+      else if (/chrome|crios/i.test(ua)) clickLog.browser = 'Chrome';
+      else if (/firefox|fxios/i.test(ua)) clickLog.browser = 'Firefox';
+      else if (/safari/i.test(ua)) clickLog.browser = 'Safari';
+
+      if (document.referrer && document.referrer.trim()) {
+        try {
+          const refUrl = new URL(document.referrer);
+          clickLog.referrer = refUrl.hostname || document.referrer;
+        } catch {
+          clickLog.referrer = document.referrer;
+        }
+      }
+
+      // Quick IP and Geo lookup with 1.2s timeout so redirect is never delayed
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1200);
+        const geoRes = await fetch('https://ipwho.is/', { signal: controller.signal });
+        clearTimeout(timeout);
+        if (geoRes.ok) {
+          const geoData = await geoRes.json();
+          if (geoData && geoData.success !== false) {
+            clickLog.ip = geoData.ip;
+            clickLog.country = geoData.country;
+            clickLog.countryCode = geoData.country_code;
+            clickLog.city = geoData.city;
+            clickLog.region = geoData.region;
+          }
+        }
+      } catch {
+        // Fallback to fast country.is lookup
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 800);
+          const cRes = await fetch('https://api.country.is/', { signal: controller.signal });
+          clearTimeout(timeout);
+          if (cRes.ok) {
+            const cData = await cRes.json();
+            if (cData && cData.country) {
+              clickLog.ip = cData.ip;
+              clickLog.countryCode = cData.country;
+            }
+          }
+        } catch {
+          // offline or restricted, proceed gracefully
+        }
+      }
+    }
+
     if (isFirebaseConfigured && db) {
       try {
         const docRef = doc(db, 'shortlinks', slug);
         const snap = await getDoc(docRef);
         if (snap.exists()) {
-          // Increment click count asynchronously (Finding H2)
-          updateDoc(docRef, { clicks: increment(1) }).catch((err) => {
+          const data = snap.data() as ShortlinkItem;
+          const currentRecent = Array.isArray(data.recentClicks) ? data.recentClicks : [];
+          const updatedRecent = [clickLog, ...currentRecent].slice(0, 50);
+
+          // Update click count and click tracker log asynchronously (Finding H2)
+          updateDoc(docRef, {
+            clicks: increment(1),
+            recentClicks: updatedRecent,
+          }).catch((err) => {
             console.warn('Click counter increment non-fatal error:', err);
           });
-          return snap.data() as ShortlinkItem;
+          return { ...data, recentClicks: updatedRecent };
         }
       } catch (err) {
         console.warn('Firestore resolveShortlink fallback:', err);
@@ -222,6 +307,8 @@ export const dataService = {
         const found = list.find((s) => s.slug === slug);
         if (found) {
           found.clicks += 1;
+          const currentRecent = Array.isArray(found.recentClicks) ? found.recentClicks : [];
+          found.recentClicks = [clickLog, ...currentRecent].slice(0, 50);
           setLocalData(k, list);
           return found;
         }
@@ -307,17 +394,34 @@ export const dataService = {
   /* ==================== DROPZONE SERVICE ==================== */
   getDropzoneItems: (userId: string): Promise<DropzoneItem[]> => dropzoneRepo.list(userId),
 
-  async uploadFile(userId: string, file: File): Promise<DropzoneItem> {
+  async uploadFile(
+    userId: string, 
+    file: File, 
+    onProgress?: UploadProgressCallback
+  ): Promise<DropzoneItem> {
     const fileId = 'drop-' + Math.random().toString(36).substring(2, 9);
+
+    // Initial progress report (0%)
+    onProgress?.({ loaded: 0, total: file.size, percent: 0 });
 
     // Helper: read file as Data URL for offline / fallback persistence across refreshes
     const toDataUrl = async (f: File): Promise<string> => {
       return new Promise<string>((resolve) => {
         if (typeof FileReader === 'undefined') {
+          onProgress?.({ loaded: f.size, total: f.size, percent: 100 });
           return resolve(typeof URL !== 'undefined' ? URL.createObjectURL(f) : '');
         }
         const reader = new FileReader();
-        reader.onloadend = () => resolve((reader.result as string) || (typeof URL !== 'undefined' ? URL.createObjectURL(f) : ''));
+        reader.onprogress = (e) => {
+          if (e.lengthComputable && e.total > 0) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            onProgress?.({ loaded: e.loaded, total: e.total, percent });
+          }
+        };
+        reader.onloadend = () => {
+          onProgress?.({ loaded: f.size, total: f.size, percent: 100 });
+          resolve((reader.result as string) || (typeof URL !== 'undefined' ? URL.createObjectURL(f) : ''));
+        };
         reader.onerror = () => resolve(typeof URL !== 'undefined' ? URL.createObjectURL(f) : '');
         reader.readAsDataURL(f);
       });
@@ -330,6 +434,18 @@ export const dataService = {
         const storageReference = ref(storage, storagePath);
 
         const uploadTask = uploadBytesResumable(storageReference, file);
+
+        // Track live Firebase upload progress
+        uploadTask.on('state_changed', (snapshot) => {
+          if (snapshot.totalBytes > 0) {
+            const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+            onProgress?.({
+              loaded: snapshot.bytesTransferred,
+              total: snapshot.totalBytes,
+              percent,
+            });
+          }
+        });
 
         // Add 5-second timeout to prevent hanging if bucket is uninitialized in Firebase Console
         const timeoutPromise = new Promise<never>((_, reject) => {
@@ -345,6 +461,8 @@ export const dataService = {
 
         const snapshot = await Promise.race([uploadTask, timeoutPromise]);
         const downloadUrl = await getDownloadURL(snapshot.ref);
+
+        onProgress?.({ loaded: file.size, total: file.size, percent: 100 });
 
         const dropItem: DropzoneItem = {
           id: fileId,
@@ -371,8 +489,10 @@ export const dataService = {
     if (file.size <= 4 * 1024 * 1024) {
       fallbackUrl = await toDataUrl(file);
     } else if (typeof URL !== 'undefined' && URL.createObjectURL) {
+      onProgress?.({ loaded: file.size, total: file.size, percent: 100 });
       fallbackUrl = URL.createObjectURL(file);
     } else {
+      onProgress?.({ loaded: file.size, total: file.size, percent: 100 });
       fallbackUrl = '';
     }
 
@@ -388,6 +508,7 @@ export const dataService = {
     };
 
     await dropzoneRepo.save(userId, dropItem);
+    return dropItem;
     return dropItem;
   },
 

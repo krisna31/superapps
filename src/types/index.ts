@@ -74,6 +74,20 @@ export interface SnippetItem {
   createdAt: number;
 }
 
+export interface ShortlinkClickLog {
+  timestamp: number;
+  ip?: string;
+  country?: string;
+  countryCode?: string;
+  city?: string;
+  region?: string;
+  device?: string; // Desktop, Mobile, Tablet
+  os?: string; // Windows, macOS, Linux, iOS, Android, Other
+  browser?: string; // Chrome, Safari, Firefox, Edge, Other
+  referrer?: string;
+  userAgent?: string;
+}
+
 export interface ShortlinkItem {
   id: string;
   userId: string;
@@ -81,6 +95,7 @@ export interface ShortlinkItem {
   originalUrl: string;
   title?: string;
   clicks: number;
+  recentClicks?: ShortlinkClickLog[];
   createdAt: number;
   updatedAt: number;
 }
@@ -118,8 +133,14 @@ export interface PickerMediaItem {
   thumb?: string;
 }
 
+export interface ExternalDownloadPortal {
+  name: string;
+  url: string;
+  description: string;
+}
+
 export interface MediaExtractionResult {
-  status: 'single' | 'picker' | 'direct';
+  status: 'single' | 'picker' | 'direct' | 'fallback_portal';
   platform: MediaPlatform;
   title?: string;
   url?: string;
@@ -127,7 +148,15 @@ export interface MediaExtractionResult {
   audioUrl?: string;
   audioFilename?: string;
   picker?: PickerMediaItem[];
+  fallbackPortals?: ExternalDownloadPortal[];
+  errorMessage?: string;
 }
+
+export type UploadProgressCallback = (progress: {
+  loaded: number;
+  total: number;
+  percent: number;
+}) => void;
 
 export interface WorkspaceBackup {
   version: string;
