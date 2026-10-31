@@ -137,11 +137,32 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       action: () => navigate('/notes?create=true'),
     },
     {
+      id: 'action-new-habit',
+      title: 'Create New Daily Habit',
+      category: 'Actions',
+      icon: Plus,
+      action: () => navigate('/habits?create=true'),
+    },
+    {
       id: 'action-new-expense',
       title: 'Add New Expense/Income',
       category: 'Actions',
       icon: Plus,
       action: () => navigate('/expenses?create=true'),
+    },
+    {
+      id: 'action-new-snippet',
+      title: 'Create New Code Snippet',
+      category: 'Actions',
+      icon: Plus,
+      action: () => navigate('/snippets?create=true'),
+    },
+    {
+      id: 'action-new-shortlink',
+      title: 'Create New Shortlink',
+      category: 'Actions',
+      icon: Plus,
+      action: () => navigate('/shortlinks?create=true'),
     },
     {
       id: 'theme-toggle',
