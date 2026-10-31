@@ -1,0 +1,22 @@
+[package]
+name = "superapps"
+version = "1.0.0"
+description = "Superapps Workspace - 8 Productivity & Developer Tools"
+authors = ["Jelvin Krisnaputra"]
+edition = "2021"
+
+[lib]
+name = "superapps_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-notification = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-os = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { CommandPaletteModal } from '../palette/CommandPaletteModal';
@@ -9,6 +9,8 @@ import { useAuth } from '@/context/AuthContext';
 
 export const AppShell: React.FC = () => {
   const { user, systemSettings, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -25,6 +27,42 @@ export const AppShell: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Android Hardware Back Button & Mobile History Handling
+  useEffect(() => {
+    const handleBackButton = (e: Event) => {
+      // Priority 1: Close active mobile drawer or modals first
+      if (isSidebarOpenMobile) {
+        setIsSidebarOpenMobile(false);
+        e.preventDefault();
+        return;
+      }
+      if (isCommandPaletteOpen) {
+        setIsCommandPaletteOpen(false);
+        e.preventDefault();
+        return;
+      }
+      if (isAuthModalOpen) {
+        setIsAuthModalOpen(false);
+        e.preventDefault();
+        return;
+      }
+
+      // Priority 2: If on sub-route, navigate back to Dashboard
+      if (location.pathname !== '/') {
+        navigate(-1);
+      }
+    };
+
+    window.addEventListener('popstate', handleBackButton);
+    // Tauri custom event if dispatched by native mobile layer
+    window.addEventListener('tauri-back-button' as any, handleBackButton);
+
+    return () => {
+      window.removeEventListener('popstate', handleBackButton);
+      window.removeEventListener('tauri-back-button' as any, handleBackButton);
+    };
+  }, [isSidebarOpenMobile, isCommandPaletteOpen, isAuthModalOpen, location.pathname, navigate]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
@@ -39,7 +77,7 @@ export const AppShell: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex transition-colors safe-top safe-bottom safe-left safe-right">
       {/* Sidebar */}
       <Sidebar
         isOpenMobile={isSidebarOpenMobile}
