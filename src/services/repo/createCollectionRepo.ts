@@ -30,7 +30,13 @@ export interface CollectionRepo<T extends { id: string }> {
 }
 
 export function isCloudUser(userId: string): boolean {
-  return Boolean(isFirebaseConfigured && db && userId && !userId.startsWith('guest-'));
+  return Boolean(
+    isFirebaseConfigured && 
+    db && 
+    userId && 
+    !userId.startsWith('guest-') && 
+    !userId.startsWith('local-')
+  );
 }
 
 const getLocalKey = (name: string, userId: string) => `superapps_${name}_${userId}`;

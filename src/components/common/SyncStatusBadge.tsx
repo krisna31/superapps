@@ -88,6 +88,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
   }, [showPopover]);
 
   const isGuest = !user || user.isAnonymous || user.uid.startsWith('guest-');
+  const isLocalSession = Boolean(user?.uid?.startsWith('local-'));
 
   let status: 'offline' | 'guest' | 'syncing' | 'synced' = 'synced';
   if (!isOnline) {
@@ -237,6 +238,8 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                   ? 'Syncing...'
                   : status === 'guest'
                   ? 'Disconnected (Guest)'
+                  : isLocalSession
+                  ? 'Local Mode (Offline Admin)'
                   : isFirebaseConfigured
                   ? 'Connected (Firestore)'
                   : 'Local Storage Fallback'}
@@ -251,9 +254,9 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                   ? 'Uploading Mutations'
                   : status === 'guest'
                   ? 'Local-only Storage'
-                  : isFirebaseConfigured
-                  ? 'Dual Persistence'
-                  : 'Local Browser Storage'}
+                  : isLocalSession || !isFirebaseConfigured
+                  ? 'Local Browser Storage'
+                  : 'Dual Persistence'}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -304,7 +307,9 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
           {status === 'synced' && (
             <div className="space-y-1.5">
               <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
-                {isFirebaseConfigured
+                {isLocalSession
+                  ? 'Running in local superadmin fallback session. Changes are saved to local browser storage.'
+                  : isFirebaseConfigured
                   ? 'All changes synchronize across open tabs and devices in real-time with dual persistence to browser storage and Cloud Firestore.'
                   : 'Running in local storage fallback mode. Configure Firebase secrets in GitHub Actions to enable cloud synchronization across devices.'}
               </p>
