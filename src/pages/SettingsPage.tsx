@@ -13,7 +13,8 @@ import {
   ShieldAlert,
   Download,
   Upload,
-  Database
+  Database,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { isFirebaseConfigured } from '@/firebase/config';
@@ -75,6 +76,14 @@ export const SettingsPage: React.FC = () => {
     } finally {
       setIsImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleResetWorkspace = () => {
+    if (confirm('Are you sure you want to reset all workspace data? This will clear all tasks, notes, habits, expenses, and snippets for this private vault.')) {
+      dataService.resetWorkspaceData(userId);
+      setSaveSuccessMessage('Workspace data successfully reset to clean state.');
+      setTimeout(() => setSaveSuccessMessage(null), 3000);
     }
   };
 
@@ -335,6 +344,15 @@ export const SettingsPage: React.FC = () => {
           >
             <Upload className="w-3.5 h-3.5" />
             <span>{isImporting ? 'Importing...' : 'Import Workspace Backup'}</span>
+          </button>
+
+          <button
+            onClick={handleResetWorkspace}
+            className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-md border border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 text-xs font-medium transition"
+            title="Wipe demo and custom data to start clean"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Reset All Workspace Data</span>
           </button>
         </div>
       </div>

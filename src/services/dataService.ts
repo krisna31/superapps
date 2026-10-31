@@ -827,4 +827,44 @@ export const dataService = {
       errors: errors.length > 0 ? errors : undefined,
     };
   },
+
+  /* ==================== WORKSPACE RESET & SAMPLE PURGE ==================== */
+  cleanLocalSamples(userId: string): void {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const collections = ['tasks', 'notes', 'habits', 'expenses', 'snippets'];
+    for (const col of collections) {
+      const key = `superapps_${col}_${userId}`;
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        try {
+          const items = JSON.parse(raw);
+          if (Array.isArray(items)) {
+            const cleaned = items.filter((item) => !isUnchangedSample(col, item));
+            if (cleaned.length !== items.length) {
+              localStorage.setItem(key, JSON.stringify(cleaned));
+              notifyLocalChange(key);
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+  },
+
+  resetWorkspaceData(userId: string): void {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const collections = ['tasks', 'notes', 'habits', 'expenses', 'snippets', 'shortlinks', 'dropzone'];
+    for (const col of collections) {
+      const key = `superapps_${col}_${userId}`;
+      localStorage.setItem(key, JSON.stringify([]));
+      notifyLocalChange(key);
+    }
+    // Set seeded flag to prevent future re-seeding
+    try {
+      localStorage.setItem(`superapps_seeded_${userId}`, 'true');
+    } catch {
+      // ignore
+    }
+  },
 };

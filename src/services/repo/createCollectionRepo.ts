@@ -79,7 +79,9 @@ export function createCollectionRepo<T extends { id: string }>(cfg: {
       }
 
       // Guest / local mode
-      seedGuestSamples(userId);
+      if (userId.startsWith('guest-') || userId.startsWith('test-')) {
+        seedGuestSamples(userId);
+      }
       const key = getLocalKey(colName, userId);
       return getLocalData<T>(key);
     },
@@ -167,7 +169,9 @@ export function createCollectionRepo<T extends { id: string }>(cfg: {
       }
 
       // Guest / local mode
-      seedGuestSamples(userId);
+      if (userId.startsWith('guest-') || userId.startsWith('test-')) {
+        seedGuestSamples(userId);
+      }
       const key = getLocalKey(colName, userId);
 
       // Initial push

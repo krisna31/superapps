@@ -142,7 +142,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     isPlatformBiometricsSupported().then(setIsBiometricsSupported);
     setIsBioEnrolled(isBiometricsEnrolled());
-  }, []);
+    if (user?.uid === 'vault-owner') {
+      dataService.cleanLocalSamples('vault-owner');
+    }
+  }, [user?.uid]);
 
   // Sync system settings on mount & listen to multi-tab storage updates
   useEffect(() => {
@@ -287,6 +290,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (computedHash === configuredMasterPasswordHash) {
         setIsUnlocked(true);
         setUser((curr) => curr || VAULT_OWNER_PROFILE);
+        dataService.cleanLocalSamples('vault-owner');
         return true;
       }
     } catch (err) {
@@ -302,6 +306,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (unwrapped && unwrapped.toLowerCase() === configuredMasterPasswordHash) {
         setIsUnlocked(true);
         setUser((curr) => curr || VAULT_OWNER_PROFILE);
+        dataService.cleanLocalSamples('vault-owner');
         return true;
       }
     } catch (err) {
