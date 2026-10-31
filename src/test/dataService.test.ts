@@ -783,7 +783,7 @@ describe('dataService Media Downloader History Persistence', () => {
       downloadUrl: 'https://cdn.example.com/yt.mp4',
     });
 
-    dataService.resetWorkspaceData(userId);
+    await dataService.resetWorkspaceData(userId);
     const history = await dataService.getMediaHistory(userId);
     expect(history).toHaveLength(0);
   });

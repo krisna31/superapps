@@ -73,8 +73,10 @@ export const TasksPage: React.FC = () => {
   };
 
   const handleDeleteTask = async (id: string) => {
-    await dataService.deleteTask(userId, id);
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    if (confirm('Delete this task permanently?')) {
+      await dataService.deleteTask(userId, id);
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+    }
   };
 
   const columns: { id: TaskStatus; label: string; color: string }[] = [

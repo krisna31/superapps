@@ -79,9 +79,9 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleResetWorkspace = () => {
-    if (confirm('Are you sure you want to reset all workspace data? This will clear all tasks, notes, habits, expenses, and snippets for this private vault.')) {
-      dataService.resetWorkspaceData(userId);
+  const handleResetWorkspace = async () => {
+    if (confirm('Are you sure you want to reset all workspace data? This will clear all tasks, notes, habits, expenses, snippets, shortlinks, dropzone files, and media history for this private vault.')) {
+      await dataService.resetWorkspaceData(userId);
       setSaveSuccessMessage('Workspace data successfully reset to clean state.');
       setTimeout(() => setSaveSuccessMessage(null), 3000);
     }

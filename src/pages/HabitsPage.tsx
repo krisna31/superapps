@@ -84,7 +84,9 @@ export const HabitsPage: React.FC = () => {
   };
 
   const handleDeleteHabit = async (id: string) => {
-    await dataService.deleteHabit(userId, id);
+    if (confirm('Delete this habit routine permanently?')) {
+      await dataService.deleteHabit(userId, id);
+    }
   };
 
   // Generate last 7 days strings [YYYY-MM-DD]

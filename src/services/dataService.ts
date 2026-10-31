@@ -1090,19 +1090,38 @@ export const dataService = {
     }
   },
 
-  resetWorkspaceData(userId: string): void {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    const collections = ['tasks', 'notes', 'habits', 'expenses', 'snippets', 'shortlinks', 'dropzone', 'media_history'];
-    for (const col of collections) {
-      const key = `superapps_${col}_${userId}`;
-      localStorage.setItem(key, JSON.stringify([]));
-      notifyLocalChange(key);
+  async resetWorkspaceData(userId: string): Promise<void> {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const collections = ['tasks', 'notes', 'habits', 'expenses', 'snippets', 'shortlinks', 'dropzone', 'media_history'];
+      for (const col of collections) {
+        const key = `superapps_${col}_${userId}`;
+        localStorage.setItem(key, JSON.stringify([]));
+        notifyLocalChange(key);
+      }
+      // Set seeded flag to prevent future re-seeding
+      try {
+        localStorage.setItem(`superapps_seeded_${userId}`, 'true');
+      } catch {
+        // ignore
+      }
     }
-    // Set seeded flag to prevent future re-seeding
-    try {
-      localStorage.setItem(`superapps_seeded_${userId}`, 'true');
-    } catch {
-      // ignore
+
+    // If Cloud user, atomically wipe user private Firestore collections
+    if (isCloudUser(userId) && db) {
+      try {
+        const cloudCols = ['tasks', 'notes', 'habits', 'expenses', 'snippets', 'dropzone', 'media_history'];
+        for (const colName of cloudCols) {
+          const colRef = collection(db, 'users', userId, colName);
+          const snap = await getDocs(colRef);
+          if (!snap.empty) {
+            const batch = writeBatch(db);
+            snap.docs.forEach((d) => batch.delete(d.ref));
+            await batch.commit();
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to wipe cloud collections on workspace reset:', err);
+      }
     }
   },
 };
