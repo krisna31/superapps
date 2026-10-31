@@ -288,7 +288,7 @@ export const SettingsPage: React.FC = () => {
               value={systemSettings.superadminEmail}
               readOnly
               aria-readonly="true"
-              placeholder="jelvinkrisnaputra31@gmail.com"
+              placeholder="name@example.com"
               className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono cursor-not-allowed select-all"
             />
           </div>

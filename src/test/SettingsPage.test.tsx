@@ -114,7 +114,7 @@ describe('SettingsPage Component', () => {
       renderSettingsPage();
     });
 
-    const emailInput = screen.getByPlaceholderText('jelvinkrisnaputra31@gmail.com') as HTMLInputElement;
+    const emailInput = screen.getByDisplayValue('jelvinkrisnaputra31@gmail.com') as HTMLInputElement;
     expect(emailInput).toHaveAttribute('readonly');
     expect(emailInput.value).toBe('jelvinkrisnaputra31@gmail.com');
     expect(screen.getByText('Enforced in Security Rules')).toBeInTheDocument();

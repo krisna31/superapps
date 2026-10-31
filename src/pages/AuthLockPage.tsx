@@ -38,6 +38,23 @@ export const AuthLockPage: React.FC = () => {
     }
   }, [systemSettings.allowUserRegistration, isSignUp]);
 
+  const formatAuthError = (err: any): string => {
+    const msg = err?.message || '';
+    if (msg.includes('auth/operation-not-allowed')) {
+      return 'Google Sign-In is not enabled yet in Firebase Console. Please enable the Google provider in Firebase Authentication > Sign-in method.';
+    }
+    if (msg.includes('auth/unauthorized-domain')) {
+      return 'Domain apps.k31.my.id is not authorized. Please add apps.k31.my.id under Firebase Authentication > Settings > Authorized domains.';
+    }
+    if (msg.includes('auth/popup-closed-by-user')) {
+      return 'Sign-in popup was closed before completing authentication.';
+    }
+    if (msg.includes('auth/invalid-credential') || msg.includes('auth/user-not-found') || msg.includes('auth/wrong-password')) {
+      return 'Invalid email or password. Please verify your credentials.';
+    }
+    return msg || 'Authentication failed. Please verify your credentials.';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -53,7 +70,7 @@ export const AuthLockPage: React.FC = () => {
         await signInWithEmail(email, password);
       }
     } catch (err: any) {
-      setError(err?.message || 'Authentication failed. Please verify your credentials.');
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -65,7 +82,7 @@ export const AuthLockPage: React.FC = () => {
     try {
       await signInWithGoogle();
     } catch (err: any) {
-      setError(err?.message || 'Google sign-in failed.');
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -192,7 +209,7 @@ export const AuthLockPage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="jelvinkrisnaputra31@gmail.com"
+                  placeholder="name@example.com"
                   className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
@@ -236,7 +253,7 @@ export const AuthLockPage: React.FC = () => {
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
                 <div className="p-2 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[10px] font-mono text-slate-500 dark:text-slate-400">
                   <span>Local Mode: Firebase is unconfigured. Workspace owner can authenticate locally as </span>
-                  <strong className="text-slate-800 dark:text-slate-200">jelvinkrisnaputra31@gmail.com</strong>.
+                  <strong className="text-slate-800 dark:text-slate-200">the designated workspace superadmin</strong>.
                 </div>
                 <button
                   type="button"
