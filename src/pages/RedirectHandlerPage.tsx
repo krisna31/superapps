@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { dataService } from '@/services/dataService';
+import { sanitizeRedirectUrl } from '@/utils/security';
 
 export const RedirectHandlerPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [loading, setLoading] = useState(true);
   const [targetUrl, setTargetUrl] = useState<string | null>(null);
+  const [securityBlocked, setSecurityBlocked] = useState(false);
 
   useEffect(() => {
     if (!slug) {
@@ -18,10 +20,18 @@ export const RedirectHandlerPage: React.FC = () => {
       try {
         const item = await dataService.resolveShortlink(slug);
         if (item && item.originalUrl) {
-          setTargetUrl(item.originalUrl);
-          // Redirect browser
+          const safeUrl = sanitizeRedirectUrl(item.originalUrl);
+          if (!safeUrl) {
+            console.warn('Security blocked unsafe shortlink target protocol:', item.originalUrl);
+            setSecurityBlocked(true);
+            setLoading(false);
+            return;
+          }
+
+          setTargetUrl(safeUrl);
+          // Safe browser redirection strictly to validated HTTP/HTTPS URL
           setTimeout(() => {
-            window.location.replace(item.originalUrl);
+            window.location.replace(safeUrl);
           }, 600);
         } else {
           setLoading(false);
@@ -39,10 +49,32 @@ export const RedirectHandlerPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4">
         <div className="w-8 h-8 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin mb-3" />
-        <h2 className="text-base font-semibold">Redirecting...</h2>
-        <p className="text-xs text-slate-400 mt-0.5 font-mono">
+        <h2 className="text-base font-semibold">Redirecting safely...</h2>
+        <p className="text-xs text-slate-400 mt-0.5 font-mono truncate max-w-sm">
           Taking you to {targetUrl || 'destination'}
         </p>
+      </div>
+    );
+  }
+
+  if (securityBlocked) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 text-center">
+        <div className="w-12 h-12 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center mb-3 border border-rose-500/20">
+          <ShieldAlert className="w-6 h-6" />
+        </div>
+        <h1 className="text-xl font-bold">Unsafe URL Blocked</h1>
+        <p className="text-xs text-slate-400 mt-1 max-w-md font-mono">
+          The shortlink <code className="text-rose-400 font-mono">/r/{slug}</code> was blocked because its destination contains an unsafe or unauthorized protocol. Only validated HTTP and HTTPS destinations are permitted.
+        </p>
+
+        <Link
+          to="/"
+          className="mt-4 flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-white hover:bg-slate-100 text-slate-900 text-xs font-medium transition"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Return to Superapps Home</span>
+        </Link>
       </div>
     );
   }

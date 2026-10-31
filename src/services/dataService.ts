@@ -41,6 +41,7 @@ import {
   seedGuestSamples
 } from '@/services/samples';
 import { createCollectionRepo, isCloudUser, Unsubscribe } from '@/services/repo/createCollectionRepo';
+import { sanitizeRedirectUrl, sanitizeFileName, isDangerousFileExtension } from '@/utils/security';
 
 export type { Unsubscribe };
 export { LOCAL_SYNC_EVENT, localBus, notifyLocalChange };
@@ -163,6 +164,12 @@ export const dataService = {
   },
 
   async saveShortlink(userId: string, shortlink: ShortlinkItem): Promise<void> {
+    const validatedUrl = sanitizeRedirectUrl(shortlink.originalUrl);
+    if (!validatedUrl) {
+      throw new Error('Invalid shortlink destination URL. Only HTTP and HTTPS protocols are allowed.');
+    }
+    shortlink.originalUrl = validatedUrl;
+
     if (isCloudUser(userId)) {
       const docRef = doc(db!, 'shortlinks', shortlink.slug);
       // Atomic verification and creation using Firestore transaction (Finding H3)
@@ -401,6 +408,11 @@ export const dataService = {
   ): Promise<DropzoneItem> {
     const fileId = 'drop-' + Math.random().toString(36).substring(2, 9);
 
+    if (isDangerousFileExtension(file.name)) {
+      throw new Error('Executable and script files (.exe, .bat, .sh, etc.) are blocked for security.');
+    }
+    const safeName = sanitizeFileName(file.name);
+
     // Initial progress report (0%)
     onProgress?.({ loaded: 0, total: file.size, percent: 0 });
 
@@ -430,7 +442,7 @@ export const dataService = {
     // If Cloud user with Firebase Storage configured, attempt cloud upload with a 5-second timeout
     if (isCloudUser(userId) && storage) {
       try {
-        const storagePath = `dropzone/${userId}/${Date.now()}_${file.name}`;
+        const storagePath = `dropzone/${userId}/${Date.now()}_${safeName}`;
         const storageReference = ref(storage, storagePath);
 
         const uploadTask = uploadBytesResumable(storageReference, file);
@@ -467,7 +479,7 @@ export const dataService = {
         const dropItem: DropzoneItem = {
           id: fileId,
           userId,
-          fileName: file.name,
+          fileName: safeName,
           fileSize: file.size,
           fileType: file.type || 'application/octet-stream',
           downloadUrl,
@@ -499,7 +511,7 @@ export const dataService = {
     const dropItem: DropzoneItem = {
       id: fileId,
       userId,
-      fileName: file.name,
+      fileName: safeName,
       fileSize: file.size,
       fileType: file.type || 'application/octet-stream',
       downloadUrl: fallbackUrl,
@@ -508,7 +520,6 @@ export const dataService = {
     };
 
     await dropzoneRepo.save(userId, dropItem);
-    return dropItem;
     return dropItem;
   },
 

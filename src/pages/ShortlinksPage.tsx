@@ -14,6 +14,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
 import { ShortlinkItem } from '@/types';
+import { sanitizeRedirectUrl } from '@/utils/security';
 
 export const ShortlinksPage: React.FC = () => {
   const { user } = useAuth();
@@ -58,13 +59,19 @@ export const ShortlinksPage: React.FC = () => {
       targetUrl = 'https://' + targetUrl;
     }
 
+    const validatedUrl = sanitizeRedirectUrl(targetUrl);
+    if (!validatedUrl) {
+      setError('Invalid destination URL. Only secure HTTP and HTTPS protocols are allowed.');
+      return;
+    }
+
     try {
       const generatedSlug = customSlug.trim() || Math.random().toString(36).substring(2, 8);
       const newShortlink: ShortlinkItem = {
         id: 'link-' + Date.now(),
         userId,
         slug: generatedSlug,
-        originalUrl: targetUrl,
+        originalUrl: validatedUrl,
         title: title.trim() || undefined,
         clicks: 0,
         createdAt: Date.now(),

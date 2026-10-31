@@ -121,7 +121,7 @@ describe('dataService Tests', () => {
     await dataService.saveShortlink(testUserId, shortlink);
     const resolved = await dataService.resolveShortlink('my-docs');
     expect(resolved).not.toBeNull();
-    expect(resolved?.originalUrl).toBe('https://docs.github.com');
+    expect(resolved?.originalUrl).toBe('https://docs.github.com/');
     expect(resolved?.clicks).toBe(1);
     expect(resolved?.recentClicks).toBeDefined();
     expect(resolved?.recentClicks?.length).toBeGreaterThan(0);

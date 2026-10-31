@@ -50,6 +50,7 @@ service cloud.firestore {
         request.resource.data.originalUrl is string &&
         request.resource.data.originalUrl.size() >= 1 &&
         request.resource.data.originalUrl.size() <= 2048 &&
+        request.resource.data.originalUrl.matches('^https?://.+') &&
         request.resource.data.clicks is int &&
         request.resource.data.clicks == 0;
       
@@ -61,6 +62,7 @@ service cloud.firestore {
       // - recentClicks list cannot exceed 60 items (prevents document bloat)
       // Case 2: Shortlink owner updating their link
       // - Owner cannot transfer ownership (userId is immutable) or change slug
+      // - Destination URL must strictly remain an HTTP/HTTPS URL
       allow update: if (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clicks', 'recentClicks']) &&
         request.resource.data.clicks == resource.data.clicks + 1 &&
@@ -75,7 +77,8 @@ service cloud.firestore {
         isAuthenticated() && 
         resource.data.userId == request.auth.uid &&
         request.resource.data.userId == resource.data.userId &&
-        request.resource.data.slug == resource.data.slug
+        request.resource.data.slug == resource.data.slug &&
+        request.resource.data.originalUrl.matches('^https?://.+')
       );
 
       // Only owner can delete their shortlinks
