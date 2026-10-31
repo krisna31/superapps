@@ -45,6 +45,9 @@ export const DropZonePage: React.FC = () => {
       setError(message);
     } finally {
       setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -181,6 +184,7 @@ export const DropZonePage: React.FC = () => {
 
                   <a
                     href={item.downloadUrl}
+                    download={item.fileName}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1 rounded text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"

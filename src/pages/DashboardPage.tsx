@@ -13,7 +13,8 @@ import {
   KeyRound,
   Copy,
   Check,
-  Terminal
+  Terminal,
+  DownloadCloud
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
@@ -82,6 +83,7 @@ export const DashboardPage: React.FC = () => {
     { title: 'SwissKnife Dev Tools', desc: 'JSON, Base64, UUID, Regex', path: '/swissknife', icon: Wrench, color: 'text-purple-500' },
     { title: 'Dropzone File Sharing', desc: 'Upload to Firebase Storage', path: '/dropzone', icon: CloudUpload, color: 'text-teal-500' },
     { title: 'URL Shortlinks', desc: 'Fast redirects & tracking', path: '/shortlinks', icon: Link2, color: 'text-orange-500' },
+    { title: 'Media Downloader', desc: 'Universal video & audio saver', path: '/downloader', icon: DownloadCloud, color: 'text-pink-500' },
   ];
 
   return (

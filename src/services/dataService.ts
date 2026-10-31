@@ -310,37 +310,79 @@ export const dataService = {
   async uploadFile(userId: string, file: File): Promise<DropzoneItem> {
     const fileId = 'drop-' + Math.random().toString(36).substring(2, 9);
 
+    // Helper: read file as Data URL for offline / fallback persistence across refreshes
+    const toDataUrl = async (f: File): Promise<string> => {
+      return new Promise<string>((resolve) => {
+        if (typeof FileReader === 'undefined') {
+          return resolve(typeof URL !== 'undefined' ? URL.createObjectURL(f) : '');
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => resolve((reader.result as string) || (typeof URL !== 'undefined' ? URL.createObjectURL(f) : ''));
+        reader.onerror = () => resolve(typeof URL !== 'undefined' ? URL.createObjectURL(f) : '');
+        reader.readAsDataURL(f);
+      });
+    };
+
+    // If Cloud user with Firebase Storage configured, attempt cloud upload with a 5-second timeout
     if (isCloudUser(userId) && storage) {
-      const storagePath = `dropzone/${userId}/${Date.now()}_${file.name}`;
-      const storageReference = ref(storage, storagePath);
-      const snapshot = await uploadBytesResumable(storageReference, file);
-      const downloadUrl = await getDownloadURL(snapshot.ref);
+      try {
+        const storagePath = `dropzone/${userId}/${Date.now()}_${file.name}`;
+        const storageReference = ref(storage, storagePath);
 
-      const dropItem: DropzoneItem = {
-        id: fileId,
-        userId,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type || 'application/octet-stream',
-        downloadUrl,
-        storagePath,
-        uploadedAt: Date.now(),
-      };
+        const uploadTask = uploadBytesResumable(storageReference, file);
 
-      // Save dropzone metadata to Firestore users/{uid}/dropzone/{id} (Finding H4)
-      await dropzoneRepo.save(userId, dropItem);
-      return dropItem;
+        // Add 5-second timeout to prevent hanging if bucket is uninitialized in Firebase Console
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            try {
+              uploadTask.cancel();
+            } catch {
+              // ignore
+            }
+            reject(new Error('Firebase Storage timeout. Bucket may not be initialized in Firebase Console.'));
+          }, 5000);
+        });
+
+        const snapshot = await Promise.race([uploadTask, timeoutPromise]);
+        const downloadUrl = await getDownloadURL(snapshot.ref);
+
+        const dropItem: DropzoneItem = {
+          id: fileId,
+          userId,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type || 'application/octet-stream',
+          downloadUrl,
+          storagePath,
+          uploadedAt: Date.now(),
+        };
+
+        // Save dropzone metadata to Firestore users/{uid}/dropzone/{id} (Finding H4)
+        await dropzoneRepo.save(userId, dropItem);
+        return dropItem;
+      } catch (err) {
+        console.warn('Firebase Storage upload failed, falling back to local persistent storage:', err);
+        // Fall back gracefully below
+      }
     }
 
-    // Guest / local fallback
-    const blobUrl = URL.createObjectURL(file);
+    // Guest / local fallback (also used if Firebase Storage bucket is uninitialized)
+    let fallbackUrl: string;
+    if (file.size <= 4 * 1024 * 1024) {
+      fallbackUrl = await toDataUrl(file);
+    } else if (typeof URL !== 'undefined' && URL.createObjectURL) {
+      fallbackUrl = URL.createObjectURL(file);
+    } else {
+      fallbackUrl = '';
+    }
+
     const dropItem: DropzoneItem = {
       id: fileId,
       userId,
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type || 'application/octet-stream',
-      downloadUrl: blobUrl,
+      downloadUrl: fallbackUrl,
       storagePath: 'local-blob',
       uploadedAt: Date.now(),
     };
