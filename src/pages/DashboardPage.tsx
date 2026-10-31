@@ -42,18 +42,18 @@ export const DashboardPage: React.FC = () => {
     }
     setQuickPassword(res);
 
-    // Load summary metrics from services
-    Promise.all([
-      dataService.getTasks(currentUserId),
-      dataService.getHabits(currentUserId),
-      dataService.getExpenses(currentUserId),
-      dataService.getNotes(currentUserId),
-    ]).then(([t, h, e, n]) => {
-      setTasks(t);
-      setHabits(h);
-      setExpenses(e);
-      setNotes(n);
-    });
+    // Real-time reactive subscriptions to all core modules
+    const unsubTasks = dataService.subscribeToTasks(currentUserId, setTasks);
+    const unsubHabits = dataService.subscribeToHabits(currentUserId, setHabits);
+    const unsubExpenses = dataService.subscribeToExpenses(currentUserId, setExpenses);
+    const unsubNotes = dataService.subscribeToNotes(currentUserId, setNotes);
+
+    return () => {
+      unsubTasks();
+      unsubHabits();
+      unsubExpenses();
+      unsubNotes();
+    };
   }, [currentUserId]);
 
   const copyPassword = () => {

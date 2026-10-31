@@ -106,12 +106,21 @@ export const ExpensesPage: React.FC = () => {
     .slice(0, 5);
 
   const exportCsv = () => {
+    // Sanitize values to prevent CSV formula injection in spreadsheet software
+    const sanitizeCsvValue = (val: string): string => {
+      let escaped = (val || '').replace(/"/g, '""');
+      if (/^[=\+\-@\t\r]/.test(escaped)) {
+        escaped = "'" + escaped;
+      }
+      return `"${escaped}"`;
+    };
+
     const headers = ['Date', 'Type', 'Category', 'Description', 'Amount'];
     const rows = expenses.map((e) => [
       e.date,
       e.type,
-      `"${e.category.replace(/"/g, '""')}"`,
-      `"${(e.description || '').replace(/"/g, '""')}"`,
+      sanitizeCsvValue(e.category),
+      sanitizeCsvValue(e.description || ''),
       e.amount,
     ]);
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');

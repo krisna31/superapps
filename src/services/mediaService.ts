@@ -19,6 +19,8 @@ export function getFallbackPortals(targetUrl: string, platform?: MediaPlatform):
       return [
         { name: 'SaveInsta', url: `https://saveinsta.app/en?url=${encoded}`, description: 'Direct Instagram Reels & Video Downloader' },
         { name: 'FastDl', url: `https://fastdl.app/en?url=${encoded}`, description: 'Photos, Videos, Reels & Stories' },
+        { name: 'InDown', url: `https://indown.io/?url=${encoded}`, description: 'Fast Instagram Video & Photo Downloader' },
+        { name: 'SnapInsta', url: 'https://snapinsta.app/', description: 'Instagram Story, Reels & Video Downloader' },
         { name: 'Cobalt Web', url: 'https://cobalt.tools', description: 'Open-source clean ad-free downloader' },
         { name: 'SnapSave', url: 'https://snapsave.app/', description: 'Full HD Instagram Downloader' },
       ];
@@ -57,9 +59,22 @@ export interface CobaltRequestOptions {
   videoQuality?: 'max' | '2160' | '1440' | '1080' | '720' | '480' | '360';
   downloadMode?: 'auto' | 'audio' | 'mute';
   audioFormat?: 'mp3' | 'ogg' | 'wav' | 'best';
+  apiKey?: string;
 }
 
 export const COBALT_CUSTOM_INSTANCE_KEY = 'superapps_cobalt_instance';
+export const COBALT_CUSTOM_API_KEY = 'superapps_cobalt_api_key';
+
+/**
+ * Generate a ready-to-run yt-dlp CLI command for terminal power users.
+ */
+export function getYtDlpCommand(targetUrl: string, downloadMode: 'auto' | 'audio' = 'auto'): string {
+  const cleanUrl = targetUrl.trim();
+  if (downloadMode === 'audio') {
+    return `yt-dlp -x --audio-format mp3 "${cleanUrl}"`;
+  }
+  return `yt-dlp -f "bv*+ba/b" "${cleanUrl}"`;
+}
 
 /**
  * Public community Cobalt instances used for fallback when extracting.
@@ -154,6 +169,26 @@ export function getCustomCobaltInstance(): string | null {
 }
 
 /**
+ * Save custom Cobalt API Key to localStorage.
+ */
+export function setCustomCobaltApiKey(key: string | null): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  if (!key || !key.trim()) {
+    localStorage.removeItem(COBALT_CUSTOM_API_KEY);
+  } else {
+    localStorage.setItem(COBALT_CUSTOM_API_KEY, key.trim());
+  }
+}
+
+/**
+ * Retrieve saved custom Cobalt API Key.
+ */
+export function getCustomCobaltApiKey(): string | null {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
+  return localStorage.getItem(COBALT_CUSTOM_API_KEY) || null;
+}
+
+/**
  * Core media extractor: handles Instagram, Facebook, TikTok, Twitter, YouTube, and direct URLs.
  */
 export async function extractMedia(
@@ -182,18 +217,25 @@ export async function extractMedia(
   // 2. Query Cobalt instance(s) with fallback
   const instances = getCobaltInstances();
   let lastError: Error | null = null;
+  const apiKey = options?.apiKey || getCustomCobaltApiKey();
 
   for (const instance of instances) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 14000);
 
+      const requestHeaders: Record<string, string> = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+      if (apiKey) {
+        requestHeaders['Authorization'] = `Bearer ${apiKey}`;
+        requestHeaders['Api-Key'] = apiKey;
+      }
+
       const response = await fetch(`${instance}/`, {
         method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
+        headers: requestHeaders,
         body: JSON.stringify({
           url: trimmed,
           videoQuality: options?.videoQuality || '1080',

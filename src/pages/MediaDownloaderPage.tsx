@@ -13,6 +13,7 @@ import {
   ClipboardPaste, 
   Layers,
   RefreshCw,
+  Terminal,
   X
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -23,6 +24,9 @@ import {
   detectMediaPlatform, 
   getCustomCobaltInstance, 
   setCustomCobaltInstance,
+  getCustomCobaltApiKey,
+  setCustomCobaltApiKey,
+  getYtDlpCommand,
   getFallbackPortals,
   DEFAULT_COBALT_INSTANCES
 } from '@/services/mediaService';
@@ -53,6 +57,7 @@ export const MediaDownloaderPage: React.FC = () => {
   const [history, setHistory] = useState<MediaDownloadItem[]>([]);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [customInstance, setCustomInstance] = useState(getCustomCobaltInstance() || '');
+  const [customApiKey, setCustomApiKey] = useState(getCustomCobaltApiKey() || '');
   const [configSaved, setConfigSaved] = useState(false);
 
   // Subscribe to media history from local vault / storage
@@ -164,9 +169,10 @@ export const MediaDownloaderPage: React.FC = () => {
     }
   };
 
-  // Save custom Cobalt endpoint
+  // Save custom Cobalt endpoint & API Key
   const handleSaveConfig = () => {
     setCustomCobaltInstance(customInstance);
+    setCustomCobaltApiKey(customApiKey);
     setConfigSaved(true);
     setTimeout(() => {
       setConfigSaved(false);
@@ -362,18 +368,34 @@ export const MediaDownloaderPage: React.FC = () => {
                     1-Click web extractors (No custom server required):
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(url);
-                    setCopiedId('url-btn');
-                    setTimeout(() => setCopiedId(null), 2000);
-                  }}
-                  className="flex items-center space-x-1 text-[11px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition self-start sm:self-auto"
-                >
-                  {copiedId === 'url-btn' ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedId === 'url-btn' ? 'Copied URL!' : 'Copy Media URL'}</span>
-                </button>
+                <div className="flex items-center space-x-1.5 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(getYtDlpCommand(url, downloadMode));
+                      setCopiedId('ytdlp-btn');
+                      setTimeout(() => setCopiedId(null), 2000);
+                    }}
+                    className="flex items-center space-x-1 text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition"
+                    title="Copy ready-to-run yt-dlp CLI command for terminal"
+                  >
+                    {copiedId === 'ytdlp-btn' ? <Check className="w-3 h-3 text-emerald-500" /> : <Terminal className="w-3 h-3" />}
+                    <span>{copiedId === 'ytdlp-btn' ? 'Copied yt-dlp!' : 'Copy yt-dlp CLI'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(url);
+                      setCopiedId('url-btn');
+                      setTimeout(() => setCopiedId(null), 2000);
+                    }}
+                    className="flex items-center space-x-1 text-[11px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                  >
+                    {copiedId === 'url-btn' ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedId === 'url-btn' ? 'Copied URL!' : 'Copy Media URL'}</span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
@@ -751,6 +773,19 @@ export const MediaDownloaderPage: React.FC = () => {
                 />
               </div>
 
+              <div className="space-y-1">
+                <label className="font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                  API Key / Bearer Token (Optional)
+                </label>
+                <input
+                  type="password"
+                  value={customApiKey}
+                  onChange={(e) => setCustomApiKey(e.target.value)}
+                  placeholder="Bearer token or API key for protected instances"
+                  className="w-full px-2.5 py-1.5 font-mono text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                />
+              </div>
+
               <div className="p-2.5 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px] font-mono space-y-1">
                 <span className="font-semibold text-slate-400">Default Fallback Instances:</span>
                 <ul className="text-slate-500 list-disc list-inside space-y-0.5">
@@ -773,7 +808,9 @@ export const MediaDownloaderPage: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setCustomInstance('');
+                  setCustomApiKey('');
                   setCustomCobaltInstance(null);
+                  setCustomCobaltApiKey(null);
                   setConfigSaved(true);
                   setTimeout(() => {
                     setConfigSaved(false);

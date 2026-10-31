@@ -561,10 +561,18 @@ describe('dataService.migrateGuestData', () => {
       createdAt: Date.now(),
     });
 
+    await dataService.saveMediaDownloadItem(guestUser, {
+      originalUrl: 'https://www.tiktok.com/@creator/video/123456',
+      title: 'TikTok Video',
+      platform: 'tiktok',
+      format: 'video',
+      downloadUrl: 'https://cdn.example.com/video.mp4',
+    });
+
     // 2. Perform migration
     const result = await dataService.migrateGuestData(guestUser, targetUser);
     expect(result.success).toBe(true);
-    expect(result.migratedCount).toBeGreaterThanOrEqual(5);
+    expect(result.migratedCount).toBeGreaterThanOrEqual(6);
 
     // 3. Verify target user has items
     const targetTasks = await dataService.getTasks(targetUser);
@@ -572,16 +580,19 @@ describe('dataService.migrateGuestData', () => {
     const targetHabits = await dataService.getHabits(targetUser);
     const targetExpenses = await dataService.getExpenses(targetUser);
     const targetSnippets = await dataService.getSnippets(targetUser);
+    const targetMedia = await dataService.getMediaHistory(targetUser);
 
     expect(targetTasks.some((t) => t.id === 'task-mig-1' && t.userId === targetUser)).toBe(true);
     expect(targetNotes.some((n) => n.id === 'note-mig-1' && n.userId === targetUser)).toBe(true);
     expect(targetHabits.some((h) => h.id === 'habit-mig-1' && h.userId === targetUser)).toBe(true);
     expect(targetExpenses.some((e) => e.id === 'expense-mig-1' && e.userId === targetUser)).toBe(true);
     expect(targetSnippets.some((s) => s.id === 'snippet-mig-1' && s.userId === targetUser)).toBe(true);
+    expect(targetMedia.some((m) => m.platform === 'tiktok' && m.userId === targetUser)).toBe(true);
 
     // 4. Verify guest local data was cleared
     expect(localStorage.getItem(`superapps_tasks_${guestUser}`)).toBeNull();
     expect(localStorage.getItem(`superapps_notes_${guestUser}`)).toBeNull();
+    expect(localStorage.getItem(`superapps_media_history_${guestUser}`)).toBeNull();
   });
 
   it('handles empty guest data gracefully', async () => {

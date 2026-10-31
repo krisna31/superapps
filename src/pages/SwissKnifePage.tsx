@@ -88,10 +88,20 @@ export const SwissKnifePage: React.FC = () => {
   useEffect(() => {
     try {
       if (b64Mode === 'encode') {
-        setB64Result(btoa(unescape(encodeURIComponent(b64Text))));
+        const bytes = new TextEncoder().encode(b64Text);
+        let binString = '';
+        for (let i = 0; i < bytes.length; i++) {
+          binString += String.fromCharCode(bytes[i]);
+        }
+        setB64Result(btoa(binString));
         setB64Error(null);
       } else {
-        setB64Result(decodeURIComponent(escape(atob(b64Text))));
+        const binString = atob(b64Text.trim());
+        const bytes = new Uint8Array(binString.length);
+        for (let i = 0; i < binString.length; i++) {
+          bytes[i] = binString.charCodeAt(i);
+        }
+        setB64Result(new TextDecoder().decode(bytes));
         setB64Error(null);
       }
     } catch {

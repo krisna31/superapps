@@ -5,6 +5,9 @@ import {
   extractFilenameFromUrl,
   getCobaltInstances,
   setCustomCobaltInstance,
+  getCustomCobaltApiKey,
+  setCustomCobaltApiKey,
+  getYtDlpCommand,
   extractMedia,
   downloadMediaFile,
   COBALT_CUSTOM_INSTANCE_KEY,
@@ -82,6 +85,21 @@ describe('mediaService Instance Configuration', () => {
     expect(localStorage.getItem(COBALT_CUSTOM_INSTANCE_KEY)).toBe('https://my-custom-cobalt.example.com');
     setCustomCobaltInstance('');
     expect(localStorage.getItem(COBALT_CUSTOM_INSTANCE_KEY)).toBeNull();
+  });
+
+  it('manages custom API key configuration', () => {
+    setCustomCobaltApiKey('secret-token-123');
+    expect(getCustomCobaltApiKey()).toBe('secret-token-123');
+    setCustomCobaltApiKey('');
+    expect(getCustomCobaltApiKey()).toBeNull();
+  });
+
+  it('generates yt-dlp CLI command for video and audio downloads', () => {
+    const videoCmd = getYtDlpCommand('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'auto');
+    expect(videoCmd).toBe('yt-dlp -f "bv*+ba/b" "https://www.youtube.com/watch?v=dQw4w9WgXcQ"');
+
+    const audioCmd = getYtDlpCommand('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'audio');
+    expect(audioCmd).toBe('yt-dlp -x --audio-format mp3 "https://www.youtube.com/watch?v=dQw4w9WgXcQ"');
   });
 });
 

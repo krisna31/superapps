@@ -739,6 +739,7 @@ export const dataService = {
         const rawSnippets = getLocalData<SnippetItem>(`superapps_snippets_${fromGuestId}`);
         const rawLinks = getLocalData<ShortlinkItem>(`superapps_shortlinks_${fromGuestId}`);
         const rawDropzone = getLocalData<DropzoneItem>(`superapps_dropzone_${fromGuestId}`);
+        const rawMediaHistory = getLocalData<MediaDownloadItem>(`superapps_media_history_${fromGuestId}`);
 
         // Filter out unchanged sample documents
         const filteredTasks = rawTasks.filter((t) => !isUnchangedSample('tasks', t));
@@ -748,6 +749,7 @@ export const dataService = {
         const filteredSnippets = rawSnippets.filter((s) => !isUnchangedSample('snippets', s));
         const filteredLinks = rawLinks;
         const filteredDropzone = rawDropzone;
+        const filteredMediaHistory = rawMediaHistory;
 
         const totalItems =
           filteredTasks.length +
@@ -756,7 +758,8 @@ export const dataService = {
           filteredExpenses.length +
           filteredSnippets.length +
           filteredLinks.length +
-          filteredDropzone.length;
+          filteredDropzone.length +
+          filteredMediaHistory.length;
 
         if (totalItems === 0) {
           // Clear empty or sample-only guest keys
@@ -830,6 +833,14 @@ export const dataService = {
             await commitBatchIfFull();
           }
 
+          for (const item of filteredMediaHistory) {
+            const docRef = doc(db!, 'users', toUserId, 'media_history', item.id);
+            currentBatch.set(docRef, { ...item, userId: toUserId }, { merge: true });
+            opsInBatch++;
+            count++;
+            await commitBatchIfFull();
+          }
+
           if (opsInBatch > 0) {
             await currentBatch.commit();
           }
@@ -878,6 +889,7 @@ export const dataService = {
           mergeItems('snippets', filteredSnippets);
           mergeItems('shortlinks', filteredLinks);
           mergeItems('dropzone', filteredDropzone);
+          mergeItems('media_history', filteredMediaHistory);
         }
 
         // Clean up transferred guest items
@@ -900,6 +912,7 @@ export const dataService = {
       localStorage.removeItem(`superapps_snippets_${guestId}`);
       localStorage.removeItem(`superapps_shortlinks_${guestId}`);
       localStorage.removeItem(`superapps_dropzone_${guestId}`);
+      localStorage.removeItem(`superapps_media_history_${guestId}`);
       localStorage.removeItem(`superapps_seeded_${guestId}`);
     } catch {
       // ignore
