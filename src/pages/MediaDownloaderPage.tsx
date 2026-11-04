@@ -195,22 +195,28 @@ export const MediaDownloaderPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showConfigModal]);
 
-  // Platform visual badges
+  // Platform visual badges (unified neutral/emerald design language)
   const renderPlatformBadge = (platform: MediaPlatform) => {
-    switch (platform) {
-      case 'instagram':
-        return <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/20">Instagram</span>;
-      case 'facebook':
-        return <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">Facebook</span>;
-      case 'tiktok':
-        return <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">TikTok</span>;
-      case 'twitter':
-        return <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">Twitter / X</span>;
-      case 'youtube':
-        return <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">YouTube</span>;
-      default:
-        return <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Direct Web</span>;
-    }
+    const labelMap: Partial<Record<MediaPlatform, string>> = {
+      instagram: 'Instagram',
+      facebook: 'Facebook',
+      tiktok: 'TikTok',
+      twitter: 'Twitter / X',
+      youtube: 'YouTube',
+    };
+    const label = labelMap[platform] || 'Direct Web';
+    const isDirect = !labelMap[platform];
+    return (
+      <span
+        className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium border ${
+          isDirect
+            ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+        }`}
+      >
+        {label}
+      </span>
+    );
   };
 
   return (

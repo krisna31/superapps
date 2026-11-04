@@ -13,6 +13,7 @@ import {
   KeyRound,
   Copy,
   Check,
+  RefreshCw,
   Terminal,
   DownloadCloud
 } from 'lucide-react';
@@ -32,10 +33,14 @@ export const DashboardPage: React.FC = () => {
   const [quickPassword, setQuickPassword] = useState('');
   const [copiedPass, setCopiedPass] = useState(false);
 
-  useEffect(() => {
-    // Generate an instant cryptographically unbiased 16-char password
+  const regenerateQuickPassword = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*';
     setQuickPassword(generateSecureRandomString(16, chars));
+  };
+
+  useEffect(() => {
+    // Generate an instant cryptographically unbiased 16-char password
+    regenerateQuickPassword();
 
     // Real-time reactive subscriptions to all core modules
     const unsubTasks = dataService.subscribeToTasks(currentUserId, setTasks);
@@ -115,15 +120,26 @@ export const DashboardPage: React.FC = () => {
               {quickPassword}
             </div>
           </div>
-          <button
-            type="button"
-            aria-label="Copy quick password"
-            onClick={copyPassword}
-            className="p-1.5 rounded text-slate-400 hover:text-emerald-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-            title="Copy Password"
-          >
-            {copiedPass ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-          </button>
+          <div className="flex items-center space-x-1">
+            <button
+              type="button"
+              aria-label="Copy quick password"
+              onClick={copyPassword}
+              className="p-1.5 rounded text-slate-400 hover:text-emerald-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+              title="Copy Password"
+            >
+              {copiedPass ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+            <button
+              type="button"
+              aria-label="Regenerate quick password"
+              onClick={regenerateQuickPassword}
+              className="p-1.5 rounded text-slate-400 hover:text-emerald-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+              title="Regenerate Password"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 

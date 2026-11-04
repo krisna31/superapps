@@ -204,7 +204,6 @@ export function createCollectionRepo<T extends { id: string }>(cfg: {
 
       localBus.addEventListener(LOCAL_SYNC_EVENT, handleLocalEvent);
       if (typeof window !== 'undefined') {
-        window.addEventListener(LOCAL_SYNC_EVENT, handleLocalEvent);
         window.addEventListener('storage', handleStorageEvent);
       }
 
@@ -212,7 +211,6 @@ export function createCollectionRepo<T extends { id: string }>(cfg: {
         isActive = false;
         localBus.removeEventListener(LOCAL_SYNC_EVENT, handleLocalEvent);
         if (typeof window !== 'undefined') {
-          window.removeEventListener(LOCAL_SYNC_EVENT, handleLocalEvent);
           window.removeEventListener('storage', handleStorageEvent);
         }
       };
