@@ -19,6 +19,7 @@ import {
   SYSTEM_SETTINGS_KEY 
 } from '@/services/dataService';
 import { seedGuestSamples } from '@/services/samples';
+import { generateSecureId } from '@/utils/security';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -43,22 +44,41 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(() => getCachedSystemSettings());
   
+  // Determine user role strictly from verified primary superadmin email or designated admin
+  const computeRole = (
+    email: string | null | undefined,
+    adminEmail: string
+  ): 'superadmin' | 'user' => {
+    if (!email) return 'user';
+    const emailLower = email.trim().toLowerCase();
+    const adminEmailLower = (adminEmail || 'jelvinkrisnaputra31@gmail.com').trim().toLowerCase();
+    return emailLower === 'jelvinkrisnaputra31@gmail.com' || emailLower === adminEmailLower
+      ? 'superadmin'
+      : 'user';
+  };
+
   const [user, setUser] = useState<UserProfile | null>(() => {
     if (typeof window === 'undefined' || !window.localStorage) return null;
-    // Check for saved local authenticated session
-    const savedUser = localStorage.getItem('superapps_local_user');
-    if (savedUser) {
-      try {
-        return JSON.parse(savedUser);
-      } catch {
-        // ignore parse error
+    // Check for saved local authenticated session (only when Firebase is unconfigured or in dev/test)
+    if (!isFirebaseConfigured || !import.meta.env.PROD) {
+      const savedUser = localStorage.getItem('superapps_local_user');
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser) as UserProfile;
+          // Recompute role from email rather than trusting raw localStorage role property
+          const verifiedRole = computeRole(parsed.email, 'jelvinkrisnaputra31@gmail.com');
+          return { ...parsed, role: verifiedRole };
+        } catch {
+          // ignore parse error
+        }
       }
     }
     // Check for saved local guest session
     const savedLocalUser = localStorage.getItem('superapps_local_guest');
     if (savedLocalUser) {
       try {
-        return JSON.parse(savedLocalUser);
+        const parsedGuest = JSON.parse(savedLocalUser) as UserProfile;
+        return { ...parsedGuest, isAnonymous: true, role: 'user' };
       } catch {
         return null;
       }
@@ -67,19 +87,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [loading, setLoading] = useState<boolean>(Boolean(isFirebaseConfigured));
-
-  // Determine user role strictly from verified superadmin email (jelvinkrisnaputra31@gmail.com) or designated admin
-  const computeRole = (
-    email: string | null | undefined,
-    adminEmail: string
-  ): 'superadmin' | 'user' => {
-    if (!email) return 'user';
-    const emailLower = email.trim().toLowerCase();
-    const adminEmailLower = adminEmail.trim().toLowerCase();
-    return emailLower === 'jelvinkrisnaputra31@gmail.com' || emailLower === adminEmailLower
-      ? 'superadmin'
-      : 'user';
-  };
 
   // Sync system settings on mount & listen to multi-tab storage updates
   useEffect(() => {
@@ -197,14 +204,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           dataService.cleanupLegacySamples(firebaseUser.uid);
         }
       } else {
-        const localUser = localStorage.getItem('superapps_local_user');
-        if (localUser) {
-          try {
-            setUser(JSON.parse(localUser));
-          } catch {
+        if (!isFirebaseConfigured || !import.meta.env.PROD) {
+          const localUser = localStorage.getItem('superapps_local_user');
+          if (localUser) {
+            try {
+              const parsed = JSON.parse(localUser) as UserProfile;
+              setUser({ ...parsed, role: computeRole(parsed.email, 'jelvinkrisnaputra31@gmail.com') });
+            } catch {
+              setUser(null);
+            }
+          } else {
             setUser(null);
           }
         } else {
+          localStorage.removeItem('superapps_local_user');
           setUser(null);
         }
         setLoading(false);
@@ -223,13 +236,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginAsLocalAdmin = async (email = 'jelvinkrisnaputra31@gmail.com') => {
+    if (isFirebaseConfigured && import.meta.env.PROD) {
+      throw new Error('Local superadmin unlock is disabled in production when Firebase Auth is configured.');
+    }
+    const cleanEmail = email.trim().toLowerCase();
     const adminUser: UserProfile = {
       uid: 'local-superadmin',
-      email: email.trim().toLowerCase(),
+      email: cleanEmail,
       displayName: 'Superadmin',
       photoURL: null,
       isAnonymous: false,
-      role: 'superadmin',
+      role: computeRole(cleanEmail, systemSettings.superadminEmail),
     };
     localStorage.setItem('superapps_local_user', JSON.stringify(adminUser));
     localStorage.removeItem('superapps_local_guest');
@@ -354,7 +371,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const guestUser: UserProfile = {
-      uid: 'guest-' + Math.random().toString(36).substring(2, 9),
+      uid: generateSecureId('guest', 8),
       email: null,
       displayName: 'Guest Explorer',
       photoURL: null,

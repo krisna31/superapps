@@ -6,13 +6,13 @@ export const notifyLocalChange = (key: string): void => {
   try {
     localBus.dispatchEvent(new CustomEvent(LOCAL_SYNC_EVENT, { detail: { key } }));
   } catch {
-    // fallback
-  }
-  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
-    try {
-      window.dispatchEvent(new CustomEvent(LOCAL_SYNC_EVENT, { detail: { key } }));
-    } catch {
-      // fallback
+    // fallback if EventTarget dispatch fails in restricted environments
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      try {
+        window.dispatchEvent(new CustomEvent(LOCAL_SYNC_EVENT, { detail: { key } }));
+      } catch {
+        // ignore
+      }
     }
   }
 };

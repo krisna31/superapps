@@ -149,28 +149,28 @@ To enable automatic deployment on push:
 
 Superapps is developed iteratively using structured milestones designed for human and **Agentic AI** pair-programming.
 
-- [x] **Milestone 1: Core Foundation & 8 Essential Modules**
+- [x] **Milestone 1: Core Foundation & 9 Essential Modules**
   - Modern React 19 + Vite + Tailwind CSS scaffolding.
   - PWA offline caching & Web App Manifest.
   - GitHub Pages CNAME & SPA 404 router.
   - Firebase Spark Auth, Firestore multi-tab cache, and Storage integration.
-  - Full implementations of Tasks, Notes, Habits, Expenses, Snippets, SwissKnife, Dropzone, and Shortlinks.
+  - Full implementations of Tasks, Notes, Habits, Expenses, Snippets, SwissKnife, Dropzone, Shortlinks, and Media Downloader.
   - Comprehensive Vitest test suite.
 
-- [ ] **Milestone 2: Cloud Sync & Enhanced Authentication**
+- [x] **Milestone 2: Cloud Sync & Enhanced Authentication**
   - Real-time Firestore snapshot listeners for live multi-tab updates.
-  - Link anonymous guest accounts to Google accounts without losing offline data.
-  - User profile avatar and cloud sync status indicator.
+  - Link anonymous guest accounts to Google or Email accounts without losing offline data.
+  - Verified superadmin RBAC and cloud sync status indicator.
 
-- [ ] **Milestone 3: Advanced Productivity & Interaction Upgrades**
+- [x] **Milestone 3: Advanced Productivity & Interaction Upgrades**
   - Native HTML5 Drag-and-Drop for Kanban task cards between columns.
   - Full WYSIWYG / rich markdown toolbar for Notes Vault.
-  - Habit streak calendar heatmap and interactive expense monthly charts.
+  - Habit streak 30-day calendar heatmap and interactive expense category breakdown.
 
-- [ ] **Milestone 4: Data Portability & Backup Center**
-  - 1-click JSON / CSV export and import for all user collections.
-  - AES-256 client-side encryption for sensitive notes and password vault.
-  - Local database snapshot management.
+- [x] **Milestone 4: Data Portability, Security Hardening & Backup Center**
+  - 1-click JSON export and schema-validated import for all user collections.
+  - Optional AES-GCM 256-bit (`PBKDF2-SHA256` 100k iterations) client-side backup encryption (`cryptoService.ts`).
+  - Content Security Policy (CSP), IP anonymization (`maskIpAddress`), shell metacharacter escaping (`escapeShellArg`), and hardened Firestore/Storage security rules.
 
 - [ ] **Milestone 5: Native PWA Superpowers & Web APIs**
   - Web Share Target API: share text/links directly into Superapps Notes or Shortlinks.

@@ -12,6 +12,7 @@ import { dataService } from '@/services/dataService';
 import { DropzoneItem } from '@/types';
 import { isFirebaseConfigured } from '@/firebase/config';
 import { useAuth } from '@/context/AuthContext';
+import { sanitizeDownloadUrl, sanitizeFileName } from '@/utils/security';
 
 export const DropZonePage: React.FC = () => {
   const { user } = useAuth();
@@ -29,6 +30,7 @@ export const DropZonePage: React.FC = () => {
   } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -112,7 +114,7 @@ export const DropZonePage: React.FC = () => {
           Dropzone File Sharing
         </h1>
         <p className="text-xs text-slate-500 mt-0.5">
-          Secure private object storage hosted on Firebase Storage Spark tier
+          Upload and share files backed by Firebase Storage or local browser storage
         </p>
       </div>
 
@@ -134,15 +136,35 @@ export const DropZonePage: React.FC = () => {
 
       {/* Upload Drop Zone */}
       <div
+        role="button"
+        tabIndex={uploading ? -1 : 0}
+        aria-label="Upload files to Dropzone"
         onClick={() => !uploading && fileInputRef.current?.click()}
-        onDragOver={(e) => e.preventDefault()}
+        onKeyDown={(e) => {
+          if (!uploading && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          if (!uploading) setIsDraggingOver(true);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!uploading && !isDraggingOver) setIsDraggingOver(true);
+        }}
+        onDragLeave={() => setIsDraggingOver(false)}
         onDrop={(e) => {
           e.preventDefault();
+          setIsDraggingOver(false);
           if (!uploading) handleFileUpload(e.dataTransfer.files);
         }}
-        className={`p-6 rounded-lg border border-dashed transition-all cursor-pointer flex flex-col items-center justify-center text-center ${
+        className={`p-6 rounded-lg border border-dashed transition-all cursor-pointer flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
           uploading
             ? 'border-emerald-500 bg-emerald-500/5 cursor-wait'
+            : isDraggingOver
+            ? 'border-emerald-500 bg-emerald-500/5'
             : 'border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40'
         }`}
       >
@@ -236,6 +258,7 @@ export const DropZonePage: React.FC = () => {
                     onClick={() => copyUrl(item.id, item.downloadUrl)}
                     className="p-1 rounded text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     title="Copy download link"
+                    aria-label={`Copy download link for ${item.fileName}`}
                   >
                     {copiedId === item.id ? (
                       <Check className="w-3.5 h-3.5 text-emerald-500" />
@@ -244,21 +267,25 @@ export const DropZonePage: React.FC = () => {
                     )}
                   </button>
 
-                  <a
-                    href={item.downloadUrl}
-                    download={item.fileName}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1 rounded text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    title="Open / Download"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                  </a>
+                  {sanitizeDownloadUrl(item.downloadUrl) && (
+                    <a
+                      href={sanitizeDownloadUrl(item.downloadUrl)!}
+                      download={sanitizeFileName(item.fileName)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 rounded text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      title="Open / Download"
+                      aria-label={`Download ${item.fileName}`}
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </a>
+                  )}
 
                   <button
                     onClick={() => handleDeleteFile(item)}
                     className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     title="Delete file"
+                    aria-label={`Delete ${item.fileName}`}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

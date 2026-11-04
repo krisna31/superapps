@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   Plus, 
@@ -55,6 +55,16 @@ export const SnippetsPage: React.FC = () => {
     };
   }, [userId, searchParams]);
 
+  // Dismiss New Snippet modal with Escape key
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen]);
+
   const handleCreateSnippet = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !code.trim()) return;
@@ -95,17 +105,19 @@ export const SnippetsPage: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const filteredSnippets = snippets.filter((s) => {
+  const filteredSnippets = useMemo(() => {
     const q = search.toLowerCase();
-    const matchesSearch =
-      s.title.toLowerCase().includes(q) ||
-      (s.description && s.description.toLowerCase().includes(q)) ||
-      s.code.toLowerCase().includes(q) ||
-      s.tags.some((t: string) => t.toLowerCase().includes(q));
+    return snippets.filter((s) => {
+      const matchesSearch =
+        s.title.toLowerCase().includes(q) ||
+        (s.description && s.description.toLowerCase().includes(q)) ||
+        s.code.toLowerCase().includes(q) ||
+        s.tags.some((t: string) => t.toLowerCase().includes(q));
 
-    const matchesLang = selectedLanguage === 'all' || s.language === selectedLanguage;
-    return matchesSearch && matchesLang;
-  });
+      const matchesLang = selectedLanguage === 'all' || s.language === selectedLanguage;
+      return matchesSearch && matchesLang;
+    });
+  }, [snippets, search, selectedLanguage]);
 
   return (
     <div className="space-y-4">
@@ -143,6 +155,7 @@ export const SnippetsPage: React.FC = () => {
         </div>
 
         <select
+          aria-label="Filter by language"
           value={selectedLanguage}
           onChange={(e) => setSelectedLanguage(e.target.value)}
           className="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none font-mono"
@@ -170,7 +183,7 @@ export const SnippetsPage: React.FC = () => {
               <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div className="min-w-0 pr-2">
                   <div className="flex items-center space-x-2">
-                    <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-750 uppercase">
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 uppercase">
                       {s.language}
                     </span>
                     <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
@@ -216,13 +229,13 @@ export const SnippetsPage: React.FC = () => {
 
               {/* Tags footer */}
               {s.tags.length > 0 && (
-                <div className="p-2 px-3 bg-slate-50 dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 flex items-center space-x-2">
+                <div className="p-2 px-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex items-center space-x-2">
                   <Tag className="w-3 h-3 text-slate-400 flex-shrink-0" />
                   <div className="flex items-center space-x-1 overflow-x-auto">
                     {s.tags.map((t: string) => (
                       <span
                         key={t}
-                        className="text-[9px] px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono"
+                        className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono"
                       >
                         #{t}
                       </span>
@@ -237,11 +250,22 @@ export const SnippetsPage: React.FC = () => {
 
       {/* New Snippet Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="new-snippet-modal-title"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg"
+          >
             <div className="flex items-center justify-between mb-3.5">
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">Save Code Snippet</h3>
+              <h3 id="new-snippet-modal-title" className="font-semibold text-sm text-slate-900 dark:text-white">Save Code Snippet</h3>
               <button
+                type="button"
+                aria-label="Close modal"
                 onClick={() => setIsModalOpen(false)}
                 className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
@@ -252,10 +276,11 @@ export const SnippetsPage: React.FC = () => {
             <form onSubmit={handleCreateSnippet} className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                  <label htmlFor="snippet-title-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                     Snippet Title *
                   </label>
                   <input
+                    id="snippet-title-input"
                     type="text"
                     required
                     value={title}
@@ -266,10 +291,11 @@ export const SnippetsPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                  <label htmlFor="snippet-language-select" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                     Language
                   </label>
                   <select
+                    id="snippet-language-select"
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
                     className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none font-mono"
@@ -282,10 +308,11 @@ export const SnippetsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="snippet-code-textarea" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Code Content *
                 </label>
                 <textarea
+                  id="snippet-code-textarea"
                   rows={8}
                   required
                   value={code}
@@ -296,10 +323,11 @@ export const SnippetsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="snippet-tags-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Tags (comma separated)
                 </label>
                 <input
+                  id="snippet-tags-input"
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
@@ -309,10 +337,11 @@ export const SnippetsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="snippet-desc-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Description
                 </label>
                 <input
+                  id="snippet-desc-input"
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   FileText, 
@@ -40,6 +40,11 @@ export const NotesPage: React.FC = () => {
   const [activeTags, setActiveTags] = useState('');
   const [activePinned, setActivePinned] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const selectedNoteIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    selectedNoteIdRef.current = selectedNoteId;
+  }, [selectedNoteId]);
 
   const insertMarkdown = (prefix: string, suffix = '') => {
     const textarea = textareaRef.current;
@@ -62,7 +67,7 @@ export const NotesPage: React.FC = () => {
   useEffect(() => {
     const unsubscribe = dataService.subscribeToNotes(userId, (data) => {
       setNotes(data);
-      if (data.length > 0 && !selectedNoteId) {
+      if (data.length > 0 && !selectedNoteIdRef.current) {
         selectNote(data[0]);
       }
     });
@@ -75,6 +80,7 @@ export const NotesPage: React.FC = () => {
   }, [userId, searchParams]);
 
   const selectNote = (note: NoteItem) => {
+    selectedNoteIdRef.current = note.id;
     setSelectedNoteId(note.id);
     setActiveTitle(note.title);
     setActiveContent(note.content);
@@ -125,9 +131,50 @@ export const NotesPage: React.FC = () => {
 
   const handleDeleteNote = async (id: string) => {
     if (confirm('Delete this note permanently?')) {
+      const remaining = notes.filter((n) => n.id !== id);
+      const nextNote = remaining.length > 0 ? remaining[0] : null;
+      selectedNoteIdRef.current = nextNote ? nextNote.id : null;
       await dataService.deleteNote(userId, id);
-      setSelectedNoteId(null);
+      if (nextNote) {
+        selectNote(nextNote);
+      } else {
+        setSelectedNoteId(null);
+      }
     }
+  };
+
+  // Keyboard shortcut Ctrl+S / Cmd+S to save active note
+  useEffect(() => {
+    if (!selectedNoteId) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSaveActiveNote();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNoteId, activeTitle, activeContent, activeTags, activePinned, notes]);
+
+  // Safe inline formatter for **bold**, *italic*, and `code`
+  const renderInlineMarkdown = (text: string) => {
+    const tokens = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+    return tokens.map((tok, i) => {
+      if (tok.startsWith('**') && tok.endsWith('**') && tok.length > 4) {
+        return <strong key={i} className="font-semibold text-slate-900 dark:text-white">{tok.slice(2, -2)}</strong>;
+      }
+      if (tok.startsWith('*') && tok.endsWith('*') && tok.length > 2) {
+        return <em key={i} className="italic">{tok.slice(1, -1)}</em>;
+      }
+      if (tok.startsWith('`') && tok.endsWith('`') && tok.length > 2) {
+        return (
+          <code key={i} className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-mono text-[11px]">
+            {tok.slice(1, -1)}
+          </code>
+        );
+      }
+      return tok;
+    });
   };
 
   // Safe markdown renderer
@@ -135,19 +182,35 @@ export const NotesPage: React.FC = () => {
     const lines = content.split('\n');
     return lines.map((line, idx) => {
       if (line.startsWith('# ')) {
-        return <h1 key={idx} className="text-lg font-bold text-slate-900 dark:text-white mt-3 mb-1.5">{line.substring(2)}</h1>;
+        return <h1 key={idx} className="text-lg font-bold text-slate-900 dark:text-white mt-3 mb-1.5">{renderInlineMarkdown(line.substring(2))}</h1>;
       }
       if (line.startsWith('## ')) {
-        return <h2 key={idx} className="text-base font-bold text-slate-800 dark:text-slate-100 mt-2.5 mb-1">{line.substring(3)}</h2>;
+        return <h2 key={idx} className="text-base font-bold text-slate-800 dark:text-slate-100 mt-2.5 mb-1">{renderInlineMarkdown(line.substring(3))}</h2>;
       }
       if (line.startsWith('### ')) {
-        return <h3 key={idx} className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-2 mb-1">{line.substring(4)}</h3>;
+        return <h3 key={idx} className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-2 mb-1">{renderInlineMarkdown(line.substring(4))}</h3>;
+      }
+      if (line.startsWith('- [x] ') || line.startsWith('- [X] ')) {
+        return (
+          <div key={idx} className="flex items-center space-x-2 ml-2 my-0.5 text-xs text-slate-500 line-through">
+            <input type="checkbox" checked readOnly className="rounded accent-emerald-500 pointer-events-none" />
+            <span>{renderInlineMarkdown(line.substring(6))}</span>
+          </div>
+        );
+      }
+      if (line.startsWith('- [ ] ')) {
+        return (
+          <div key={idx} className="flex items-center space-x-2 ml-2 my-0.5 text-xs text-slate-700 dark:text-slate-300">
+            <input type="checkbox" checked={false} readOnly className="rounded accent-emerald-500 pointer-events-none" />
+            <span>{renderInlineMarkdown(line.substring(6))}</span>
+          </div>
+        );
       }
       if (line.startsWith('- ')) {
-        return <li key={idx} className="ml-4 list-disc text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{line.substring(2)}</li>;
+        return <li key={idx} className="ml-4 list-disc text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{renderInlineMarkdown(line.substring(2))}</li>;
       }
       if (line.startsWith('> ')) {
-        return <blockquote key={idx} className="border-l-2 border-slate-300 dark:border-slate-700 pl-3 italic text-xs text-slate-500 my-1">{line.substring(2)}</blockquote>;
+        return <blockquote key={idx} className="border-l-2 border-slate-300 dark:border-slate-700 pl-3 italic text-xs text-slate-500 my-1">{renderInlineMarkdown(line.substring(2))}</blockquote>;
       }
       if (line.startsWith('```')) {
         return <div key={idx} className="font-mono text-xs text-emerald-500 bg-slate-950 px-2 py-0.5 rounded my-0.5">{line}</div>;
@@ -155,28 +218,30 @@ export const NotesPage: React.FC = () => {
       if (!line.trim()) {
         return <div key={idx} className="h-2" />;
       }
-      return <p key={idx} className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed my-0.5">{line}</p>;
+      return <p key={idx} className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed my-0.5">{renderInlineMarkdown(line)}</p>;
     });
   };
 
-  const filteredNotes = notes
-    .filter((n) => {
-      const q = search.toLowerCase();
-      return (
-        n.title.toLowerCase().includes(q) ||
-        n.content.toLowerCase().includes(q) ||
-        n.tags.some((t: string) => t.toLowerCase().includes(q))
-      );
-    })
-    .sort((a, b) => {
-      if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-      return b.updatedAt - a.updatedAt;
-    });
+  const filteredNotes = useMemo(() => {
+    const q = search.toLowerCase();
+    return notes
+      .filter((n) => {
+        return (
+          n.title.toLowerCase().includes(q) ||
+          n.content.toLowerCase().includes(q) ||
+          n.tags.some((t: string) => t.toLowerCase().includes(q))
+        );
+      })
+      .sort((a, b) => {
+        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+        return b.updatedAt - a.updatedAt;
+      });
+  }, [notes, search]);
 
   return (
-    <div className="h-[calc(100vh-7.5rem)] flex flex-col md:flex-row gap-3">
+    <div className="min-h-[calc(100vh-7.5rem)] md:h-[calc(100vh-7.5rem)] flex flex-col md:flex-row gap-3">
       {/* Notes Sidebar List */}
-      <div className="w-full md:w-72 flex flex-col rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 overflow-hidden">
+      <div className="w-full md:w-72 max-h-64 md:max-h-none flex flex-col rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 overflow-hidden">
         <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center space-x-1.5">
             <FileText className="w-4 h-4 text-slate-500" />
@@ -217,8 +282,17 @@ export const NotesPage: React.FC = () => {
               return (
                 <div
                   key={note.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-selected={isSelected}
                   onClick={() => selectNote(note)}
-                  className={`p-2 rounded-md cursor-pointer transition text-left relative ${
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      selectNote(note);
+                    }
+                  }}
+                  className={`p-2 rounded-md cursor-pointer transition text-left relative focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400 ${
                     isSelected
                       ? 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-medium'
                       : 'hover:bg-slate-50 dark:hover:bg-slate-800/40 border border-transparent'
@@ -239,7 +313,7 @@ export const NotesPage: React.FC = () => {
                     {note.tags.map((t: string) => (
                       <span
                         key={t}
-                        className="text-[9px] px-1 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono"
+                        className="text-[9px] px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono"
                       >
                         #{t}
                       </span>

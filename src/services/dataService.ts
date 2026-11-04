@@ -41,7 +41,14 @@ import {
   seedGuestSamples
 } from '@/services/samples';
 import { createCollectionRepo, isCloudUser, Unsubscribe } from '@/services/repo/createCollectionRepo';
-import { sanitizeRedirectUrl, sanitizeFileName, isDangerousFileExtension } from '@/utils/security';
+import {
+  sanitizeRedirectUrl,
+  sanitizeDownloadUrl,
+  sanitizeFileName,
+  isDangerousFileExtension,
+  maskIpAddress,
+  generateSecureId,
+} from '@/utils/security';
 
 export type { Unsubscribe };
 export { LOCAL_SYNC_EVENT, localBus, notifyLocalChange };
@@ -106,6 +113,7 @@ const setLocalData = <T>(key: string, data: T[]): void => {
     localStorage.setItem(key, JSON.stringify(data));
     notifyLocalChange(key);
   } catch (err) {
+    reportSyncError('save', 'shortlinks', err);
     console.error('Failed to write to localStorage:', err);
   }
 };
@@ -246,34 +254,38 @@ export const dataService = {
           clickLog.referrer = document.referrer;
         }
       }
+    }
 
-      // Quick IP and Geo lookup with 1.2s timeout so redirect is never delayed
+    // Parallel Geo-IP lookup (capped at 500ms) with privacy IP masking (S8)
+    const populateGeoAsync = async (): Promise<void> => {
+      if (typeof window === 'undefined') return;
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 1200);
+        const timeout = setTimeout(() => controller.abort(), 500);
         const geoRes = await fetch('https://ipwho.is/', { signal: controller.signal });
         clearTimeout(timeout);
         if (geoRes.ok) {
           const geoData = await geoRes.json();
           if (geoData && geoData.success !== false) {
-            clickLog.ip = geoData.ip;
+            clickLog.ip = maskIpAddress(geoData.ip);
             clickLog.country = geoData.country;
             clickLog.countryCode = geoData.country_code;
             clickLog.city = geoData.city;
             clickLog.region = geoData.region;
+            return;
           }
         }
       } catch {
-        // Fallback to fast country.is lookup
+        // Fallback to fast country.is lookup (350ms budget)
         try {
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 800);
+          const timeout = setTimeout(() => controller.abort(), 350);
           const cRes = await fetch('https://api.country.is/', { signal: controller.signal });
           clearTimeout(timeout);
           if (cRes.ok) {
             const cData = await cRes.json();
             if (cData && cData.country) {
-              clickLog.ip = cData.ip;
+              clickLog.ip = maskIpAddress(cData.ip);
               clickLog.countryCode = cData.country;
             }
           }
@@ -281,12 +293,12 @@ export const dataService = {
           // offline or restricted, proceed gracefully
         }
       }
-    }
+    };
 
     if (isFirebaseConfigured && db) {
       try {
         const docRef = doc(db, 'shortlinks', slug);
-        const snap = await getDoc(docRef);
+        const [snap] = await Promise.all([getDoc(docRef), populateGeoAsync()]);
         if (snap.exists()) {
           const data = snap.data() as ShortlinkItem;
           const currentRecent = Array.isArray(data.recentClicks) ? data.recentClicks : [];
@@ -304,6 +316,8 @@ export const dataService = {
       } catch (err) {
         console.warn('Firestore resolveShortlink fallback:', err);
       }
+    } else {
+      await populateGeoAsync();
     }
 
     // Fallback: search across local storages
@@ -384,17 +398,23 @@ export const dataService = {
       if (!detail || detail.key === key) handleUpdate();
     };
 
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (!e.key || e.key === key) handleUpdate();
+    };
+
     localBus.addEventListener(LOCAL_SYNC_EVENT, handleLocalEvent);
     if (typeof window !== 'undefined') {
       window.addEventListener(LOCAL_SYNC_EVENT, handleLocalEvent);
-      window.addEventListener('storage', (e) => {
-        if (!e.key || e.key === key) handleUpdate();
-      });
+      window.addEventListener('storage', handleStorageEvent);
     }
 
     return () => {
       isActive = false;
       localBus.removeEventListener(LOCAL_SYNC_EVENT, handleLocalEvent);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(LOCAL_SYNC_EVENT, handleLocalEvent);
+        window.removeEventListener('storage', handleStorageEvent);
+      }
     };
   },
 
@@ -406,10 +426,10 @@ export const dataService = {
     file: File, 
     onProgress?: UploadProgressCallback
   ): Promise<DropzoneItem> {
-    const fileId = 'drop-' + Math.random().toString(36).substring(2, 9);
+    const fileId = generateSecureId('drop', 8);
 
     if (isDangerousFileExtension(file.name)) {
-      throw new Error('Executable and script files (.exe, .bat, .sh, etc.) are blocked for security.');
+      throw new Error('Executable, script, and active web files (.exe, .bat, .sh, .svg, .html, etc.) are blocked for security.');
     }
     const safeName = sanitizeFileName(file.name);
 
@@ -544,7 +564,7 @@ export const dataService = {
 
   async saveMediaDownloadItem(userId: string, item: Omit<MediaDownloadItem, 'id' | 'createdAt' | 'userId'> & { id?: string; createdAt?: number; userId?: string }): Promise<MediaDownloadItem> {
     const historyItem: MediaDownloadItem = {
-      id: item.id || 'media-' + Math.random().toString(36).substring(2, 9),
+      id: item.id || generateSecureId('media', 8),
       userId,
       originalUrl: item.originalUrl,
       title: item.title,
@@ -721,7 +741,7 @@ export const dataService = {
         (col === 'snippets' && SAMPLE_SNIPPET_TITLES[originalId]);
 
       return isSampleId
-        ? `${col}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
+        ? generateSecureId(`${col}-${Date.now()}`, 5)
         : originalId;
     };
 
@@ -963,98 +983,229 @@ export const dataService = {
     let count = 0;
     const errors: string[] = [];
 
-    // Import tasks
+    // Import tasks with schema validation
     if (Array.isArray(backup.data.tasks)) {
       for (const t of backup.data.tasks) {
         try {
-          await this.saveTask(userId, { ...t, userId });
+          if (!t || typeof t !== 'object' || typeof t.id !== 'string' || !t.id.trim() || typeof t.title !== 'string' || !t.title.trim()) {
+            throw new Error('Missing valid id or title');
+          }
+          const validStatus =
+            t.status === 'in_progress' || t.status === 'review' || t.status === 'done'
+              ? t.status
+              : 'todo';
+          const validPriority =
+            t.priority === 'low' || t.priority === 'medium' || t.priority === 'high' || t.priority === 'urgent'
+              ? t.priority
+              : 'medium';
+          await this.saveTask(userId, {
+            ...t,
+            id: t.id.trim(),
+            userId,
+            title: t.title.trim(),
+            description: typeof t.description === 'string' ? t.description : undefined,
+            status: validStatus,
+            priority: validPriority,
+            createdAt: typeof t.createdAt === 'number' && Number.isFinite(t.createdAt) ? t.createdAt : Date.now(),
+            updatedAt: typeof t.updatedAt === 'number' && Number.isFinite(t.updatedAt) ? t.updatedAt : Date.now(),
+          });
           count++;
         } catch (err: any) {
-          errors.push(`Task "${t.title}": ${err?.message}`);
+          errors.push(`Task "${t?.title || t?.id || 'unknown'}": ${err?.message}`);
         }
       }
     }
 
-    // Import notes
+    // Import notes with schema validation
     if (Array.isArray(backup.data.notes)) {
       for (const n of backup.data.notes) {
         try {
-          await this.saveNote(userId, { ...n, userId });
+          if (!n || typeof n !== 'object' || typeof n.id !== 'string' || !n.id.trim() || typeof n.title !== 'string') {
+            throw new Error('Missing valid id or title');
+          }
+          await this.saveNote(userId, {
+            ...n,
+            id: n.id.trim(),
+            userId,
+            title: n.title.trim() || 'Untitled Note',
+            content: typeof n.content === 'string' ? n.content : '',
+            tags: Array.isArray(n.tags) ? n.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+            isPinned: Boolean(n.isPinned),
+            createdAt: typeof n.createdAt === 'number' && Number.isFinite(n.createdAt) ? n.createdAt : Date.now(),
+            updatedAt: typeof n.updatedAt === 'number' && Number.isFinite(n.updatedAt) ? n.updatedAt : Date.now(),
+          });
           count++;
         } catch (err: any) {
-          errors.push(`Note "${n.title}": ${err?.message}`);
+          errors.push(`Note "${n?.title || n?.id || 'unknown'}": ${err?.message}`);
         }
       }
     }
 
-    // Import habits
+    // Import habits with schema validation
     if (Array.isArray(backup.data.habits)) {
       for (const h of backup.data.habits) {
         try {
-          await this.saveHabit(userId, { ...h, userId });
+          if (!h || typeof h !== 'object' || typeof h.id !== 'string' || !h.id.trim() || typeof h.title !== 'string' || !h.title.trim()) {
+            throw new Error('Missing valid id or title');
+          }
+          await this.saveHabit(userId, {
+            ...h,
+            id: h.id.trim(),
+            userId,
+            title: h.title.trim(),
+            description: typeof h.description === 'string' ? h.description : undefined,
+            frequency: h.frequency === 'weekly' ? 'weekly' : 'daily',
+            completedDates: Array.isArray(h.completedDates)
+              ? h.completedDates.filter((d): d is string => typeof d === 'string')
+              : [],
+            streak: typeof h.streak === 'number' && Number.isFinite(h.streak) && h.streak >= 0 ? h.streak : 0,
+            createdAt: typeof h.createdAt === 'number' && Number.isFinite(h.createdAt) ? h.createdAt : Date.now(),
+          });
           count++;
         } catch (err: any) {
-          errors.push(`Habit "${h.title}": ${err?.message}`);
+          errors.push(`Habit "${h?.title || h?.id || 'unknown'}": ${err?.message}`);
         }
       }
     }
 
-    // Import expenses
+    // Import expenses with schema validation
     if (Array.isArray(backup.data.expenses)) {
       for (const e of backup.data.expenses) {
         try {
-          await this.saveExpense(userId, { ...e, userId });
+          if (
+            !e ||
+            typeof e !== 'object' ||
+            typeof e.id !== 'string' ||
+            !e.id.trim() ||
+            typeof e.amount !== 'number' ||
+            !Number.isFinite(e.amount) ||
+            e.amount < 0
+          ) {
+            throw new Error('Invalid expense id or non-negative amount');
+          }
+          await this.saveExpense(userId, {
+            ...e,
+            id: e.id.trim(),
+            userId,
+            type: e.type === 'income' ? 'income' : 'expense',
+            amount: e.amount,
+            category: typeof e.category === 'string' && e.category.trim() ? e.category.trim() : 'General',
+            description: typeof e.description === 'string' ? e.description : '',
+            date: typeof e.date === 'string' && e.date.trim() ? e.date.trim() : new Date().toISOString().split('T')[0],
+            createdAt: typeof e.createdAt === 'number' && Number.isFinite(e.createdAt) ? e.createdAt : Date.now(),
+          });
           count++;
         } catch (err: any) {
-          errors.push(`Expense "${e.description}": ${err?.message}`);
+          errors.push(`Expense "${e?.description || e?.id || 'unknown'}": ${err?.message}`);
         }
       }
     }
 
-    // Import snippets
+    // Import snippets with schema validation
     if (Array.isArray(backup.data.snippets)) {
       for (const s of backup.data.snippets) {
         try {
-          await this.saveSnippet(userId, { ...s, userId });
+          if (!s || typeof s !== 'object' || typeof s.id !== 'string' || !s.id.trim() || typeof s.title !== 'string' || !s.title.trim()) {
+            throw new Error('Missing valid id or title');
+          }
+          await this.saveSnippet(userId, {
+            ...s,
+            id: s.id.trim(),
+            userId,
+            title: s.title.trim(),
+            code: typeof s.code === 'string' ? s.code : '',
+            language: typeof s.language === 'string' && s.language.trim() ? s.language.trim() : 'plaintext',
+            tags: Array.isArray(s.tags) ? s.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+            description: typeof s.description === 'string' ? s.description : undefined,
+            createdAt: typeof s.createdAt === 'number' && Number.isFinite(s.createdAt) ? s.createdAt : Date.now(),
+          });
           count++;
         } catch (err: any) {
-          errors.push(`Snippet "${s.title}": ${err?.message}`);
+          errors.push(`Snippet "${s?.title || s?.id || 'unknown'}": ${err?.message}`);
         }
       }
     }
 
-    // Import shortlinks
+    // Import shortlinks with schema validation
     if (Array.isArray(backup.data.shortlinks)) {
       for (const l of backup.data.shortlinks) {
         try {
-          await this.saveShortlink(userId, { ...l, userId });
+          if (!l || typeof l !== 'object' || typeof l.slug !== 'string' || !l.slug.trim() || typeof l.originalUrl !== 'string') {
+            throw new Error('Missing valid slug or originalUrl');
+          }
+          await this.saveShortlink(userId, {
+            ...l,
+            id: typeof l.id === 'string' && l.id.trim() ? l.id.trim() : l.slug.trim(),
+            slug: l.slug.trim(),
+            userId,
+            clicks: typeof l.clicks === 'number' && Number.isFinite(l.clicks) && l.clicks >= 0 ? l.clicks : 0,
+            createdAt: typeof l.createdAt === 'number' && Number.isFinite(l.createdAt) ? l.createdAt : Date.now(),
+          });
           count++;
         } catch (err: any) {
-          errors.push(`Shortlink "${l.slug}": ${err?.message}`);
+          errors.push(`Shortlink "${l?.slug || 'unknown'}": ${err?.message}`);
         }
       }
     }
 
-    // Import dropzone metadata
+    // Import dropzone metadata with URL & filename sanitization
     if (Array.isArray(backup.data.dropzone)) {
       for (const d of backup.data.dropzone) {
         try {
-          await dropzoneRepo.save(userId, { ...d, userId });
+          if (!d || typeof d !== 'object' || typeof d.id !== 'string' || !d.id.trim() || typeof d.fileName !== 'string') {
+            throw new Error('Missing valid dropzone id or fileName');
+          }
+          const safeFileName = sanitizeFileName(d.fileName);
+          if (isDangerousFileExtension(safeFileName)) {
+            throw new Error(`Blocked dangerous file extension in "${safeFileName}"`);
+          }
+          const safeDownloadUrl = sanitizeDownloadUrl(d.downloadUrl);
+          if (!safeDownloadUrl) {
+            throw new Error(`Blocked unsafe or invalid downloadUrl in "${safeFileName}"`);
+          }
+          await dropzoneRepo.save(userId, {
+            ...d,
+            id: d.id.trim(),
+            userId,
+            fileName: safeFileName,
+            fileSize: typeof d.fileSize === 'number' && Number.isFinite(d.fileSize) && d.fileSize >= 0 ? d.fileSize : 0,
+            fileType: typeof d.fileType === 'string' ? d.fileType : 'application/octet-stream',
+            downloadUrl: safeDownloadUrl,
+            storagePath: typeof d.storagePath === 'string' ? d.storagePath : 'local-blob',
+            uploadedAt: typeof d.uploadedAt === 'number' && Number.isFinite(d.uploadedAt) ? d.uploadedAt : Date.now(),
+          });
           count++;
         } catch (err: any) {
-          errors.push(`Dropzone "${d.fileName}": ${err?.message}`);
+          errors.push(`Dropzone "${d?.fileName || d?.id || 'unknown'}": ${err?.message}`);
         }
       }
     }
 
-    // Import media history
+    // Import media history with URL sanitization
     if (Array.isArray(backup.data.mediaHistory)) {
       for (const m of backup.data.mediaHistory) {
         try {
-          await mediaHistoryRepo.save(userId, { ...m, userId });
+          if (!m || typeof m !== 'object' || typeof m.id !== 'string' || !m.id.trim()) {
+            throw new Error('Missing valid media history id');
+          }
+          const safeOrigUrl = sanitizeRedirectUrl(m.originalUrl);
+          const safeDlUrl = sanitizeRedirectUrl(m.downloadUrl);
+          if (!safeOrigUrl || !safeDlUrl) {
+            throw new Error('Unsafe or invalid media URL');
+          }
+          await mediaHistoryRepo.save(userId, {
+            ...m,
+            id: m.id.trim(),
+            userId,
+            originalUrl: safeOrigUrl,
+            downloadUrl: safeDlUrl,
+            title: typeof m.title === 'string' ? m.title : 'Media Item',
+            filename: m.filename ? sanitizeFileName(m.filename) : undefined,
+            createdAt: typeof m.createdAt === 'number' && Number.isFinite(m.createdAt) ? m.createdAt : Date.now(),
+          });
           count++;
         } catch (err: any) {
-          errors.push(`Media history "${m.title}": ${err?.message}`);
+          errors.push(`Media history "${m?.title || m?.id || 'unknown'}": ${err?.message}`);
         }
       }
     }

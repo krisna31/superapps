@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   Flame, 
@@ -12,6 +12,34 @@ import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
 import { HabitItem } from '@/types';
 
+const formatLocalDate = (d: Date): string => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const computeCurrentStreak = (completedDates: string[], todayStr: string): number => {
+  if (!completedDates || completedDates.length === 0) return 0;
+  const dateSet = new Set(completedDates);
+  const cursor = new Date(todayStr + 'T00:00:00');
+
+  // If today is not yet checked off, start checking from yesterday so an active streak is preserved
+  if (!dateSet.has(todayStr)) {
+    cursor.setDate(cursor.getDate() - 1);
+    if (!dateSet.has(formatLocalDate(cursor))) {
+      return 0;
+    }
+  }
+
+  let streak = 0;
+  while (dateSet.has(formatLocalDate(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+};
+
 export const HabitsPage: React.FC = () => {
   const { user } = useAuth();
   const userId = user?.uid || 'guest-default';
@@ -23,7 +51,16 @@ export const HabitsPage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = formatLocalDate(new Date());
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen]);
 
   useEffect(() => {
     const unsubscribe = dataService.subscribeToHabits(userId, (data) => {
@@ -60,20 +97,11 @@ export const HabitsPage: React.FC = () => {
 
   const handleToggleHabitDay = async (habit: HabitItem, dateStr: string) => {
     const alreadyDone = habit.completedDates.includes(dateStr);
-    let nextDates = [...habit.completedDates];
-    let nextStreak = habit.streak;
+    const nextDates = alreadyDone
+      ? habit.completedDates.filter((d) => d !== dateStr)
+      : [...habit.completedDates, dateStr];
 
-    if (alreadyDone) {
-      nextDates = nextDates.filter((d) => d !== dateStr);
-      if (dateStr === todayStr && nextStreak > 0) {
-        nextStreak -= 1;
-      }
-    } else {
-      nextDates.push(dateStr);
-      if (dateStr === todayStr) {
-        nextStreak += 1;
-      }
-    }
+    const nextStreak = computeCurrentStreak(nextDates, todayStr);
 
     const updated: HabitItem = {
       ...habit,
@@ -89,31 +117,37 @@ export const HabitsPage: React.FC = () => {
     }
   };
 
-  // Generate last 7 days strings [YYYY-MM-DD]
-  const getLast7Days = () => {
+  const daysList = useMemo(() => {
     const days: string[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      days.push(d.toISOString().split('T')[0]);
+      days.push(formatLocalDate(d));
     }
     return days;
-  };
+  }, [todayStr]);
 
-  // Generate last 30 days strings for consistency heatmap
-  const getLast30Days = () => {
+  const days30List = useMemo(() => {
     const days: string[] = [];
     for (let i = 29; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      days.push(d.toISOString().split('T')[0]);
+      days.push(formatLocalDate(d));
     }
     return days;
-  };
+  }, [todayStr]);
 
-  const daysList = getLast7Days();
-  const days30List = getLast30Days();
-  const completedTodayCount = habits.filter((h) => h.completedDates.includes(todayStr)).length;
+  const completionCountsByDate = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const h of habits) {
+      for (const d of h.completedDates) {
+        counts[d] = (counts[d] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [habits]);
+
+  const completedTodayCount = completionCountsByDate[todayStr] || 0;
   const completionPercentage = habits.length > 0 ? Math.round((completedTodayCount / habits.length) * 100) : 0;
 
   return (
@@ -125,7 +159,7 @@ export const HabitsPage: React.FC = () => {
             Daily Habits
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Routine tracker, streak preservation, and seven-day completion matrix
+            Track daily habits, streaks, and 7-day consistency
           </p>
         </div>
 
@@ -149,7 +183,7 @@ export const HabitsPage: React.FC = () => {
             {completedTodayCount} of {habits.length} Habits Completed ({completionPercentage}%)
           </div>
           <p className="text-xs text-slate-500">
-            Daily cadence tracking against active routine benchmarks.
+            Complete your daily routines to maintain your active streaks.
           </p>
         </div>
 
@@ -233,12 +267,15 @@ export const HabitsPage: React.FC = () => {
                     {daysList.map((d) => {
                       const completed = habit.completedDates.includes(d);
                       const isToday = d === todayStr;
-                      const dayName = new Date(d).toLocaleDateString('en-US', { weekday: 'narrow' });
+                      const dayName = new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'narrow' });
                       return (
                         <button
                           key={d}
+                          type="button"
+                          aria-label={`Toggle ${habit.title} for ${d}`}
+                          aria-pressed={completed}
                           onClick={() => handleToggleHabitDay(habit, d)}
-                          className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-mono transition ${
+                          className={`w-7 h-7 sm:w-6 sm:h-6 rounded flex items-center justify-center text-[10px] font-mono transition ${
                             completed
                               ? 'bg-emerald-600 text-white'
                               : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -254,8 +291,10 @@ export const HabitsPage: React.FC = () => {
                   {/* Action */}
                   <div className="w-full md:col-span-1 flex justify-end">
                     <button
+                      type="button"
+                      aria-label={`Delete ${habit.title}`}
                       onClick={() => handleDeleteHabit(habit.id)}
-                      className="p-1 text-slate-400 hover:text-rose-500 rounded transition"
+                      className="p-1.5 sm:p-1 text-slate-400 hover:text-rose-500 rounded transition"
                       title="Delete habit"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -276,22 +315,22 @@ export const HabitsPage: React.FC = () => {
               30-Day Routine Execution Heatmap
             </h3>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Cumulative daily habit completion density across active benchmarks
+              Daily habit completion rate over the past 30 days
             </p>
           </div>
           <div className="flex items-center space-x-1.5 text-[10px] font-mono text-slate-400">
             <span>Less</span>
-            <span className="w-2.5 h-2.5 rounded-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
-            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500/30 border border-emerald-500/40" />
-            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500/70 border border-emerald-500/80" />
-            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500 border border-emerald-600" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500/30 border border-emerald-500/40" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500/70 border border-emerald-500/80" />
+            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 border border-emerald-600" />
             <span>More</span>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-1.5 pt-1">
           {days30List.map((d) => {
-            const count = habits.filter((h) => h.completedDates.includes(d)).length;
+            const count = completionCountsByDate[d] || 0;
             const ratio = habits.length > 0 ? count / habits.length : 0;
             const isToday = d === todayStr;
 
@@ -321,12 +360,23 @@ export const HabitsPage: React.FC = () => {
 
       {/* Create Habit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="w-full max-w-sm rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-habit-modal-title"
+            className="w-full max-w-sm rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg"
+          >
             <div className="flex items-center justify-between mb-3.5">
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">Add New Habit</h3>
+              <h3 id="create-habit-modal-title" className="font-semibold text-sm text-slate-900 dark:text-white">Add New Habit</h3>
               <button
                 onClick={() => setIsModalOpen(false)}
+                aria-label="Close modal"
                 className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X className="w-4 h-4" />
@@ -335,10 +385,11 @@ export const HabitsPage: React.FC = () => {
 
             <form onSubmit={handleCreateHabit} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="habit-title-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Habit Title *
                 </label>
                 <input
+                  id="habit-title-input"
                   type="text"
                   required
                   value={title}
@@ -349,10 +400,11 @@ export const HabitsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="habit-desc-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Description / Motivation
                 </label>
                 <input
+                  id="habit-desc-input"
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}

@@ -11,7 +11,7 @@ service cloud.firestore {
     function isSuperadmin() {
       return isAuthenticated() && 
         request.auth.token.email.lower() == 'jelvinkrisnaputra31@gmail.com' && 
-        (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'password');
+        request.auth.token.email_verified == true;
     }
     
     // System settings: publicly readable for client UI; only verified superadmin can write (H1)
@@ -38,7 +38,7 @@ service cloud.firestore {
       allow get: if true;
       
       // Scrape prevention: listing shortlinks requires authentication and ownership filter
-      allow list: if isAuthenticated();
+      allow list: if isAuthenticated() && (resource.data.userId == request.auth.uid || isSuperadmin());
       
       // Creating requires authenticated caller attributing to their own UID with safe constraints
       allow create: if isAuthenticated() && 
@@ -78,7 +78,11 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid &&
         request.resource.data.userId == resource.data.userId &&
         request.resource.data.slug == resource.data.slug &&
-        request.resource.data.originalUrl.matches('^https?://.+')
+        request.resource.data.originalUrl is string &&
+        request.resource.data.originalUrl.size() >= 1 &&
+        request.resource.data.originalUrl.size() <= 2048 &&
+        request.resource.data.originalUrl.matches('^https?://.+') &&
+        request.resource.data.clicks is int
       );
 
       // Only owner can delete their shortlinks

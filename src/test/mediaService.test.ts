@@ -96,10 +96,10 @@ describe('mediaService Instance Configuration', () => {
 
   it('generates yt-dlp CLI command for video and audio downloads', () => {
     const videoCmd = getYtDlpCommand('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'auto');
-    expect(videoCmd).toBe('yt-dlp -f "bv*+ba/b" "https://www.youtube.com/watch?v=dQw4w9WgXcQ"');
+    expect(videoCmd).toBe('yt-dlp -f "bv*+ba/b" -- "https://www.youtube.com/watch?v=dQw4w9WgXcQ"');
 
     const audioCmd = getYtDlpCommand('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'audio');
-    expect(audioCmd).toBe('yt-dlp -x --audio-format mp3 "https://www.youtube.com/watch?v=dQw4w9WgXcQ"');
+    expect(audioCmd).toBe('yt-dlp -x --audio-format mp3 -- "https://www.youtube.com/watch?v=dQw4w9WgXcQ"');
   });
 });
 

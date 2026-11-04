@@ -140,7 +140,7 @@ export const AuthLockPage: React.FC = () => {
         <div className="w-full max-w-sm space-y-4">
           {/* Lock Icon & Status Header */}
           <div className="text-center space-y-1.5">
-            <div className="inline-flex p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 shadow-xs mb-1">
+            <div className="inline-flex p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 shadow-sm mb-1">
               <ShieldAlert className="w-6 h-6" />
             </div>
             <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
@@ -166,7 +166,7 @@ export const AuthLockPage: React.FC = () => {
                   type="button"
                   onClick={handleGoogle}
                   disabled={loading}
-                  className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-mono text-xs transition shadow-xs"
+                  className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono text-xs transition shadow-sm"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
                     <path
@@ -201,11 +201,13 @@ export const AuthLockPage: React.FC = () => {
             {/* Email / Password Form */}
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-mono font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="auth-lock-email" className="block text-[11px] font-mono font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Email Address
                 </label>
                 <input
+                  id="auth-lock-email"
                   type="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -215,12 +217,14 @@ export const AuthLockPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="auth-lock-password" className="block text-[11px] font-mono font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Password
                 </label>
                 <div className="relative">
                   <input
+                    id="auth-lock-password"
                     type={showPassword ? 'text' : 'password'}
+                    autoComplete={isSignUp ? 'new-password' : 'current-password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -230,6 +234,7 @@ export const AuthLockPage: React.FC = () => {
                   />
                   <button
                     type="button"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   >
@@ -241,18 +246,18 @@ export const AuthLockPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center space-x-1.5 py-2 px-3 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 font-mono text-xs font-medium transition shadow-xs disabled:opacity-50"
+                className="w-full flex items-center justify-center space-x-1.5 py-2 px-3 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 font-mono text-xs font-medium transition shadow-sm disabled:opacity-50"
               >
                 {isSignUp ? <UserPlus className="w-3.5 h-3.5" /> : <LogIn className="w-3.5 h-3.5" />}
                 <span>{isSignUp ? 'Create Account' : 'Authenticate & Unlock'}</span>
               </button>
             </form>
 
-            {/* Offline / Local Admin Helper Button (when Firebase unconfigured) */}
-            {!isFirebaseConfigured && (
+            {/* Offline / Local Admin Helper Button (only when Firebase unconfigured in dev/test) */}
+            {!isFirebaseConfigured && !import.meta.env.PROD && (
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
                 <div className="p-2 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[10px] font-mono text-slate-500 dark:text-slate-400">
-                  <span>Local Mode: Firebase is unconfigured. Workspace owner can authenticate locally as </span>
+                  <span>Local Dev Mode: Firebase is unconfigured. Workspace owner can authenticate locally as </span>
                   <strong className="text-slate-800 dark:text-slate-200">the designated workspace superadmin</strong>.
                 </div>
                 <button

@@ -19,6 +19,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { isFirebaseConfigured } from '@/firebase/config';
 import { dataService } from '@/services/dataService';
+import { cryptoService } from '@/services/cryptoService';
 
 export const SettingsPage: React.FC = () => {
   const { user, systemSettings, updateSystemSettings } = useAuth();
@@ -26,6 +27,7 @@ export const SettingsPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [backupPassphrase, setBackupPassphrase] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Superadmin authorization guard check
@@ -35,18 +37,35 @@ export const SettingsPage: React.FC = () => {
   const handleExportWorkspace = async () => {
     try {
       setIsExporting(true);
+      setErrorMessage(null);
       const backup = await dataService.exportWorkspaceBackup(userId);
-      const jsonStr = JSON.stringify(backup, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const rawJson = JSON.stringify(backup, null, 2);
+      const pass = backupPassphrase.trim();
+      const dateStamp = new Date().toISOString().split('T')[0];
+
+      let outputPayload = rawJson;
+      let filename = `superapps-backup-${dateStamp}.json`;
+
+      if (pass) {
+        const envelope = await cryptoService.encryptPayload(rawJson, pass);
+        outputPayload = JSON.stringify(envelope, null, 2);
+        filename = `superapps-backup-${dateStamp}.enc.json`;
+      }
+
+      const blob = new Blob([outputPayload], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `superapps-backup-${new Date().toISOString().split('T')[0]}.json`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      setSaveSuccessMessage('Workspace backup exported successfully.');
+      setSaveSuccessMessage(
+        pass
+          ? 'Encrypted (AES-GCM 256-bit) workspace backup exported successfully.'
+          : 'Workspace backup exported successfully.'
+      );
       setTimeout(() => setSaveSuccessMessage(null), 3000);
     } catch (err: any) {
       setErrorMessage(err?.message || 'Failed to export workspace backup.');
@@ -59,11 +78,31 @@ export const SettingsPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 25 * 1024 * 1024) {
+      setErrorMessage('Backup file exceeds the 25 MB safety limit.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     try {
       setIsImporting(true);
       setErrorMessage(null);
       const text = await file.text();
-      const parsed = JSON.parse(text);
+      let parsed = JSON.parse(text);
+
+      if (cryptoService.isEncryptedEnvelope(parsed)) {
+        const pass = backupPassphrase.trim();
+        if (!pass) {
+          const passInput = document.getElementById('backup-passphrase') as HTMLInputElement | null;
+          passInput?.focus();
+          throw new Error(
+            'Encrypted backup detected (AES-GCM 256-bit). Please enter your decryption passphrase in the field below and import again.'
+          );
+        }
+        const decryptedText = await cryptoService.decryptPayload(parsed, pass);
+        parsed = JSON.parse(decryptedText);
+      }
+
       const res = await dataService.importWorkspaceBackup(userId, parsed);
       if (res.success) {
         setSaveSuccessMessage(`Workspace backup restored: ${res.importedCount} items imported.`);
@@ -72,7 +111,7 @@ export const SettingsPage: React.FC = () => {
       }
       setTimeout(() => setSaveSuccessMessage(null), 4000);
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Invalid backup JSON file.');
+      setErrorMessage(err?.message || 'Invalid or corrupted backup JSON file.');
     } finally {
       setIsImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -192,7 +231,7 @@ export const SettingsPage: React.FC = () => {
                 role="switch"
                 aria-checked={systemSettings.allowGuestAccess}
                 onClick={handleToggleGuestAccess}
-                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
                   systemSettings.allowGuestAccess ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
                 }`}
                 title="Toggle Guest Mode"
@@ -242,7 +281,7 @@ export const SettingsPage: React.FC = () => {
                 role="switch"
                 aria-checked={systemSettings.allowUserRegistration}
                 onClick={handleToggleUserRegistration}
-                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
                   systemSettings.allowUserRegistration ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
                 }`}
                 title="Toggle User Registration"
@@ -316,8 +355,22 @@ export const SettingsPage: React.FC = () => {
           </h2>
         </div>
         <p className="text-xs text-slate-500 mb-3.5">
-          Full data snapshot export and migration across all 8 modules (Tasks, Notes, Habits, Expenses, Snippets, Shortlinks, Dropzone, and Settings).
+          Full data snapshot export and migration across all modules (Tasks, Notes, Habits, Expenses, Snippets, Shortlinks, Dropzone, Media History, and Settings). Optional client-side AES-GCM 256-bit encryption (PBKDF2-SHA256).
         </p>
+
+        <div className="mb-3.5 max-w-md">
+          <label htmlFor="backup-passphrase" className="block text-[11px] font-mono font-medium text-slate-700 dark:text-slate-300 mb-1">
+            Backup Encryption Passphrase (Optional — AES-GCM 256-bit)
+          </label>
+          <input
+            id="backup-passphrase"
+            type="password"
+            value={backupPassphrase}
+            onChange={(e) => setBackupPassphrase(e.target.value)}
+            placeholder="Leave blank for plain JSON, or enter passphrase to encrypt/decrypt"
+            className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
+          />
+        </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           <button
@@ -326,7 +379,13 @@ export const SettingsPage: React.FC = () => {
             className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium transition disabled:opacity-50"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>{isExporting ? 'Exporting...' : 'Export Workspace JSON'}</span>
+            <span>
+              {isExporting
+                ? 'Exporting...'
+                : backupPassphrase.trim()
+                ? 'Export Encrypted Backup'
+                : 'Export Workspace JSON'}
+            </span>
           </button>
 
           <input

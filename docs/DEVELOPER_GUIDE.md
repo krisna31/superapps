@@ -39,6 +39,7 @@ src/
 │   │   └── AuthModal.tsx             # Sign in with Google, Email/Password, Guest mode
 │   ├── layout/
 │   │   ├── AppShell.tsx              # Master layout container (Sidebar + Navbar + Outlet)
+│   │   ├── ErrorBoundary.tsx         # Top-level crash recovery error boundary
 │   │   ├── Navbar.tsx                # Top navigation, Command Palette trigger, theme switcher
 │   │   └── Sidebar.tsx               # Collapsible navigation drawer with PWA install button
 │   └── palette/
@@ -58,15 +59,22 @@ src/
 │   ├── SwissKnifePage.tsx            # Offline dev utilities (JSON, Base64, UUID, Hash, Regex, Passwords)
 │   ├── DropZonePage.tsx              # File uploader backed by Firebase Storage
 │   ├── ShortlinksPage.tsx            # Short URL generator & click analytics
+│   ├── MediaDownloaderPage.tsx       # Universal media downloader & yt-dlp command generator
 │   └── RedirectHandlerPage.tsx       # Route handler for /r/:slug browser redirection
 ├── services/
-│   └── dataService.ts                # Unified data access layer for all entities
+│   ├── cryptoService.ts              # Web Crypto AES-GCM 256-bit (PBKDF2-SHA256) backup encryption
+│   ├── dataService.ts                # Unified data access layer for all entities
+│   ├── localBus.ts                   # Single-target intra-tab reactive event bus
+│   └── mediaService.ts               # Multi-node media extraction & CLI fallback generator
 ├── test/
 │   ├── setup.ts                      # Vitest environment setup and mocks
 │   ├── App.test.tsx                  # UI component integration test
-│   └── dataService.test.ts           # Service CRUD & click tracking unit tests
+│   ├── dataService.test.ts           # Service CRUD & click tracking unit tests
+│   └── security.test.ts              # Security, sanitization, CSPRNG & encryption tests
 ├── types/
 │   └── index.ts                      # TypeScript interface definitions
+├── utils/
+│   └── security.ts                   # URL, filename, shell arg, IP masking & CSPRNG helpers
 ├── App.tsx                           # Route declarations
 └── main.tsx                          # Application entry point & PWA registration
 ```
@@ -92,12 +100,11 @@ To register a new quick action or navigation shortcut, edit `src/components/pale
 {
   id: 'unique-command-id',
   title: 'Action Display Name',
-  category: 'Navigation' | 'Actions' | 'Tools',
+  category: 'Navigation' | 'Actions' | 'Appearance',
   icon: LucideIconComponent,
   action: () => {
     // Perform action or navigate
-  },
-  keywords: ['keyword1', 'search_term']
+  }
 }
 ```
 
@@ -140,24 +147,24 @@ When adding new data operations:
 - [x] PWA offline caching with `vite-plugin-pwa`.
 - [x] Custom domain `apps.k31.my.id` with `public/CNAME` and SPA 404 redirect.
 - [x] Firebase Spark Auth, Firestore multi-tab cache, and Storage integration.
-- [x] 8 Core Modules: Tasks, Notes, Habits, Expenses, Snippets, SwissKnife, Dropzone, Shortlinks.
+- [x] 9 Core Modules: Tasks, Notes, Habits, Expenses, Snippets, SwissKnife, Dropzone, Shortlinks, Media Downloader.
 - [x] Vitest test suites (100% pass) and production build validation.
 
-### Milestone 2: Cloud Sync & Account Linking
-- [ ] Add Firestore `onSnapshot` real-time listeners for instant synchronization across multiple open browser tabs.
-- [ ] Implement `linkWithCredential` allowing anonymous guest users to link their Google account without losing local data.
-- [ ] Display real-time Cloud Sync indicator badge in the top navbar.
+### Milestone 2: Cloud Sync & Account Linking (COMPLETED)
+- [x] Add Firestore `onSnapshot` real-time listeners for instant synchronization across multiple open browser tabs.
+- [x] Implement `linkWithCredential` allowing anonymous guest users to link their Google/Email account without losing local data.
+- [x] Display real-time Cloud Sync indicator badge in the top navbar.
 
-### Milestone 3: Rich Interaction Upgrades
-- [ ] HTML5 Drag-and-Drop for Kanban tasks between status columns.
-- [ ] Rich Markdown formatting toolbar (bold, italic, checklist, heading insertion) in Notes Vault.
-- [ ] Yearly contribution heatmap calendar for Daily Habits.
-- [ ] Monthly interactive bar/pie chart for Expenses breakdown.
+### Milestone 3: Rich Interaction Upgrades (COMPLETED)
+- [x] HTML5 Drag-and-Drop for Kanban tasks between status columns.
+- [x] Rich Markdown formatting toolbar (bold, italic, checklist, heading insertion) in Notes Vault.
+- [x] 30-day contribution heatmap calendar for Daily Habits.
+- [x] Monthly interactive category breakdown for Expenses.
 
-### Milestone 4: Data Portability & Backup Center
-- [ ] Full JSON backup export: downloads all tasks, notes, habits, expenses, and snippets into an encrypted or plain JSON file.
-- [ ] JSON backup import & restore tool.
-- [ ] Client-side AES-GCM encryption for private notes vault.
+### Milestone 4: Data Portability & Backup Center (COMPLETED)
+- [x] Full JSON backup export: downloads all tasks, notes, habits, expenses, snippets, files, and shortlinks into an encrypted (`.enc.json`) or plain JSON file.
+- [x] Schema-validated JSON backup import & restore tool with automatic AES-GCM decryption.
+- [x] Client-side Web Crypto AES-GCM 256-bit (`PBKDF2-SHA256` 100,000 iterations) encryption (`src/services/cryptoService.ts`).
 
 ### Milestone 5: Native PWA Superpowers
 - [ ] Web Share Target API: allow other apps or mobile browsers to share links and text directly into Superapps.

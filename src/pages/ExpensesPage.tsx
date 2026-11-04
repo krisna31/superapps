@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   Wallet, 
@@ -79,31 +79,48 @@ export const ExpensesPage: React.FC = () => {
     }
   };
 
-  const filteredExpenses = expenses.filter((e) => {
-    if (filterType === 'all') return true;
-    return e.type === filterType;
-  });
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen]);
 
-  const totalIncome = expenses
-    .filter((e) => e.type === 'income')
-    .reduce((sum, e) => sum + e.amount, 0);
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter((e) => {
+      if (filterType === 'all') return true;
+      return e.type === filterType;
+    });
+  }, [expenses, filterType]);
 
-  const totalExpense = expenses
-    .filter((e) => e.type === 'expense')
-    .reduce((sum, e) => sum + e.amount, 0);
+  const { totalIncome, totalExpense, sortedCategories } = useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    const catTotals: Record<string, number> = {};
+
+    for (const e of expenses) {
+      if (e.type === 'income') {
+        income += e.amount;
+      } else {
+        expense += e.amount;
+        catTotals[e.category] = (catTotals[e.category] || 0) + e.amount;
+      }
+    }
+
+    const sorted = Object.entries(catTotals)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+
+    return {
+      totalIncome: income,
+      totalExpense: expense,
+      sortedCategories: sorted,
+    };
+  }, [expenses]);
 
   const netBalance = totalIncome - totalExpense;
-
-  const categoryTotals = expenses
-    .filter((e) => e.type === 'expense')
-    .reduce<Record<string, number>>((acc, e) => {
-      acc[e.category] = (acc[e.category] || 0) + e.amount;
-      return acc;
-    }, {});
-
-  const sortedCategories = Object.entries(categoryTotals)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5);
 
   const exportCsv = () => {
     // Sanitize values to prevent CSV formula injection in spreadsheet software
@@ -144,7 +161,7 @@ export const ExpensesPage: React.FC = () => {
             Expenses & Budget
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Personal balance sheet, revenue inflows, and expenditure tracking
+            Track income, expenses, and category spending
           </p>
         </div>
 
@@ -315,7 +332,7 @@ export const ExpensesPage: React.FC = () => {
                       {exp.description}
                     </h4>
                     <div className="flex items-center space-x-1.5 text-[10px] font-mono text-slate-400">
-                      <span className="px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-[9px] uppercase">
+                      <span className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[9px] uppercase">
                         {exp.category}
                       </span>
                       <span>•</span>
@@ -351,12 +368,23 @@ export const ExpensesPage: React.FC = () => {
 
       {/* New Transaction Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="w-full max-w-sm rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="record-transaction-modal-title"
+            className="w-full max-w-sm rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg"
+          >
             <div className="flex items-center justify-between mb-3.5">
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">Record Transaction</h3>
+              <h3 id="record-transaction-modal-title" className="font-semibold text-sm text-slate-900 dark:text-white">Record Transaction</h3>
               <button
                 onClick={() => setIsModalOpen(false)}
+                aria-label="Close modal"
                 className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X className="w-4 h-4" />
@@ -368,7 +396,10 @@ export const ExpensesPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-1 p-1 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-medium">
                 <button
                   type="button"
-                  onClick={() => setType('expense')}
+                  onClick={() => {
+                    setType('expense');
+                    if (category === 'Salary' || category === 'Investment') setCategory('Food');
+                  }}
                   className={`py-1.5 rounded-md transition ${
                     type === 'expense'
                       ? 'bg-rose-600 text-white font-semibold'
@@ -379,7 +410,10 @@ export const ExpensesPage: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setType('income')}
+                  onClick={() => {
+                    setType('income');
+                    if (category === 'Food') setCategory('Salary');
+                  }}
                   className={`py-1.5 rounded-md transition ${
                     type === 'income'
                       ? 'bg-emerald-600 text-white font-semibold'
@@ -391,10 +425,11 @@ export const ExpensesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="expense-amount-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Amount (IDR) *
                 </label>
                 <input
+                  id="expense-amount-input"
                   type="number"
                   required
                   min="1"
@@ -407,10 +442,11 @@ export const ExpensesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="expense-category-select" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Category
                 </label>
                 <select
+                  id="expense-category-select"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none"
@@ -422,10 +458,11 @@ export const ExpensesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="expense-desc-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Description / Note
                 </label>
                 <input
+                  id="expense-desc-input"
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -435,10 +472,11 @@ export const ExpensesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="expense-date-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Date
                 </label>
                 <input
+                  id="expense-date-input"
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}

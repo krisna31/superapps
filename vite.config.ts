@@ -9,13 +9,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'logo.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.svg', 'logo.svg', 'pwa-192x192.svg', 'pwa-512x512.svg'],
       manifest: {
         name: 'Superapps Workspace',
         short_name: 'Superapps',
         description: 'Modern all-in-one productivity suite with Tasks, Notes, Habits, Expenses & Developer Tools',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#090d16',
+        background_color: '#090d16',
         display: 'standalone',
         orientation: 'portrait-primary',
         icons: [
@@ -32,7 +32,10 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm}'],
+        cleanupOutdatedCaches: true,
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/r\//]
       }
     })
   ],

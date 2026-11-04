@@ -36,6 +36,7 @@ import {
   MediaExtractionResult, 
   PickerMediaItem 
 } from '@/types';
+import { sanitizeRedirectUrl } from '@/utils/security';
 
 export const MediaDownloaderPage: React.FC = () => {
   const { user } = useAuth();
@@ -171,14 +172,28 @@ export const MediaDownloaderPage: React.FC = () => {
 
   // Save custom Cobalt endpoint & API Key
   const handleSaveConfig = () => {
-    setCustomCobaltInstance(customInstance);
-    setCustomCobaltApiKey(customApiKey);
-    setConfigSaved(true);
-    setTimeout(() => {
-      setConfigSaved(false);
+    try {
+      setCustomCobaltInstance(customInstance);
+      setCustomCobaltApiKey(customApiKey);
+      setConfigSaved(true);
+      setTimeout(() => {
+        setConfigSaved(false);
+        setShowConfigModal(false);
+      }, 1200);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Invalid custom instance URL.');
       setShowConfigModal(false);
-    }, 1200);
+    }
   };
+
+  useEffect(() => {
+    if (!showConfigModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowConfigModal(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showConfigModal]);
 
   // Platform visual badges
   const renderPlatformBadge = (platform: MediaPlatform) => {
@@ -235,6 +250,10 @@ export const MediaDownloaderPage: React.FC = () => {
           <div className="relative flex items-center">
             <input
               type="url"
+              aria-label="Media source URL"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
               value={url}
               onChange={(e) => {
                 setUrl(e.target.value);
@@ -287,7 +306,7 @@ export const MediaDownloaderPage: React.FC = () => {
                   onClick={() => setDownloadMode('auto')}
                   className={`flex items-center space-x-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
                     downloadMode === 'auto'
-                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
                       : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                   }`}
                 >
@@ -299,7 +318,7 @@ export const MediaDownloaderPage: React.FC = () => {
                   onClick={() => setDownloadMode('audio')}
                   className={`flex items-center space-x-1 px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
                     downloadMode === 'audio'
-                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs'
+                      ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
                       : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                   }`}
                 >
@@ -312,6 +331,7 @@ export const MediaDownloaderPage: React.FC = () => {
               {downloadMode === 'auto' && (
                 <div className="flex items-center space-x-1.5">
                   <select
+                    aria-label="Video quality"
                     value={videoQuality}
                     onChange={(e: any) => setVideoQuality(e.target.value)}
                     className="text-[11px] font-mono py-1 px-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-slate-800 dark:text-slate-200 focus:outline-none"
@@ -494,7 +514,7 @@ export const MediaDownloaderPage: React.FC = () => {
                   <button
                     onClick={() => handleDownload(result.url!, result.filename, 'single-main')}
                     disabled={downloadingItem === 'single-main'}
-                    className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-medium transition-colors shadow-xs"
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-medium transition-colors shadow-sm"
                   >
                     {downloadingItem === 'single-main' ? (
                       <>
@@ -528,7 +548,7 @@ export const MediaDownloaderPage: React.FC = () => {
                     </button>
 
                     <a
-                      href={result.url}
+                      href={sanitizeRedirectUrl(result.url) || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center space-x-1.5 px-3 py-1.5 text-xs font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors"
@@ -712,15 +732,18 @@ export const MediaDownloaderPage: React.FC = () => {
                     )}
                   </button>
 
-                  <a
-                    href={item.originalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
-                    title="Visit original post"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  {sanitizeRedirectUrl(item.originalUrl) && (
+                    <a
+                      href={sanitizeRedirectUrl(item.originalUrl)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
+                      title="Visit original post"
+                      aria-label="Visit original post"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
 
                   <button
                     onClick={() => handleDeleteHistory(item)}
@@ -738,17 +761,28 @@ export const MediaDownloaderPage: React.FC = () => {
 
       {/* Custom Cobalt Instance Modal */}
       {showConfigModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 space-y-4 shadow-xl">
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowConfigModal(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="media-settings-modal-title"
+            className="w-full max-w-md rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 space-y-4 shadow-xl"
+          >
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
               <div className="flex items-center space-x-2">
                 <SlidersHorizontal className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                <h3 id="media-settings-modal-title" className="text-sm font-semibold text-slate-900 dark:text-white">
                   Media Extractor Settings
                 </h3>
               </div>
               <button
                 onClick={() => setShowConfigModal(false)}
+                aria-label="Close modal"
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X className="w-4 h-4" />
@@ -761,10 +795,11 @@ export const MediaDownloaderPage: React.FC = () => {
               </p>
 
               <div className="space-y-1">
-                <label className="font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                <label htmlFor="custom-cobalt-url" className="font-mono text-[11px] text-slate-700 dark:text-slate-300">
                   Custom Instance / yt-dlp Backend URL (Optional)
                 </label>
                 <input
+                  id="custom-cobalt-url"
                   type="url"
                   value={customInstance}
                   onChange={(e) => setCustomInstance(e.target.value)}
@@ -774,10 +809,11 @@ export const MediaDownloaderPage: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="font-mono text-[11px] text-slate-700 dark:text-slate-300">
+                <label htmlFor="custom-cobalt-key" className="font-mono text-[11px] text-slate-700 dark:text-slate-300">
                   API Key / Bearer Token (Optional)
                 </label>
                 <input
+                  id="custom-cobalt-key"
                   type="password"
                   value={customApiKey}
                   onChange={(e) => setCustomApiKey(e.target.value)}

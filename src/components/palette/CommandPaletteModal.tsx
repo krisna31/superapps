@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
@@ -41,7 +41,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
   const { setTheme, resolvedTheme } = useTheme();
   const { user } = useAuth();
 
-  const commands: CommandItem[] = [
+  const commands: CommandItem[] = useMemo(() => [
     {
       id: 'nav-dashboard',
       title: 'Go to Dashboard',
@@ -171,11 +171,16 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       icon: resolvedTheme === 'dark' ? Sun : Moon,
       action: () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark'),
     },
-  ];
+  ], [navigate, user?.role, resolvedTheme, setTheme]);
 
-  const filteredCommands = commands.filter((cmd) =>
-    cmd.title.toLowerCase().includes(query.toLowerCase()) ||
-    cmd.category.toLowerCase().includes(query.toLowerCase())
+  const filteredCommands = useMemo(
+    () =>
+      commands.filter(
+        (cmd) =>
+          cmd.title.toLowerCase().includes(query.toLowerCase()) ||
+          cmd.category.toLowerCase().includes(query.toLowerCase())
+      ),
+    [commands, query]
   );
 
   useEffect(() => {
@@ -220,6 +225,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       onClick={onClose}
     >
       <div 
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command Palette"
         className="w-full max-w-lg rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
@@ -227,6 +235,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
           <Search className="w-4 h-4 text-slate-400 mr-2.5 flex-shrink-0" />
           <input
             ref={inputRef}
+            aria-label="Search commands"
             type="text"
             value={query}
             onChange={(e) => {

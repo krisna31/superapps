@@ -9,6 +9,12 @@
     --border-color: #e2e8f0;
     --text-primary: #0f172a;
     --text-secondary: #64748b;
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-track: transparent;
+    color-scheme: light;
+    accent-color: #10b981;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
 
   .dark {
@@ -17,13 +23,23 @@
     --border-color: #1e293b;
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
+    --scrollbar-thumb: #334155;
+    --scrollbar-track: transparent;
+    color-scheme: dark;
+    accent-color: #10b981;
   }
 
   body {
     background-color: var(--bg-main);
     color: var(--text-primary);
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.5;
+    overflow-wrap: break-word;
     overflow-x: hidden;
+  }
+
+  h1, h2, h3 {
+    text-wrap: balance;
   }
 }
 
@@ -33,23 +49,21 @@
   font-feature-settings: 'tnum' 1;
 }
 
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+/* Legacy fallback for WebKit/Blink browsers without standard scrollbar-color */
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
 
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 9999px;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 9999px;
+  }
 }
 
 /* Mobile Safe Area Insets (Android Notches & Gesture Navigation Bars) */

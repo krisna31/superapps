@@ -65,8 +65,13 @@ export const AppShell: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+      <div
+        role="status"
+        aria-live="polite"
+        className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center space-y-2.5"
+      >
         <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs font-mono text-slate-500 dark:text-slate-400">Initializing workspace...</span>
       </div>
     );
   }
@@ -78,6 +83,13 @@ export const AppShell: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex transition-colors safe-top safe-bottom safe-left safe-right">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-1.5 focus:rounded-md focus:bg-slate-900 focus:text-white dark:focus:bg-white dark:focus:text-slate-900 focus:text-xs focus:font-mono focus:shadow-md"
+      >
+        Skip to main content
+      </a>
+
       {/* Sidebar */}
       <Sidebar
         isOpenMobile={isSidebarOpenMobile}
@@ -92,7 +104,7 @@ export const AppShell: React.FC = () => {
           onToggleSidebar={() => setIsSidebarOpenMobile((prev) => !prev)}
         />
 
-        <main className="flex-1 p-3 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto">
+        <main id="main-content" className="flex-1 p-3 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>

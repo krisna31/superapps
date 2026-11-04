@@ -184,7 +184,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
               <span>Synchronization Center</span>
             </div>
             <span
-              className={`text-[10px] font-mono px-1.5 py-0.2 rounded border ${
+              className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
                 status === 'offline'
                   ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
                   : status === 'syncing'

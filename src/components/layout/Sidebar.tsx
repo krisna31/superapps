@@ -67,6 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile })
       {/* Mobile Backdrop */}
       {isOpenMobile && (
         <div
+          aria-hidden="true"
           className="fixed inset-0 z-40 bg-black/60 md:hidden"
           onClick={onCloseMobile}
         />
@@ -102,8 +103,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile })
             )}
 
             <button
+              type="button"
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               onClick={() => setCollapsed(!collapsed)}
-              className="hidden md:flex p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="hidden md:flex p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
@@ -121,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile })
                   end={item.path === '/'}
                   onClick={onCloseMobile}
                   className={({ isActive }) =>
-                    `flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium transition ${
+                    `flex items-center px-2.5 py-2 md:py-1.5 rounded-md text-xs font-medium transition ${
                       isActive
                         ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50'

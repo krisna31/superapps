@@ -14,7 +14,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
 import { ShortlinkItem } from '@/types';
-import { sanitizeRedirectUrl } from '@/utils/security';
+import { sanitizeRedirectUrl, generateSecureRandomString } from '@/utils/security';
 
 export const ShortlinksPage: React.FC = () => {
   const { user } = useAuth();
@@ -48,6 +48,19 @@ export const ShortlinksPage: React.FC = () => {
     };
   }, [userId, searchParams]);
 
+  // Dismiss modals with Escape key
+  useEffect(() => {
+    if (!isModalOpen && !selectedAnalyticsLink) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (selectedAnalyticsLink) setSelectedAnalyticsLink(null);
+        else if (isModalOpen) setIsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen, selectedAnalyticsLink]);
+
   const handleCreateShortlink = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -66,7 +79,7 @@ export const ShortlinksPage: React.FC = () => {
     }
 
     try {
-      const generatedSlug = customSlug.trim() || Math.random().toString(36).substring(2, 8);
+      const generatedSlug = customSlug.trim() || generateSecureRandomString(6);
       const newShortlink: ShortlinkItem = {
         id: 'link-' + Date.now(),
         userId,
@@ -111,7 +124,7 @@ export const ShortlinksPage: React.FC = () => {
             URL Shortlinks
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Client-side slug redirection engine with hit tracking and analytics
+            Create custom shortlinks with click tracking and visitor analytics
           </p>
         </div>
 
@@ -148,7 +161,7 @@ export const ShortlinksPage: React.FC = () => {
               >
                 <div className="space-y-0.5 min-w-0">
                   <div className="flex items-center space-x-2">
-                    <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                    <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
                       /r/{link.slug}
                     </span>
                     <span className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">
@@ -209,11 +222,22 @@ export const ShortlinksPage: React.FC = () => {
 
       {/* New Shortlink Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="w-full max-w-sm rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="new-shortlink-modal-title"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg"
+          >
             <div className="flex items-center justify-between mb-3.5">
-              <h3 className="font-semibold text-sm text-slate-900 dark:text-white">Create Shortlink</h3>
+              <h3 id="new-shortlink-modal-title" className="font-semibold text-sm text-slate-900 dark:text-white">Create Shortlink</h3>
               <button
+                type="button"
+                aria-label="Close modal"
                 onClick={() => setIsModalOpen(false)}
                 className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
@@ -229,10 +253,11 @@ export const ShortlinksPage: React.FC = () => {
 
             <form onSubmit={handleCreateShortlink} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="shortlink-url-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Destination URL *
                 </label>
                 <input
+                  id="shortlink-url-input"
                   type="text"
                   required
                   value={originalUrl}
@@ -243,7 +268,7 @@ export const ShortlinksPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="shortlink-slug-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Custom Slug / Alias (Optional)
                 </label>
                 <div className="flex items-center">
@@ -251,6 +276,7 @@ export const ShortlinksPage: React.FC = () => {
                     /r/
                   </span>
                   <input
+                    id="shortlink-slug-input"
                     type="text"
                     value={customSlug}
                     onChange={(e) => setCustomSlug(e.target.value)}
@@ -261,10 +287,11 @@ export const ShortlinksPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="shortlink-title-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
                   Title / Description
                 </label>
                 <input
+                  id="shortlink-title-input"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -326,8 +353,17 @@ export const ShortlinksPage: React.FC = () => {
         const topReferrer = Object.entries(referrerCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Direct';
 
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
-            <div className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setSelectedAnalyticsLink(null)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="shortlink-analytics-modal-title"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
+            >
               {/* Modal Header */}
               <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
                 <div className="min-w-0 pr-3">
@@ -335,7 +371,7 @@ export const ShortlinksPage: React.FC = () => {
                     <span className="p-1 rounded bg-sky-500/10 text-sky-500">
                       <BarChart2 className="w-4 h-4" />
                     </span>
-                    <h3 className="font-semibold text-sm text-slate-900 dark:text-white truncate">
+                    <h3 id="shortlink-analytics-modal-title" className="font-semibold text-sm text-slate-900 dark:text-white truncate">
                       Analytics & Click Tracker
                     </h3>
                     <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
@@ -348,6 +384,8 @@ export const ShortlinksPage: React.FC = () => {
                 </div>
 
                 <button
+                  type="button"
+                  aria-label="Close analytics modal"
                   onClick={() => setSelectedAnalyticsLink(null)}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                 >

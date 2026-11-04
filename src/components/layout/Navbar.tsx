@@ -44,7 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div className="hidden sm:flex items-center space-x-1.5">
             <span className="font-bold text-slate-900 dark:text-white text-sm tracking-tight">Superapps</span>
-            <span className="px-1.5 py-0.2 text-[9px] font-mono font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded">
+            <span className="px-1.5 py-0.5 text-[9px] font-mono font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded">
               v1.0
             </span>
           </div>
@@ -88,8 +88,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Theme Mode Toggle Button */}
         <div className="relative group">
           <button
+            type="button"
+            aria-label={`Switch theme (current: ${theme})`}
             onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark')}
-            className="p-1.5 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 sm:p-1.5 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             title={`Current theme: ${theme}. Click to switch.`}
           >
             {theme === 'system' ? (
@@ -121,15 +123,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {user.email || user.displayName || (user.isAnonymous ? 'Guest' : 'User')}
               </span>
               {user.role === 'superadmin' && (
-                <span className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded">
+                <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-mono font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded">
                   Admin
                 </span>
               )}
             </div>
 
             <button
+              type="button"
+              aria-label="Sign Out"
               onClick={() => signOut()}
-              className="p-1.5 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2 sm:p-1.5 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />

@@ -2,13 +2,16 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Dropzone files: Users can upload files up to 10MB into their own folder (H4)
-    // Public download link allows reading if file exists
+    // Dropzone files: Users can upload safe files up to 10MB into their own folder
+    // Public download link allows reading if file exists; owner can delete their own files
     match /dropzone/{userId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && 
+      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null && 
         request.auth.uid == userId &&
-        request.resource.size < 10 * 1024 * 1024; // 10MB max per file
+        request.resource.size < 10 * 1024 * 1024 &&
+        !request.resource.name.lower().matches('.*\\.(exe|bat|cmd|sh|bash|vbs|vbe|js|jse|wsf|wsh|msc|ps1|scr|pif|msi|msp|com|html|htm|svg|xhtml|xml)$') &&
+        !request.resource.contentType.matches('text/html.*|image/svg\\+xml.*|application/xhtml\\+xml.*');
     }
   }
 }

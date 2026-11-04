@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { AppShell } from './components/layout/AppShell';
+import { ErrorBoundary } from './components/layout/ErrorBoundary';
 
 // Dynamic route-based code-splitting
 const DashboardPage = React.lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
@@ -32,29 +33,31 @@ export const App: React.FC = () => {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Suspense fallback={<PageFallback />}>
-            <Routes>
-              {/* Standalone Shortlink Redirect Handler */}
-              <Route path="/r/:slug" element={<RedirectHandlerPage />} />
+          <ErrorBoundary>
+            <Suspense fallback={<PageFallback />}>
+              <Routes>
+                {/* Standalone Shortlink Redirect Handler */}
+                <Route path="/r/:slug" element={<RedirectHandlerPage />} />
 
-              {/* Main Application Shell with Navigation */}
-              <Route path="/" element={<AppShell />}>
-                <Route index element={<DashboardPage />} />
-                <Route path="tasks" element={<TasksPage />} />
-                <Route path="notes" element={<NotesPage />} />
-                <Route path="habits" element={<HabitsPage />} />
-                <Route path="expenses" element={<ExpensesPage />} />
-                <Route path="snippets" element={<SnippetsPage />} />
-                <Route path="swissknife" element={<SwissKnifePage />} />
-                <Route path="dropzone" element={<DropZonePage />} />
-                <Route path="shortlinks" element={<ShortlinksPage />} />
-                <Route path="downloader" element={<MediaDownloaderPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                {/* Catch-all redirect to Dashboard */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Route>
-            </Routes>
-          </Suspense>
+                {/* Main Application Shell with Navigation */}
+                <Route path="/" element={<AppShell />}>
+                  <Route index element={<DashboardPage />} />
+                  <Route path="tasks" element={<TasksPage />} />
+                  <Route path="notes" element={<NotesPage />} />
+                  <Route path="habits" element={<HabitsPage />} />
+                  <Route path="expenses" element={<ExpensesPage />} />
+                  <Route path="snippets" element={<SnippetsPage />} />
+                  <Route path="swissknife" element={<SwissKnifePage />} />
+                  <Route path="dropzone" element={<DropZonePage />} />
+                  <Route path="shortlinks" element={<ShortlinksPage />} />
+                  <Route path="downloader" element={<MediaDownloaderPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  {/* Catch-all redirect to Dashboard */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

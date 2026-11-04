@@ -1,4 +1,5 @@
 import { MediaPlatform, MediaExtractionResult, PickerMediaItem } from '@/types';
+import { escapeShellArg, sanitizeRedirectUrl, sanitizeFileName } from '@/utils/security';
 
 export interface FallbackPortal {
   name: string;
@@ -67,13 +68,18 @@ export const COBALT_CUSTOM_API_KEY = 'superapps_cobalt_api_key';
 
 /**
  * Generate a ready-to-run yt-dlp CLI command for terminal power users.
+ * Validates URL and escapes shell metacharacters + uses `--` option terminator.
  */
 export function getYtDlpCommand(targetUrl: string, downloadMode: 'auto' | 'audio' = 'auto'): string {
-  const cleanUrl = targetUrl.trim();
-  if (downloadMode === 'audio') {
-    return `yt-dlp -x --audio-format mp3 "${cleanUrl}"`;
+  const safeUrl = sanitizeRedirectUrl(targetUrl);
+  if (!safeUrl) {
+    return '# Invalid URL: only HTTP/HTTPS URLs are allowed';
   }
-  return `yt-dlp -f "bv*+ba/b" "${cleanUrl}"`;
+  const escapedArg = escapeShellArg(safeUrl);
+  if (downloadMode === 'audio') {
+    return `yt-dlp -x --audio-format mp3 -- ${escapedArg}`;
+  }
+  return `yt-dlp -f "bv*+ba/b" -- ${escapedArg}`;
 }
 
 /**
@@ -156,7 +162,11 @@ export function setCustomCobaltInstance(url: string | null): void {
   if (!url || !url.trim()) {
     localStorage.removeItem(COBALT_CUSTOM_INSTANCE_KEY);
   } else {
-    localStorage.setItem(COBALT_CUSTOM_INSTANCE_KEY, url.trim().replace(/\/+$/, ''));
+    const safeUrl = sanitizeRedirectUrl(url);
+    if (!safeUrl) {
+      throw new Error('Custom Cobalt instance must be a valid HTTP or HTTPS URL.');
+    }
+    localStorage.setItem(COBALT_CUSTOM_INSTANCE_KEY, safeUrl.replace(/\/+$/, ''));
   }
 }
 
@@ -196,19 +206,22 @@ export async function extractMedia(
   options?: CobaltRequestOptions
 ): Promise<MediaExtractionResult> {
   const trimmed = rawUrl.trim();
-  if (!trimmed) {
-    throw new Error('Please enter a valid URL.');
+  const safeInputUrl = sanitizeRedirectUrl(trimmed);
+  if (!trimmed || !safeInputUrl) {
+    throw new Error('Please enter a valid HTTP or HTTPS URL.');
   }
 
-  const platform = detectMediaPlatform(trimmed);
+  const platform = detectMediaPlatform(safeInputUrl);
 
   // 1. Direct Web Media Sniffer: bypass external APIs if it's already a direct video/audio URL
-  if (isDirectMediaUrl(trimmed)) {
-    const filename = extractFilenameFromUrl(trimmed, platform === 'generic' ? 'downloaded-media.mp4' : `${platform}-media.mp4`);
+  if (isDirectMediaUrl(safeInputUrl)) {
+    const filename = sanitizeFileName(
+      extractFilenameFromUrl(safeInputUrl, platform === 'generic' ? 'downloaded-media.mp4' : `${platform}-media.mp4`)
+    );
     return {
       status: 'direct',
       platform,
-      url: trimmed,
+      url: safeInputUrl,
       filename,
       title: filename,
     };
@@ -264,11 +277,17 @@ export async function extractMedia(
 
       // Handle Tunnel, Stream, or Redirect single media
       if (data.status === 'tunnel' || data.status === 'stream' || data.status === 'redirect') {
-        const filename = data.filename || `${platform}-${Date.now()}.${options?.downloadMode === 'audio' ? 'mp3' : 'mp4'}`;
+        const safeMediaUrl = sanitizeRedirectUrl(data.url);
+        if (!safeMediaUrl) {
+          throw new Error('Extractor returned an invalid media URL.');
+        }
+        const filename = sanitizeFileName(
+          data.filename || `${platform}-${Date.now()}.${options?.downloadMode === 'audio' ? 'mp3' : 'mp4'}`
+        );
         return {
           status: 'single',
           platform,
-          url: data.url,
+          url: safeMediaUrl,
           filename,
           title: filename,
         };
@@ -276,19 +295,25 @@ export async function extractMedia(
 
       // Handle Picker (Instagram carousel, TikTok photo slideshow)
       if (data.status === 'picker' && Array.isArray(data.picker)) {
-        const pickerItems: PickerMediaItem[] = data.picker.map((item: any) => ({
-          type: item.type || 'photo',
-          url: item.url,
-          thumb: item.thumb || item.url,
-        }));
+        const pickerItems: PickerMediaItem[] = data.picker
+          .map((item: any) => {
+            const safeItemUrl = sanitizeRedirectUrl(item.url);
+            if (!safeItemUrl) return null;
+            return {
+              type: item.type || 'photo',
+              url: safeItemUrl,
+              thumb: sanitizeRedirectUrl(item.thumb) || safeItemUrl,
+            };
+          })
+          .filter((item: PickerMediaItem | null): item is PickerMediaItem => item !== null);
 
         return {
           status: 'picker',
           platform,
           title: `${platform.toUpperCase()} Album (${pickerItems.length} items)`,
           picker: pickerItems,
-          audioUrl: data.audio,
-          audioFilename: data.audioFilename,
+          audioUrl: sanitizeRedirectUrl(data.audio) || undefined,
+          audioFilename: data.audioFilename ? sanitizeFileName(data.audioFilename) : undefined,
         };
       }
 
@@ -372,15 +397,20 @@ export async function extractMedia(
  * Triggers a file download in the browser with fallback if CORS blocks blob fetching.
  */
 export async function downloadMediaFile(url: string, filename: string): Promise<{ method: 'blob' | 'direct' }> {
+  const safeUrl = sanitizeRedirectUrl(url);
+  if (!safeUrl) {
+    throw new Error('Blocked unsafe or invalid download URL.');
+  }
+  const safeName = sanitizeFileName(filename || 'downloaded-media.mp4');
   try {
-    const response = await fetch(url, { mode: 'cors' });
+    const response = await fetch(safeUrl, { mode: 'cors' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
     
     const anchor = document.createElement('a');
     anchor.href = blobUrl;
-    anchor.download = filename || 'downloaded-media.mp4';
+    anchor.download = safeName;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
@@ -391,8 +421,8 @@ export async function downloadMediaFile(url: string, filename: string): Promise<
     // CORS or streaming restriction: trigger direct download anchor or open in new window
     console.warn('CORS blob download prevented, falling back to direct link trigger:', err);
     const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename || 'downloaded-media.mp4';
+    anchor.href = safeUrl;
+    anchor.download = safeName;
     anchor.target = '_blank';
     anchor.rel = 'noopener noreferrer';
     document.body.appendChild(anchor);
