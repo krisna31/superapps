@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
 import { SnippetItem } from '@/types';
+import { generateSecureId } from '@/utils/security';
 
 export const SnippetsPage: React.FC = () => {
   const { user } = useAuth();
@@ -75,7 +76,7 @@ export const SnippetsPage: React.FC = () => {
       .filter((t) => t.length > 0);
 
     const newSnippet: SnippetItem = {
-      id: 'snippet-' + Date.now(),
+      id: generateSecureId('snippet'),
       userId,
       title: title.trim(),
       language,

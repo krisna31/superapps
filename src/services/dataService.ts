@@ -48,6 +48,8 @@ import {
   isDangerousFileExtension,
   maskIpAddress,
   generateSecureId,
+  isValidSlug,
+  sanitizeDocId,
 } from '@/utils/security';
 
 export type { Unsubscribe };
@@ -172,6 +174,11 @@ export const dataService = {
   },
 
   async saveShortlink(userId: string, shortlink: ShortlinkItem): Promise<void> {
+    if (!isValidSlug(shortlink.slug)) {
+      throw new Error('Invalid shortlink slug. Use 1-100 alphanumeric characters, hyphens (-), or underscores (_).');
+    }
+    shortlink.slug = shortlink.slug.trim();
+
     const validatedUrl = sanitizeRedirectUrl(shortlink.originalUrl);
     if (!validatedUrl) {
       throw new Error('Invalid shortlink destination URL. Only HTTP and HTTPS protocols are allowed.');
@@ -563,17 +570,22 @@ export const dataService = {
     mediaHistoryRepo.list(userId),
 
   async saveMediaDownloadItem(userId: string, item: Omit<MediaDownloadItem, 'id' | 'createdAt' | 'userId'> & { id?: string; createdAt?: number; userId?: string }): Promise<MediaDownloadItem> {
+    const safeOriginalUrl = sanitizeRedirectUrl(item.originalUrl);
+    const safeDownloadUrl = sanitizeRedirectUrl(item.downloadUrl);
+    if (!safeOriginalUrl || !safeDownloadUrl) {
+      throw new Error('Invalid media URL: only HTTP and HTTPS URLs are permitted.');
+    }
     const historyItem: MediaDownloadItem = {
-      id: item.id || generateSecureId('media', 8),
+      id: item.id ? sanitizeDocId(item.id, 'media') : generateSecureId('media', 8),
       userId,
-      originalUrl: item.originalUrl,
-      title: item.title,
+      originalUrl: safeOriginalUrl,
+      title: typeof item.title === 'string' && item.title.trim() ? item.title.trim() : 'Media Item',
       platform: item.platform,
       format: item.format,
       quality: item.quality,
-      downloadUrl: item.downloadUrl,
-      thumbnailUrl: item.thumbnailUrl,
-      filename: item.filename,
+      downloadUrl: safeDownloadUrl,
+      thumbnailUrl: item.thumbnailUrl ? (sanitizeRedirectUrl(item.thumbnailUrl) || undefined) : undefined,
+      filename: item.filename ? sanitizeFileName(item.filename) : undefined,
       createdAt: item.createdAt || Date.now(),
     };
     await mediaHistoryRepo.save(userId, historyItem);
@@ -983,7 +995,7 @@ export const dataService = {
     let count = 0;
     const errors: string[] = [];
 
-    // Import tasks with schema validation
+    // Import tasks with strict schema whitelisting
     if (Array.isArray(backup.data.tasks)) {
       for (const t of backup.data.tasks) {
         try {
@@ -998,17 +1010,18 @@ export const dataService = {
             t.priority === 'low' || t.priority === 'medium' || t.priority === 'high' || t.priority === 'urgent'
               ? t.priority
               : 'medium';
-          await this.saveTask(userId, {
-            ...t,
-            id: t.id.trim(),
+          const taskItem: TaskItem = {
+            id: sanitizeDocId(t.id, 'task'),
             userId,
             title: t.title.trim(),
-            description: typeof t.description === 'string' ? t.description : undefined,
             status: validStatus,
             priority: validPriority,
             createdAt: typeof t.createdAt === 'number' && Number.isFinite(t.createdAt) ? t.createdAt : Date.now(),
             updatedAt: typeof t.updatedAt === 'number' && Number.isFinite(t.updatedAt) ? t.updatedAt : Date.now(),
-          });
+          };
+          if (typeof t.description === 'string') taskItem.description = t.description;
+          if (typeof t.dueDate === 'string' && t.dueDate.trim()) taskItem.dueDate = t.dueDate.trim();
+          await this.saveTask(userId, taskItem);
           count++;
         } catch (err: any) {
           errors.push(`Task "${t?.title || t?.id || 'unknown'}": ${err?.message}`);
@@ -1016,7 +1029,7 @@ export const dataService = {
       }
     }
 
-    // Import notes with schema validation
+    // Import notes with strict schema whitelisting
     if (Array.isArray(backup.data.notes)) {
       for (const n of backup.data.notes) {
         try {
@@ -1024,8 +1037,7 @@ export const dataService = {
             throw new Error('Missing valid id or title');
           }
           await this.saveNote(userId, {
-            ...n,
-            id: n.id.trim(),
+            id: sanitizeDocId(n.id, 'note'),
             userId,
             title: n.title.trim() || 'Untitled Note',
             content: typeof n.content === 'string' ? n.content : '',
@@ -1041,26 +1053,26 @@ export const dataService = {
       }
     }
 
-    // Import habits with schema validation
+    // Import habits with strict schema whitelisting
     if (Array.isArray(backup.data.habits)) {
       for (const h of backup.data.habits) {
         try {
           if (!h || typeof h !== 'object' || typeof h.id !== 'string' || !h.id.trim() || typeof h.title !== 'string' || !h.title.trim()) {
             throw new Error('Missing valid id or title');
           }
-          await this.saveHabit(userId, {
-            ...h,
-            id: h.id.trim(),
+          const habitItem: HabitItem = {
+            id: sanitizeDocId(h.id, 'habit'),
             userId,
             title: h.title.trim(),
-            description: typeof h.description === 'string' ? h.description : undefined,
             frequency: h.frequency === 'weekly' ? 'weekly' : 'daily',
             completedDates: Array.isArray(h.completedDates)
               ? h.completedDates.filter((d): d is string => typeof d === 'string')
               : [],
             streak: typeof h.streak === 'number' && Number.isFinite(h.streak) && h.streak >= 0 ? h.streak : 0,
             createdAt: typeof h.createdAt === 'number' && Number.isFinite(h.createdAt) ? h.createdAt : Date.now(),
-          });
+          };
+          if (typeof h.description === 'string') habitItem.description = h.description;
+          await this.saveHabit(userId, habitItem);
           count++;
         } catch (err: any) {
           errors.push(`Habit "${h?.title || h?.id || 'unknown'}": ${err?.message}`);
@@ -1068,7 +1080,7 @@ export const dataService = {
       }
     }
 
-    // Import expenses with schema validation
+    // Import expenses with strict schema whitelisting
     if (Array.isArray(backup.data.expenses)) {
       for (const e of backup.data.expenses) {
         try {
@@ -1084,8 +1096,7 @@ export const dataService = {
             throw new Error('Invalid expense id or non-negative amount');
           }
           await this.saveExpense(userId, {
-            ...e,
-            id: e.id.trim(),
+            id: sanitizeDocId(e.id, 'exp'),
             userId,
             type: e.type === 'income' ? 'income' : 'expense',
             amount: e.amount,
@@ -1101,24 +1112,24 @@ export const dataService = {
       }
     }
 
-    // Import snippets with schema validation
+    // Import snippets with strict schema whitelisting
     if (Array.isArray(backup.data.snippets)) {
       for (const s of backup.data.snippets) {
         try {
           if (!s || typeof s !== 'object' || typeof s.id !== 'string' || !s.id.trim() || typeof s.title !== 'string' || !s.title.trim()) {
             throw new Error('Missing valid id or title');
           }
-          await this.saveSnippet(userId, {
-            ...s,
-            id: s.id.trim(),
+          const snippetItem: SnippetItem = {
+            id: sanitizeDocId(s.id, 'snip'),
             userId,
             title: s.title.trim(),
             code: typeof s.code === 'string' ? s.code : '',
             language: typeof s.language === 'string' && s.language.trim() ? s.language.trim() : 'plaintext',
             tags: Array.isArray(s.tags) ? s.tags.filter((tag): tag is string => typeof tag === 'string') : [],
-            description: typeof s.description === 'string' ? s.description : undefined,
             createdAt: typeof s.createdAt === 'number' && Number.isFinite(s.createdAt) ? s.createdAt : Date.now(),
-          });
+          };
+          if (typeof s.description === 'string') snippetItem.description = s.description;
+          await this.saveSnippet(userId, snippetItem);
           count++;
         } catch (err: any) {
           errors.push(`Snippet "${s?.title || s?.id || 'unknown'}": ${err?.message}`);
@@ -1126,21 +1137,31 @@ export const dataService = {
       }
     }
 
-    // Import shortlinks with schema validation
+    // Import shortlinks with strict schema whitelisting & slug validation
     if (Array.isArray(backup.data.shortlinks)) {
       for (const l of backup.data.shortlinks) {
         try {
-          if (!l || typeof l !== 'object' || typeof l.slug !== 'string' || !l.slug.trim() || typeof l.originalUrl !== 'string') {
+          if (!l || typeof l !== 'object' || typeof l.slug !== 'string' || !isValidSlug(l.slug) || typeof l.originalUrl !== 'string') {
             throw new Error('Missing valid slug or originalUrl');
           }
-          await this.saveShortlink(userId, {
-            ...l,
-            id: typeof l.id === 'string' && l.id.trim() ? l.id.trim() : l.slug.trim(),
-            slug: l.slug.trim(),
+          const cleanSlug = l.slug.trim();
+          const safeRecentClicks: ShortlinkClickLog[] | undefined = Array.isArray(l.recentClicks)
+            ? l.recentClicks
+                .filter((c): c is ShortlinkClickLog => Boolean(c && typeof c === 'object' && typeof c.timestamp === 'number'))
+                .slice(0, 50)
+            : undefined;
+          const shortlinkItem: ShortlinkItem = {
+            id: typeof l.id === 'string' && l.id.trim() ? sanitizeDocId(l.id, 'link') : cleanSlug,
+            slug: cleanSlug,
             userId,
+            originalUrl: l.originalUrl,
             clicks: typeof l.clicks === 'number' && Number.isFinite(l.clicks) && l.clicks >= 0 ? l.clicks : 0,
             createdAt: typeof l.createdAt === 'number' && Number.isFinite(l.createdAt) ? l.createdAt : Date.now(),
-          });
+            updatedAt: typeof l.updatedAt === 'number' && Number.isFinite(l.updatedAt) ? l.updatedAt : Date.now(),
+          };
+          if (typeof l.title === 'string' && l.title.trim()) shortlinkItem.title = l.title.trim();
+          if (safeRecentClicks) shortlinkItem.recentClicks = safeRecentClicks;
+          await this.saveShortlink(userId, shortlinkItem);
           count++;
         } catch (err: any) {
           errors.push(`Shortlink "${l?.slug || 'unknown'}": ${err?.message}`);
@@ -1164,8 +1185,7 @@ export const dataService = {
             throw new Error(`Blocked unsafe or invalid downloadUrl in "${safeFileName}"`);
           }
           await dropzoneRepo.save(userId, {
-            ...d,
-            id: d.id.trim(),
+            id: sanitizeDocId(d.id, 'drop'),
             userId,
             fileName: safeFileName,
             fileSize: typeof d.fileSize === 'number' && Number.isFinite(d.fileSize) && d.fileSize >= 0 ? d.fileSize : 0,
@@ -1181,7 +1201,7 @@ export const dataService = {
       }
     }
 
-    // Import media history with URL sanitization
+    // Import media history with URL sanitization & strict schema whitelisting
     if (Array.isArray(backup.data.mediaHistory)) {
       for (const m of backup.data.mediaHistory) {
         try {
@@ -1193,16 +1213,32 @@ export const dataService = {
           if (!safeOrigUrl || !safeDlUrl) {
             throw new Error('Unsafe or invalid media URL');
           }
-          await mediaHistoryRepo.save(userId, {
-            ...m,
-            id: m.id.trim(),
+          const validPlatform =
+            m.platform === 'instagram' ||
+            m.platform === 'facebook' ||
+            m.platform === 'tiktok' ||
+            m.platform === 'twitter' ||
+            m.platform === 'youtube'
+              ? m.platform
+              : 'generic';
+          const validFormat = m.format === 'audio' || m.format === 'picker' ? m.format : 'video';
+          const mediaItem: MediaDownloadItem = {
+            id: sanitizeDocId(m.id, 'media'),
             userId,
             originalUrl: safeOrigUrl,
             downloadUrl: safeDlUrl,
-            title: typeof m.title === 'string' ? m.title : 'Media Item',
-            filename: m.filename ? sanitizeFileName(m.filename) : undefined,
+            title: typeof m.title === 'string' && m.title.trim() ? m.title.trim() : 'Media Item',
+            platform: validPlatform,
+            format: validFormat,
             createdAt: typeof m.createdAt === 'number' && Number.isFinite(m.createdAt) ? m.createdAt : Date.now(),
-          });
+          };
+          if (typeof m.quality === 'string' && m.quality.trim()) mediaItem.quality = m.quality.trim();
+          if (m.thumbnailUrl) {
+            const safeThumb = sanitizeRedirectUrl(m.thumbnailUrl);
+            if (safeThumb) mediaItem.thumbnailUrl = safeThumb;
+          }
+          if (m.filename) mediaItem.filename = sanitizeFileName(m.filename);
+          await mediaHistoryRepo.save(userId, mediaItem);
           count++;
         } catch (err: any) {
           errors.push(`Media history "${m?.title || m?.id || 'unknown'}": ${err?.message}`);
@@ -1257,18 +1293,49 @@ export const dataService = {
       }
     }
 
-    // If Cloud user, atomically wipe user private Firestore collections
+    // If Cloud user, atomically wipe user private Firestore collections, cloud shortlinks, and Storage blobs
     if (isCloudUser(userId) && db) {
       try {
+        // Best-effort cleanup of Firebase Storage dropzone blobs before deleting metadata
+        if (storage) {
+          try {
+            const dropzoneColRef = collection(db, 'users', userId, 'dropzone');
+            const dropzoneSnap = await getDocs(dropzoneColRef);
+            for (const docSnap of dropzoneSnap.docs) {
+              const data = docSnap.data() as Partial<DropzoneItem>;
+              if (data.storagePath && data.storagePath !== 'local-blob' && !data.storagePath.startsWith('local')) {
+                try {
+                  await deleteObject(ref(storage, data.storagePath));
+                } catch {
+                  // ignore individual storage delete errors
+                }
+              }
+            }
+          } catch {
+            // ignore storage listing errors
+          }
+        }
+
+        const refsToDelete: ReturnType<typeof doc>[] = [];
         const cloudCols = ['tasks', 'notes', 'habits', 'expenses', 'snippets', 'dropzone', 'media_history'];
         for (const colName of cloudCols) {
           const colRef = collection(db, 'users', userId, colName);
           const snap = await getDocs(colRef);
-          if (!snap.empty) {
-            const batch = writeBatch(db);
-            snap.docs.forEach((d) => batch.delete(d.ref));
-            await batch.commit();
-          }
+          snap.docs.forEach((d) => refsToDelete.push(d.ref));
+        }
+
+        // Also include user's cloud shortlinks
+        const shortlinksQuery = query(collection(db, 'shortlinks'), where('userId', '==', userId));
+        const shortlinksSnap = await getDocs(shortlinksQuery);
+        shortlinksSnap.docs.forEach((d) => refsToDelete.push(d.ref));
+
+        // Commit deletions in safe 450-operation chunks
+        const BATCH_LIMIT = 450;
+        for (let i = 0; i < refsToDelete.length; i += BATCH_LIMIT) {
+          const batch = writeBatch(db);
+          const chunk = refsToDelete.slice(i, i + BATCH_LIMIT);
+          chunk.forEach((docRef) => batch.delete(docRef));
+          await batch.commit();
         }
       } catch (err) {
         console.warn('Failed to wipe cloud collections on workspace reset:', err);

@@ -27,6 +27,10 @@ export function isValidHttpUrl(rawUrl: string): boolean {
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       return false;
     }
+    // Reject embedded credentials (https://trusted.com@evil.com phishing/confusion)
+    if (parsed.username || parsed.password) {
+      return false;
+    }
     // Must have a valid non-empty hostname
     if (!parsed.hostname || parsed.hostname.trim() === '') {
       return false;
@@ -55,7 +59,7 @@ export function sanitizeRedirectUrl(rawUrl: string): string | null {
 
 /**
  * Safely validates a download/media URL.
- * Allows http:, https:, blob:, and non-executable data: URLs (blocking text/html, image/svg+xml, javascript).
+ * Allows http:, https:, origin-scoped blob:https?://, and an explicit allowlist of non-executable data: MIME types.
  */
 export function sanitizeDownloadUrl(rawUrl: string): string | null {
   if (!rawUrl || typeof rawUrl !== 'string') return null;
@@ -65,17 +69,48 @@ export function sanitizeDownloadUrl(rawUrl: string): string | null {
   if (isValidHttpUrl(trimmed)) {
     return sanitizeRedirectUrl(trimmed);
   }
-  if (/^blob:/i.test(trimmed)) {
+  if (/^blob:https?:\/\/[^\s]+$/i.test(trimmed)) {
     return trimmed;
   }
   if (/^data:/i.test(trimmed)) {
-    // Block active HTML, SVG, XHTML, or script data URLs
-    if (/^data:\s*(text\/html|image\/svg\+xml|application\/xhtml\+xml|text\/javascript|application\/javascript|text\/xml|application\/xml)/i.test(trimmed)) {
-      return null;
+    // Allowlist strictly non-active media, document, and plain-text data URLs
+    const safeDataUrlPattern =
+      /^data:(image\/(png|jpeg|jpg|gif|webp|bmp|ico)|application\/(pdf|json|zip|octet-stream)|text\/(plain|csv|markdown)|audio\/[a-z0-9.+-]+|video\/[a-z0-9.+-]+)(;[a-z0-9=._-]+)*,/i;
+    if (safeDataUrlPattern.test(trimmed)) {
+      return trimmed;
     }
-    return trimmed;
+    return null;
   }
   return null;
+}
+
+/**
+ * Validates that a shortlink slug is strictly URL- and Firestore-path-safe (1..100 chars, alphanumeric, hyphen, underscore).
+ */
+export function isValidSlug(slug: string): boolean {
+  if (!slug || typeof slug !== 'string') return false;
+  return /^[a-zA-Z0-9_-]{1,100}$/.test(slug.trim());
+}
+
+/**
+ * Validates a Firestore / localStorage document ID against path traversal (/ or ..) and control characters.
+ * Returns the trimmed ID if valid, or generates a fresh CSPRNG ID with fallbackPrefix.
+ */
+export function sanitizeDocId(rawId: unknown, fallbackPrefix = 'id'): string {
+  if (typeof rawId === 'string') {
+    const trimmed = rawId.trim();
+    if (
+      trimmed.length >= 1 &&
+      trimmed.length <= 128 &&
+      trimmed !== '.' &&
+      trimmed !== '..' &&
+      !trimmed.includes('..') &&
+      /^[a-zA-Z0-9_.-]+$/.test(trimmed)
+    ) {
+      return trimmed;
+    }
+  }
+  return generateSecureId(fallbackPrefix, 10);
 }
 
 /**
@@ -120,14 +155,17 @@ export function isDangerousFileExtension(fileName: string): boolean {
 
 /**
  * Safely escapes a string argument for POSIX/Windows shell commands (e.g. yt-dlp CLI).
- * Strips control characters (\r, \n, \0) and neutralizes shell metacharacters ($, `, ", \, !, ;, |, &).
+ * Strips control characters (\r, \n, \0) and neutralizes shell metacharacters ($, `, ", \, !, %VAR%).
  */
 export function escapeShellArg(raw: string): string {
   if (!raw || typeof raw !== 'string') return '""';
   // Strip control characters and newlines first
   const cleaned = raw.replace(/[\r\n\0]/g, '').trim();
   // Escape backslashes, double quotes, dollar signs, backticks, and exclamation marks
-  const escaped = cleaned.replace(/(["\\$`!])/g, '\\$1');
+  const escaped = cleaned
+    .replace(/(["\\$`!])/g, '\\$1')
+    // Neutralize Windows cmd.exe %VAR% expansion while keeping valid URL percent-encodings intact
+    .replace(/%([A-Za-z_][A-Za-z0-9_]*)%/g, '%%$1%%');
   return `"${escaped}"`;
 }
 

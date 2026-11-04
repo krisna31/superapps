@@ -9,6 +9,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
 import { TaskItem, TaskPriority, TaskStatus } from '@/types';
+import { generateSecureId } from '@/utils/security';
 
 export const TasksPage: React.FC = () => {
   const { user } = useAuth();
@@ -53,7 +54,7 @@ export const TasksPage: React.FC = () => {
     if (!title.trim()) return;
 
     const newTask: TaskItem = {
-      id: 'task-' + Date.now(),
+      id: generateSecureId('task'),
       userId,
       title: title.trim(),
       description: description.trim() || undefined,

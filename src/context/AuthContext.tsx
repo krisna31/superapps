@@ -44,17 +44,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(() => getCachedSystemSettings());
   
-  // Determine user role strictly from verified primary superadmin email or designated admin
+  // Determine user role strictly from verified primary superadmin email or cloud-verified designated admin
   const computeRole = (
     email: string | null | undefined,
-    adminEmail: string
+    adminEmail?: string,
+    isTrustedSource = false
   ): 'superadmin' | 'user' => {
     if (!email) return 'user';
     const emailLower = email.trim().toLowerCase();
-    const adminEmailLower = (adminEmail || 'jelvinkrisnaputra31@gmail.com').trim().toLowerCase();
-    return emailLower === 'jelvinkrisnaputra31@gmail.com' || emailLower === adminEmailLower
-      ? 'superadmin'
-      : 'user';
+    if (emailLower === 'jelvinkrisnaputra31@gmail.com') {
+      return 'superadmin';
+    }
+    // Only trust dynamic adminEmail if verified from cloud settings or when running in offline/local mode
+    if ((isTrustedSource || !isFirebaseConfigured) && adminEmail) {
+      const adminEmailLower = adminEmail.trim().toLowerCase();
+      if (adminEmailLower && emailLower === adminEmailLower) {
+        return 'superadmin';
+      }
+    }
+    return 'user';
   };
 
   const [user, setUser] = useState<UserProfile | null>(() => {
@@ -96,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSystemSettings(settings);
       setUser((currentUser) => {
         if (!currentUser || currentUser.isAnonymous || !currentUser.email) return currentUser;
-        const newRole = computeRole(currentUser.email, settings.superadminEmail);
+        const newRole = computeRole(currentUser.email, settings.superadminEmail, true);
         if (currentUser.role !== newRole) {
           const updatedUser: UserProfile = { ...currentUser, role: newRole };
           localStorage.setItem('superapps_local_user', JSON.stringify(updatedUser));
@@ -113,7 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSystemSettings(parsed);
           setUser((currentUser) => {
             if (!currentUser || currentUser.isAnonymous || !currentUser.email) return currentUser;
-            const newRole = computeRole(currentUser.email, parsed.superadminEmail);
+            const newRole = computeRole(currentUser.email, parsed.superadminEmail, false);
             if (currentUser.role !== newRole) {
               const updatedUser: UserProfile = { ...currentUser, role: newRole };
               localStorage.setItem('superapps_local_user', JSON.stringify(updatedUser));
@@ -142,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (partial.superadminEmail) {
       setUser((currentUser) => {
         if (!currentUser || currentUser.isAnonymous || !currentUser.email) return currentUser;
-        const newRole = computeRole(currentUser.email, partial.superadminEmail!);
+        const newRole = computeRole(currentUser.email, partial.superadminEmail!, true);
         if (currentUser.role !== newRole) {
           const updatedUser: UserProfile = { ...currentUser, role: newRole };
           localStorage.setItem('superapps_local_user', JSON.stringify(updatedUser));
@@ -164,7 +172,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const settings = await dataService.getSystemSettings();
         const userRole = computeRole(
           firebaseUser.email,
-          settings.superadminEmail
+          settings.superadminEmail,
+          true
         );
 
         const profile: UserProfile = {
@@ -324,6 +333,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (!isFirebaseConfigured || !auth) {
       throw new Error('Firebase configuration not set. Cloud account linking requires Firebase configuration.');
+    }
+
+    const latestSettings = await dataService.getSystemSettings();
+    const canRegisterNew =
+      latestSettings.allowUserRegistration ||
+      computeRole(trimmedEmail, latestSettings.superadminEmail, true) === 'superadmin';
+
+    // When registration is closed, only allow signing into an existing account to migrate guest data
+    if (!canRegisterNew) {
+      try {
+        const cred = await signInWithEmailAndPassword(auth, trimmedEmail, pass);
+        if (guestUid && cred.user.uid !== guestUid) {
+          await dataService.migrateGuestData(guestUid, cred.user.uid);
+          localStorage.removeItem('superapps_local_guest');
+        }
+        return;
+      } catch {
+        throw new Error('Registration is closed by administrator.');
+      }
     }
 
     if (auth.currentUser && auth.currentUser.isAnonymous) {

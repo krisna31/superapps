@@ -45,21 +45,20 @@ service cloud.firestore {
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.slug is string &&
         request.resource.data.slug == code &&
-        request.resource.data.slug.size() >= 1 &&
-        request.resource.data.slug.size() <= 100 &&
+        request.resource.data.slug.matches('^[a-zA-Z0-9_-]{1,100}$') &&
         request.resource.data.originalUrl is string &&
         request.resource.data.originalUrl.size() >= 1 &&
         request.resource.data.originalUrl.size() <= 2048 &&
         request.resource.data.originalUrl.matches('^https?://.+') &&
         request.resource.data.clicks is int &&
-        request.resource.data.clicks == 0;
+        request.resource.data.clicks >= 0;
       
       // Safe update:
       // Case 1: Unauthenticated or visitor hit counter & analytics tracker
       // - Can ONLY affect 'clicks' and 'recentClicks'
       // - Must strictly increment clicks by 1
       // - CANNOT tamper with owner UID, slug, destination originalUrl, or createdAt (prevents URL hijacking!)
-      // - recentClicks list cannot exceed 60 items (prevents document bloat)
+      // - recentClicks list cannot shrink (unless capped at 50) and cannot exceed 60 items
       // Case 2: Shortlink owner updating their link
       // - Owner cannot transfer ownership (userId is immutable) or change slug
       // - Destination URL must strictly remain an HTTP/HTTPS URL
@@ -71,7 +70,12 @@ service cloud.firestore {
         request.resource.data.originalUrl == resource.data.originalUrl &&
         (!('recentClicks' in request.resource.data) || (
           request.resource.data.recentClicks is list &&
-          request.resource.data.recentClicks.size() <= 60
+          request.resource.data.recentClicks.size() <= 60 &&
+          (
+            !('recentClicks' in resource.data) ||
+            request.resource.data.recentClicks.size() >= resource.data.recentClicks.size() ||
+            request.resource.data.recentClicks.size() >= 50
+          )
         ))
       ) || (
         isAuthenticated() && 
@@ -82,11 +86,12 @@ service cloud.firestore {
         request.resource.data.originalUrl.size() >= 1 &&
         request.resource.data.originalUrl.size() <= 2048 &&
         request.resource.data.originalUrl.matches('^https?://.+') &&
-        request.resource.data.clicks is int
+        request.resource.data.clicks is int &&
+        request.resource.data.clicks >= 0
       );
 
-      // Only owner can delete their shortlinks
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Owner or verified superadmin can delete shortlinks
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isSuperadmin());
     }
   }
 }

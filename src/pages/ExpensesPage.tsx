@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
 import { ExpenseItem } from '@/types';
+import { generateSecureId } from '@/utils/security';
 
 export const ExpensesPage: React.FC = () => {
   const { user } = useAuth();
@@ -57,7 +58,7 @@ export const ExpensesPage: React.FC = () => {
     if (!amount || isNaN(Number(amount))) return;
 
     const newExpense: ExpenseItem = {
-      id: 'exp-' + Date.now(),
+      id: generateSecureId('exp'),
       userId,
       type,
       amount: Number(amount),

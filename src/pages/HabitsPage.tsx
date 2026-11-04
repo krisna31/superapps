@@ -11,6 +11,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
 import { HabitItem } from '@/types';
+import { generateSecureId } from '@/utils/security';
 
 const formatLocalDate = (d: Date): string => {
   const year = d.getFullYear();
@@ -79,7 +80,7 @@ export const HabitsPage: React.FC = () => {
     if (!title.trim()) return;
 
     const newHabit: HabitItem = {
-      id: 'habit-' + Date.now(),
+      id: generateSecureId('habit'),
       userId,
       title: title.trim(),
       description: description.trim() || undefined,

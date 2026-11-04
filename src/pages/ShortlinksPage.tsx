@@ -14,7 +14,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
 import { ShortlinkItem } from '@/types';
-import { sanitizeRedirectUrl, generateSecureRandomString } from '@/utils/security';
+import { sanitizeRedirectUrl, generateSecureRandomString, generateSecureId, isValidSlug } from '@/utils/security';
 
 export const ShortlinksPage: React.FC = () => {
   const { user } = useAuth();
@@ -79,9 +79,14 @@ export const ShortlinksPage: React.FC = () => {
     }
 
     try {
-      const generatedSlug = customSlug.trim() || generateSecureRandomString(6);
+      const trimmedCustomSlug = customSlug.trim();
+      if (trimmedCustomSlug && !isValidSlug(trimmedCustomSlug)) {
+        setError('Custom slug may only contain letters, numbers, hyphens (-), and underscores (_) (max 100 chars).');
+        return;
+      }
+      const generatedSlug = trimmedCustomSlug || generateSecureRandomString(6);
       const newShortlink: ShortlinkItem = {
-        id: 'link-' + Date.now(),
+        id: generateSecureId('link'),
         userId,
         slug: generatedSlug,
         originalUrl: validatedUrl,
@@ -260,6 +265,9 @@ export const ShortlinksPage: React.FC = () => {
                   id="shortlink-url-input"
                   type="text"
                   required
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
                   value={originalUrl}
                   onChange={(e) => setOriginalUrl(e.target.value)}
                   placeholder="https://example.com/very/long/url"
@@ -278,6 +286,9 @@ export const ShortlinksPage: React.FC = () => {
                   <input
                     id="shortlink-slug-input"
                     type="text"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
                     value={customSlug}
                     onChange={(e) => setCustomSlug(e.target.value)}
                     placeholder="my-link (leave empty to randomize)"
@@ -322,7 +333,7 @@ export const ShortlinksPage: React.FC = () => {
 
       {/* Detailed Click Analytics & Tracker Modal */}
       {selectedAnalyticsLink && (() => {
-        const clicks = selectedAnalyticsLink.recentClicks || [];
+        const clicks = Array.isArray(selectedAnalyticsLink.recentClicks) ? selectedAnalyticsLink.recentClicks : [];
         
         // Geo Aggregation
         const countryCounts: Record<string, { name: string; count: number; code?: string }> = {};

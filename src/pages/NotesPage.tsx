@@ -23,6 +23,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
 import { NoteItem } from '@/types';
+import { generateSecureId } from '@/utils/security';
 
 export const NotesPage: React.FC = () => {
   const { user } = useAuth();
@@ -65,6 +66,14 @@ export const NotesPage: React.FC = () => {
   };
 
   useEffect(() => {
+    // Reset active note selection when switching users to prevent cross-account editor state retention
+    selectedNoteIdRef.current = null;
+    setSelectedNoteId(null);
+    setActiveTitle('');
+    setActiveContent('');
+    setActiveTags('');
+    setActivePinned(false);
+
     const unsubscribe = dataService.subscribeToNotes(userId, (data) => {
       setNotes(data);
       if (data.length > 0 && !selectedNoteIdRef.current) {
@@ -91,7 +100,7 @@ export const NotesPage: React.FC = () => {
 
   const handleCreateNote = async () => {
     const newNote: NoteItem = {
-      id: 'note-' + Date.now(),
+      id: generateSecureId('note'),
       userId,
       title: 'Untitled Note',
       content: '# Untitled\n\nStart writing markdown notes here...',
@@ -177,10 +186,26 @@ export const NotesPage: React.FC = () => {
     });
   };
 
-  // Safe markdown renderer
+  // Safe markdown renderer with fenced code block state tracking
   const renderMarkdown = (content: string) => {
     const lines = content.split('\n');
+    let inCodeBlock = false;
     return lines.map((line, idx) => {
+      if (line.trim().startsWith('```')) {
+        inCodeBlock = !inCodeBlock;
+        return (
+          <div key={idx} className="font-mono text-[11px] text-slate-500 bg-slate-950 px-2.5 py-0.5 rounded-sm my-0.5 select-none">
+            {line}
+          </div>
+        );
+      }
+      if (inCodeBlock) {
+        return (
+          <pre key={idx} className="font-mono text-xs text-emerald-400 bg-slate-950 px-3 py-0.5 overflow-x-auto leading-relaxed">
+            <code>{line || ' '}</code>
+          </pre>
+        );
+      }
       if (line.startsWith('# ')) {
         return <h1 key={idx} className="text-lg font-bold text-slate-900 dark:text-white mt-3 mb-1.5">{renderInlineMarkdown(line.substring(2))}</h1>;
       }
@@ -211,9 +236,6 @@ export const NotesPage: React.FC = () => {
       }
       if (line.startsWith('> ')) {
         return <blockquote key={idx} className="border-l-2 border-slate-300 dark:border-slate-700 pl-3 italic text-xs text-slate-500 my-1">{renderInlineMarkdown(line.substring(2))}</blockquote>;
-      }
-      if (line.startsWith('```')) {
-        return <div key={idx} className="font-mono text-xs text-emerald-500 bg-slate-950 px-2 py-0.5 rounded my-0.5">{line}</div>;
       }
       if (!line.trim()) {
         return <div key={idx} className="h-2" />;

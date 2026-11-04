@@ -126,19 +126,25 @@ export const SwissKnifePage: React.FC = () => {
   const [sha1, setSha1] = useState('');
 
   useEffect(() => {
+    let isCancelled = false;
     const computeHashes = async () => {
       const encoder = new TextEncoder();
       const data = encoder.encode(hashInput);
 
       const hash256Buffer = await crypto.subtle.digest('SHA-256', data);
+      if (isCancelled) return;
       const hash256Array = Array.from(new Uint8Array(hash256Buffer));
       setSha256(hash256Array.map((b) => b.toString(16).padStart(2, '0')).join(''));
 
       const hash1Buffer = await crypto.subtle.digest('SHA-1', data);
+      if (isCancelled) return;
       const hash1Array = Array.from(new Uint8Array(hash1Buffer));
       setSha1(hash1Array.map((b) => b.toString(16).padStart(2, '0')).join(''));
     };
     computeHashes();
+    return () => {
+      isCancelled = true;
+    };
   }, [hashInput]);
 
   /* ================== 6. REGEX TESTER ================== */

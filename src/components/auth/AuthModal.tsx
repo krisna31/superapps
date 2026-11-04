@@ -181,6 +181,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <input
               id="modal-email"
               type="email"
+              autoComplete="email"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -196,6 +200,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <input
               id="modal-password"
               type="password"
+              autoComplete={isSignUp || isGuest ? 'new-password' : 'current-password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

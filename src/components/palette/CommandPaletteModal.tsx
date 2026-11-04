@@ -37,6 +37,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { setTheme, resolvedTheme } = useTheme();
   const { user } = useAuth();
@@ -193,8 +194,17 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
 
   useEffect(() => {
     if (!isOpen) return;
+    const activeEl = listRef.current?.querySelector<HTMLElement>('[data-active="true"]');
+    activeEl?.scrollIntoView?.({ block: 'nearest' });
+  }, [selectedIndex, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Wait for IME composition to end before handling Enter or navigation keys
+      if (e.isComposing || e.keyCode === 229) return;
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSelectedIndex((prev) => (prev + 1) % (filteredCommands.length || 1));
@@ -237,6 +247,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
             ref={inputRef}
             aria-label="Search commands"
             type="text"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -250,7 +263,12 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
           </kbd>
         </div>
 
-        <div className="max-h-72 overflow-y-auto p-1.5 space-y-0.5">
+        <div
+          ref={listRef}
+          role="listbox"
+          aria-label="Commands"
+          className="max-h-72 overflow-y-auto p-1.5 space-y-0.5"
+        >
           {filteredCommands.length === 0 ? (
             <div className="py-6 text-center text-xs text-slate-400">
               No matching commands found.
@@ -262,6 +280,10 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
               return (
                 <button
                   key={cmd.id}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  data-active={isSelected ? 'true' : 'false'}
                   onClick={() => {
                     cmd.action();
                     onClose();

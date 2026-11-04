@@ -336,53 +336,74 @@ export async function extractMedia(
 
   // 3. Fallback Multi-Engine: Platform-Specific Scrapers
   if (platform === 'tiktok') {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
     try {
-      const tikRes = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(trimmed)}`);
+      const tikRes = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(safeInputUrl)}`, {
+        signal: controller.signal,
+      });
       if (tikRes.ok) {
         const tikData = await tikRes.json();
         if (tikData && tikData.code === 0 && tikData.data) {
           const d = tikData.data;
           const isAudio = options?.downloadMode === 'audio';
-          const mediaUrl = isAudio ? (d.music || d.play) : (d.play || d.wmplay);
-          const filename = `tiktok-${d.id || Date.now()}.${isAudio ? 'mp3' : 'mp4'}`;
-          return {
-            status: 'single',
-            platform: 'tiktok',
-            title: d.title || 'TikTok Video',
-            url: mediaUrl,
-            filename,
-            audioUrl: d.music,
-            audioFilename: `tiktok-${d.id || Date.now()}-audio.mp3`,
-          };
-        }
-      }
-    } catch (e) {
-      console.warn('TikWM fallback failed:', e);
-    }
-  }
-
-  if (platform === 'twitter') {
-    try {
-      const match = trimmed.match(/(?:status|statuses)\/(\d+)/);
-      if (match) {
-        const vxRes = await fetch(`https://api.vxtwitter.com/Twitter/status/${match[1]}`);
-        if (vxRes.ok) {
-          const vxData = await vxRes.json();
-          const videoUrl = vxData.media_extended?.[0]?.url || vxData.mediaURLs?.[0];
-          if (videoUrl && /\.(mp4|webm|m3u8)/i.test(videoUrl)) {
-            const filename = `twitter-${match[1]}.mp4`;
+          const rawMediaUrl = isAudio ? (d.music || d.play) : (d.play || d.wmplay);
+          const safeMediaUrl = sanitizeRedirectUrl(rawMediaUrl);
+          if (safeMediaUrl) {
+            const safeAudioUrl = sanitizeRedirectUrl(d.music) || undefined;
+            const filename = sanitizeFileName(`tiktok-${d.id || Date.now()}.${isAudio ? 'mp3' : 'mp4'}`);
+            const audioFilename = sanitizeFileName(`tiktok-${d.id || Date.now()}-audio.mp3`);
             return {
               status: 'single',
-              platform: 'twitter',
-              title: vxData.text?.substring(0, 60) || 'Twitter Video',
-              url: videoUrl,
+              platform: 'tiktok',
+              title: typeof d.title === 'string' && d.title.trim() ? d.title.trim().substring(0, 120) : 'TikTok Video',
+              url: safeMediaUrl,
               filename,
+              audioUrl: safeAudioUrl,
+              audioFilename,
             };
           }
         }
       }
     } catch (e) {
-      console.warn('VxTwitter fallback failed:', e);
+      console.warn('TikWM fallback failed:', e);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  if (platform === 'twitter') {
+    const match = safeInputUrl.match(/(?:status|statuses)\/(\d+)/);
+    if (match) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      try {
+        const vxRes = await fetch(`https://api.vxtwitter.com/Twitter/status/${match[1]}`, {
+          signal: controller.signal,
+        });
+        if (vxRes.ok) {
+          const vxData = await vxRes.json();
+          const rawVideoUrl = vxData.media_extended?.[0]?.url || vxData.mediaURLs?.[0];
+          const safeVideoUrl = sanitizeRedirectUrl(rawVideoUrl);
+          if (safeVideoUrl) {
+            const parsedVideoUrl = new URL(safeVideoUrl);
+            if (/\.(mp4|webm|m3u8)$/i.test(parsedVideoUrl.pathname)) {
+              const filename = sanitizeFileName(`twitter-${match[1]}.mp4`);
+              return {
+                status: 'single',
+                platform: 'twitter',
+                title: typeof vxData.text === 'string' && vxData.text.trim() ? vxData.text.trim().substring(0, 60) : 'Twitter Video',
+                url: safeVideoUrl,
+                filename,
+              };
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('VxTwitter fallback failed:', e);
+      } finally {
+        clearTimeout(timeoutId);
+      }
     }
   }
 
@@ -402,8 +423,10 @@ export async function downloadMediaFile(url: string, filename: string): Promise<
     throw new Error('Blocked unsafe or invalid download URL.');
   }
   const safeName = sanitizeFileName(filename || 'downloaded-media.mp4');
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
   try {
-    const response = await fetch(safeUrl, { mode: 'cors' });
+    const response = await fetch(safeUrl, { mode: 'cors', signal: controller.signal });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
@@ -429,5 +452,7 @@ export async function downloadMediaFile(url: string, filename: string): Promise<
     anchor.click();
     document.body.removeChild(anchor);
     return { method: 'direct' };
+  } finally {
+    clearTimeout(timeoutId);
   }
 }

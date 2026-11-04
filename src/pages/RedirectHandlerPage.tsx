@@ -16,9 +16,13 @@ export const RedirectHandlerPage: React.FC = () => {
       return;
     }
 
+    let redirectTimer: ReturnType<typeof setTimeout> | null = null;
+    let isCancelled = false;
+
     const resolveLink = async () => {
       try {
         const item = await dataService.resolveShortlink(slug);
+        if (isCancelled) return;
         if (item && item.originalUrl) {
           const safeUrl = sanitizeRedirectUrl(item.originalUrl);
           if (!safeUrl) {
@@ -30,19 +34,29 @@ export const RedirectHandlerPage: React.FC = () => {
 
           setTargetUrl(safeUrl);
           // Safe browser redirection strictly to validated HTTP/HTTPS URL
-          setTimeout(() => {
-            window.location.replace(safeUrl);
+          redirectTimer = setTimeout(() => {
+            if (!isCancelled) {
+              window.location.replace(safeUrl);
+            }
           }, 600);
         } else {
           setLoading(false);
         }
       } catch (err) {
-        console.error('Failed to resolve shortlink:', err);
-        setLoading(false);
+        if (!isCancelled) {
+          console.error('Failed to resolve shortlink:', err);
+          setLoading(false);
+        }
       }
     };
 
     resolveLink();
+    return () => {
+      isCancelled = true;
+      if (redirectTimer !== null) {
+        clearTimeout(redirectTimer);
+      }
+    };
   }, [slug]);
 
   if (loading) {
