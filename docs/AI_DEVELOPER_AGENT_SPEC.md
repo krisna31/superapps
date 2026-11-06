@@ -15,8 +15,8 @@ This specification defines the exact operational guidelines, conventions, and wo
 3. **No Unsolicited Broad Refactors**:
    - Maintain existing docstrings, TypeScript types, and comments.
    - Execute tasks cleanly scoped to the active milestone or user request.
-4. **Git Safety & Commit Protocol**:
-   - Never run `git commit` or `git push` unless the user explicitly instructs you to do so.
+4. **Automatic Git Commit & Push Protocol (Superapps Workspace)**:
+   - Once a task's edits are finished and both `npm run test` and `npm run build` pass with exit code 0, automatically stage, commit, and push (`git commit` + `git push origin main`) without waiting for manual user confirmation.
    - Formulate commit messages following **Conventional Commits** (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`).
 
 ---

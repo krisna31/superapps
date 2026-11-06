@@ -23,4 +23,4 @@ This workspace uses strict milestone-driven development and requires adhering to
 
 ## 3. Verification & Git Workflow
 - **Verification Gate**: Always run `npm run test` and `npm run build` before concluding a task. Both must pass with exit code 0.
-- **Git Safety**: Never execute `git commit` or `git push` without explicit, direct user instructions. Always prepare a structured conventional commit message draft.
+- **Automatic Git Commit & Push (Workspace Override)**: For this project (`d:\jkp\temp\superapps`) only, once edits are complete and `npm run test` + `npm run build` pass, automatically execute `git commit` (using a structured Conventional Commits message) and `git push origin main` without waiting for manual confirmation.
