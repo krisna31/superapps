@@ -61,64 +61,70 @@ export const RedirectHandlerPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col items-center justify-center p-4 font-mono">
-        <div className="w-8 h-8 border-2 border-[var(--border-strong)] border-t-[var(--color-primary)] animate-spin mb-4 rounded-none" />
-        <div className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest mb-1">
-          [ROUTING]
+      <div className="min-h-screen bg-canvas text-ink flex flex-col items-center justify-center p-4 font-sans">
+        <div className="ios-inset-grouped bg-surface shadow-ios-md border border-border-subtle p-8 rounded-[20px] max-w-sm w-full text-center flex flex-col items-center animate-fade-in">
+          <div className="w-9 h-9 border-3 border-accent-primary/20 border-t-accent-primary rounded-full animate-spin mb-4" />
+          <div className="text-[11px] font-semibold text-accent-primary uppercase tracking-wider mb-1">
+            Safe Routing
+          </div>
+          <h2 className="text-lg font-display font-bold text-ink tracking-tight">Redirecting safely...</h2>
+          <p className="text-xs text-ink-secondary mt-1 truncate max-w-xs">
+            Taking you to {targetUrl || 'destination'}
+          </p>
         </div>
-        <h2 className="text-base font-display font-black uppercase tracking-tight">Redirecting safely...</h2>
-        <p className="text-xs text-[var(--text-muted)] mt-1 font-mono truncate max-w-sm">
-          Taking you to {targetUrl || 'destination'}
-        </p>
       </div>
     );
   }
 
   if (securityBlocked) {
     return (
-      <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col items-center justify-center p-4 text-center font-mono">
-        <div className="w-12 h-12 rounded-none bg-[var(--bg-surface)] text-rose-600 dark:text-rose-400 flex items-center justify-center mb-3 border-[1.5px] border-rose-500/40 shadow-none">
-          <ShieldAlert className="w-6 h-6" />
-        </div>
-        <div className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest mb-1">
-          [SECURITY BLOCKED]
-        </div>
-        <h1 className="text-xl font-display font-black uppercase tracking-tight">Unsafe URL Blocked</h1>
-        <p className="text-xs text-[var(--text-muted)] mt-2 max-w-md font-mono leading-relaxed">
-          The shortlink <code className="text-rose-500 font-mono font-bold">/r/{slug}</code> was blocked because its destination contains an unsafe or unauthorized protocol. Only validated HTTP and HTTPS destinations are permitted.
-        </p>
+      <div className="min-h-screen bg-canvas text-ink flex flex-col items-center justify-center p-4 font-sans">
+        <div className="ios-inset-grouped bg-surface shadow-ios-md border border-status-danger/30 p-8 rounded-[20px] max-w-md w-full text-center flex flex-col items-center animate-fade-in">
+          <div className="w-14 h-14 rounded-full bg-status-danger/10 text-status-danger flex items-center justify-center mb-4 border border-status-danger/20">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <div className="text-[11px] font-semibold text-status-danger uppercase tracking-wider mb-1">
+            Security Blocked
+          </div>
+          <h1 className="text-xl font-display font-bold tracking-tight text-ink">Unsafe URL Blocked</h1>
+          <p className="text-xs text-ink-secondary mt-2 leading-relaxed">
+            The shortlink <code className="text-status-danger font-mono font-semibold">/r/{slug}</code> was blocked because its destination contains an unsafe or unauthorized protocol. Only validated HTTP and HTTPS destinations are permitted.
+          </p>
 
-        <Link
-          to="/"
-          className="mt-5 flex items-center space-x-1.5 px-4 py-2 rounded-none bg-[var(--color-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] text-white text-xs font-mono font-bold uppercase tracking-wider transition-colors duration-100 ease-linear border-[1.5px] border-[var(--border-strong)] shadow-none"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Return to Superapps Home</span>
-        </Link>
+          <Link
+            to="/"
+            className="mt-6 ios-btn ios-btn-primary rounded-[10px] text-xs font-semibold px-4 min-h-[40px] flex items-center space-x-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Return to Superapps Home</span>
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col items-center justify-center p-4 text-center font-mono">
-      <div className="w-12 h-12 rounded-none bg-[var(--bg-surface)] text-[var(--color-primary)] flex items-center justify-center mb-3 border-[1.5px] border-[var(--border-strong)] shadow-none">
-        <AlertCircle className="w-6 h-6" />
-      </div>
-      <div className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest mb-1">
-        [HTTP-404]
-      </div>
-      <h1 className="text-xl font-display font-black uppercase tracking-tight">Shortlink Not Found</h1>
-      <p className="text-xs text-[var(--text-muted)] mt-2 max-w-sm font-mono leading-relaxed">
-        The shortlink <code className="text-[var(--color-primary)] font-mono font-bold">/r/{slug}</code> does not exist or has expired.
-      </p>
+    <div className="min-h-screen bg-canvas text-ink flex flex-col items-center justify-center p-4 font-sans">
+      <div className="ios-inset-grouped bg-surface shadow-ios-md border border-border-subtle p-8 rounded-[20px] max-w-md w-full text-center flex flex-col items-center animate-fade-in">
+        <div className="w-14 h-14 rounded-full bg-subtle text-accent-primary flex items-center justify-center mb-4 border border-border-subtle">
+          <AlertCircle className="w-7 h-7" />
+        </div>
+        <div className="text-[11px] font-semibold text-accent-primary uppercase tracking-wider mb-1">
+          HTTP 404
+        </div>
+        <h1 className="text-xl font-display font-bold tracking-tight text-ink">Shortlink Not Found</h1>
+        <p className="text-xs text-ink-secondary mt-2 leading-relaxed">
+          The shortlink <code className="text-accent-primary font-mono font-semibold">/r/{slug}</code> does not exist or has expired.
+        </p>
 
-      <Link
-        to="/"
-        className="mt-5 flex items-center space-x-1.5 px-4 py-2 rounded-none bg-[var(--color-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] text-white text-xs font-mono font-bold uppercase tracking-wider transition-colors duration-100 ease-linear border-[1.5px] border-[var(--border-strong)] shadow-none"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Return to Superapps Home</span>
-      </Link>
+        <Link
+          to="/"
+          className="mt-6 ios-btn ios-btn-primary rounded-[10px] text-xs font-semibold px-4 min-h-[40px] flex items-center space-x-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Return to Superapps Home</span>
+        </Link>
+      </div>
     </div>
   );
 };

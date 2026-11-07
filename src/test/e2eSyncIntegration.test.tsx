@@ -977,8 +977,10 @@ describe('Milestone 2 Opaque-Box E2E Sync & Integration Test Suite', () => {
       });
 
       // Header shell and navigation must render
-      expect(screen.getAllByText(/Superapps/i).length).toBeGreaterThan(0);
-      expect(screen.getAllByText('Tasks (Kanban)').length).toBeGreaterThanOrEqual(1);
+      await waitFor(() => {
+        expect(screen.getAllByText(/Superapps/i).length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Tasks (Kanban)').length).toBeGreaterThanOrEqual(1);
+      });
 
       // Dispatch cross-tab storage mutation
       const task: TaskItem = {

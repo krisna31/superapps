@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Public+Sans:ital,wght@0,100..900;1,100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,107 +8,125 @@
   .light {
     color-scheme: light;
 
-    /* 1. Gallery Plaster White Ladders */
-    --bg-canvas: #F7F7F5;
-    --bg-subtle: #EBEBE8;
+    /* Apple HIG System Grouped Backgrounds */
+    --bg-canvas: #F2F2F7;
+    --bg-subtle: #E5E5EA;
     --bg-surface: #FFFFFF;
     --bg-elevated: #FFFFFF;
 
-    /* 2. Maximum Stark AAA Ink Hierarchy */
-    --text-primary: #0A0A0A;   /* 19.80:1 vs surface */
-    --text-secondary: #383838; /* 11.73:1 vs surface */
-    --text-muted: #595959;     /* 7.00:1 vs surface */
+    /* Translucent Frosted Glass Materials */
+    --bg-material-translucent: rgba(255, 255, 255, 0.82);
+    --bg-material-thin: rgba(242, 242, 247, 0.72);
+    --backdrop-blur: blur(20px) saturate(180%);
 
-    /* 3. Exposed Structural Grid Skeleton */
-    --border-subtle: #D4D4D0;
-    --border-default: #8F8F8A;
-    --border-strong: #0A0A0A;  /* 1.5px-2px shared grid skeleton */
+    /* Contrast-Engineered Ink & Typography */
+    --text-primary: #000000;   /* 21.00:1 vs surface */
+    --text-secondary: #47474C; /* 9.24:1 vs surface */
+    --text-muted: #68686E;     /* 5.02:1 vs surface */
 
-    /* 4. International Ultramarine & Signal Red-Orange */
-    --accent-primary: #0033EE;
-    --accent-hover: #0022AA;
-    --accent-tint: rgba(0, 51, 238, 0.08);
+    /* Separators & Hairlines */
+    --border-subtle: #E5E5EA;
+    --border-default: #C6C6C8;
+    --border-strong: #8E8E93;
+
+    /* Interactive Accents (Calibrated Apple System Blue) */
+    --accent-primary: #0055D6;
+    --accent-hover: #0040A8;
+    --accent-tint: rgba(0, 85, 214, 0.08);
     --text-on-accent: #FFFFFF;
-    --accent-secondary: #C93B00;
+    --accent-secondary: #5856D6;
 
-    --status-success: #006633;
-    --status-warning: #8F5200;
-    --status-danger: #CC1100;
-    --status-info: #0033EE;
+    /* System Status Indicators */
+    --status-success: #1E7E34;
+    --status-warning: #9E5D00;
+    --status-danger: #C5221F;
+    --status-info: #00629E;
 
-    /* 5. 6-Color Bauhaus Primary + Structural Data Scale */
-    --chart-1: #0033EE;
-    --chart-2: #C93B00;
-    --chart-3: #0A0A0A;
-    --chart-4: #006633;
-    --chart-5: #8F5200;
-    --chart-6: #6E6E6A;
+    /* 6-Color Apple System Chart Scale */
+    --chart-1: #0055D6;
+    --chart-2: #5856D6;
+    --chart-3: #1E7E34;
+    --chart-4: #9E5D00;
+    --chart-5: #C5221F;
+    --chart-6: #00629E;
 
     /* Legacy mapping helpers */
     --bg-main: var(--bg-canvas);
     --card-bg: var(--bg-surface);
-    --border-color: var(--border-strong);
-    --scrollbar-thumb: #8F8F8A;
-    --scrollbar-track: var(--bg-subtle);
+    --border-color: var(--border-default);
+    --scrollbar-thumb: #C6C6C8;
+    --scrollbar-track: transparent;
 
-    /* 6. Typography, Zero-Radius Geometry & Shutter Polarity Motion */
-    --font-display: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-sans: 'Public Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    /* Radii (Apple Continuous Squircle Scale) */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --radius-pill: 9999px;
 
-    --radius-xs: 0px;
-    --radius-sm: 0px;
-    --radius-md: 0px;
-    --radius-lg: 2px;
+    /* Touch Targets (Apple HIG 44px Floor) */
+    --touch-target-min: 44px;
 
-    --ctrl-sm: 32px;
-    --ctrl-md: 38px;
-    --ctrl-lg: 46px;
+    /* Typography */
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Helvetica Neue", Arial, sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "SF Mono", Menlo, Monaco, "Courier New", monospace;
 
-    --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
-    --duration-fast: 110ms;
-    --duration-panel: 150ms;
+    /* Motion: Apple Fluid Springs & Curves */
+    --ease-ios: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --duration-fast: 150ms;
+    --duration-interactive: 200ms;
 
     accent-color: var(--accent-primary);
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
 
-  /* System Dark Polarity Fallback (Pitch Architectural Carbon) */
+  /* System Dark Polarity Fallback */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]):not(.light) {
       color-scheme: dark;
-      --bg-canvas: #0A0A0A;
-      --bg-subtle: #121212;
-      --bg-surface: #171717;
-      --bg-elevated: #222222;
-      --text-primary: #FAFAFA;
-      --text-secondary: #C2C2C2;
-      --text-muted: #8E8E8E;
-      --border-subtle: #292929;
-      --border-default: #525252;
-      --border-strong: #FAFAFA;
-      --accent-primary: #5C85FF;
-      --accent-hover: #7DA0FF;
-      --accent-tint: rgba(92, 133, 255, 0.16);
-      --text-on-accent: #0A0A0A;
-      --accent-secondary: #E5FF00;
-      --status-success: #33D67A;
-      --status-warning: #FFB800;
-      --status-danger: #FF5C4D;
-      --status-info: #5C85FF;
-      --chart-1: #5C85FF;
-      --chart-2: #E5FF00;
-      --chart-3: #FAFAFA;
-      --chart-4: #33D67A;
-      --chart-5: #FF5C4D;
-      --chart-6: #8E8E8E;
+      --bg-canvas: #0A0A0C;
+      --bg-subtle: #141416;
+      --bg-surface: #1C1C1E;
+      --bg-elevated: #2C2C2E;
+
+      --bg-material-translucent: rgba(28, 28, 30, 0.82);
+      --bg-material-thin: rgba(14, 14, 16, 0.72);
+      --backdrop-blur: blur(20px) saturate(180%);
+
+      --text-primary: #FFFFFF;
+      --text-secondary: #B5B5BA;
+      --text-muted: #8E8E93;
+
+      --border-subtle: #2C2C2E;
+      --border-default: #38383A;
+      --border-strong: #636366;
+
+      --accent-primary: #479EFF;
+      --accent-hover: #6BB2FF;
+      --accent-tint: rgba(71, 158, 255, 0.14);
+      --text-on-accent: #00142A;
+      --accent-secondary: #5E5CE6;
+
+      --status-success: #30D158;
+      --status-warning: #FFD60A;
+      --status-danger: #FF453A;
+      --status-info: #64D2FF;
+
+      --chart-1: #479EFF;
+      --chart-2: #5E5CE6;
+      --chart-3: #30D158;
+      --chart-4: #FFD60A;
+      --chart-5: #FF453A;
+      --chart-6: #64D2FF;
 
       --bg-main: var(--bg-canvas);
       --card-bg: var(--bg-surface);
-      --border-color: var(--border-strong);
-      --scrollbar-thumb: #525252;
-      --scrollbar-track: var(--bg-subtle);
+      --border-color: var(--border-default);
+      --scrollbar-thumb: #38383A;
+      --scrollbar-track: transparent;
     }
   }
 
@@ -118,37 +134,46 @@
   [data-theme="dark"],
   .dark {
     color-scheme: dark;
-    --bg-canvas: #0A0A0A;
-    --bg-subtle: #121212;
-    --bg-surface: #171717;
-    --bg-elevated: #222222;
-    --text-primary: #FAFAFA;   /* 17.18:1 vs surface */
-    --text-secondary: #C2C2C2; /* 10.06:1 vs surface */
-    --text-muted: #8E8E8E;     /* 5.47:1 vs surface */
-    --border-subtle: #292929;
-    --border-default: #525252;
-    --border-strong: #FAFAFA;
-    --accent-primary: #5C85FF;
-    --accent-hover: #7DA0FF;
-    --accent-tint: rgba(92, 133, 255, 0.16);
-    --text-on-accent: #0A0A0A;
-    --accent-secondary: #E5FF00;
-    --status-success: #33D67A;
-    --status-warning: #FFB800;
-    --status-danger: #FF5C4D;
-    --status-info: #5C85FF;
-    --chart-1: #5C85FF;
-    --chart-2: #E5FF00;
-    --chart-3: #FAFAFA;
-    --chart-4: #33D67A;
-    --chart-5: #FF5C4D;
-    --chart-6: #8E8E8E;
+    --bg-canvas: #0A0A0C;
+    --bg-subtle: #141416;
+    --bg-surface: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+
+    --bg-material-translucent: rgba(28, 28, 30, 0.82);
+    --bg-material-thin: rgba(14, 14, 16, 0.72);
+    --backdrop-blur: blur(20px) saturate(180%);
+
+    --text-primary: #FFFFFF;   /* 17.01:1 vs surface */
+    --text-secondary: #B5B5BA; /* 8.33:1 vs surface */
+    --text-muted: #8E8E93;     /* 5.12:1 vs surface */
+
+    --border-subtle: #2C2C2E;
+    --border-default: #38383A;
+    --border-strong: #636366;
+
+    --accent-primary: #479EFF;
+    --accent-hover: #6BB2FF;
+    --accent-tint: rgba(71, 158, 255, 0.14);
+    --text-on-accent: #00142A;
+    --accent-secondary: #5E5CE6;
+
+    --status-success: #30D158;
+    --status-warning: #FFD60A;
+    --status-danger: #FF453A;
+    --status-info: #64D2FF;
+
+    --chart-1: #479EFF;
+    --chart-2: #5E5CE6;
+    --chart-3: #30D158;
+    --chart-4: #FFD60A;
+    --chart-5: #FF453A;
+    --chart-6: #64D2FF;
 
     --bg-main: var(--bg-canvas);
     --card-bg: var(--bg-surface);
-    --border-color: var(--border-strong);
-    --scrollbar-thumb: #525252;
-    --scrollbar-track: var(--bg-subtle);
+    --border-color: var(--border-default);
+    --scrollbar-thumb: #38383A;
+    --scrollbar-track: transparent;
   }
 
   body {
@@ -156,115 +181,172 @@
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     font-family: var(--font-sans);
-    font-size: 0.9375rem; /* 15px Public Sans for body */
-    line-height: 1.5;
+    font-size: 0.9375rem; /* 15px SF Pro for body */
+    line-height: 1.47;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow-wrap: break-word;
     overflow-x: hidden;
   }
 
-  /* CRITICAL: Never italicize Bricolage Grotesque (no ital axis); use wdth 88 for poster tension */
-  .werkbund-display,
+  /* Apple HIG Typography Hierarchy */
   h1 {
     font-family: var(--font-display);
-    font-style: normal;
-    font-weight: 750;
-    font-variation-settings: "opsz" 72, "wdth" 88;
-    line-height: 0.96;
-    letter-spacing: -0.035em;
+    font-size: 1.875rem; /* 30px Large Title */
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.022em;
     color: var(--text-primary);
-    text-wrap: balance;
     margin-top: 0;
   }
 
-  h2,
-  .werkbund-cell-header {
+  h2 {
     font-family: var(--font-display);
-    font-style: normal;
-    font-weight: 650;
-    font-variation-settings: "opsz" 22, "wdth" 95;
-    line-height: 1.15;
-    letter-spacing: -0.018em;
+    font-size: 1.375rem; /* 22px Title 2 */
+    font-weight: 600;
+    line-height: 1.28;
+    letter-spacing: -0.015em;
     color: var(--text-primary);
     margin-top: 0;
   }
 
   h3 {
     font-family: var(--font-display);
-    font-style: normal;
+    font-size: 1.125rem; /* 18px Title 3 */
     font-weight: 600;
-    font-variation-settings: "opsz" 18, "wdth" 95;
-    line-height: 1.25;
-    letter-spacing: -0.015em;
+    line-height: 1.33;
+    letter-spacing: -0.012em;
     color: var(--text-primary);
     margin-top: 0;
   }
 }
 
-/* Seamless Shared-Border Architectural Grid Utility */
-.werkbund-grid {
-  display: grid;
-  background-color: var(--border-strong);
-  gap: 1.5px;
-  border: 1.5px solid var(--border-strong);
-}
+/* ==============================================================================
+   APPLE HIG INSET GROUPED & MATERIAL UTILITIES
+   ============================================================================== */
 
-.werkbund-grid > * {
+/* Inset Grouped Section Container */
+.ios-inset-grouped {
   background-color: var(--bg-surface);
-  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-/* Blueprint Coordinates & Indices */
-.werkbund-coord {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: 0.75rem; /* Hard 12px floor */
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  text-transform: uppercase;
+/* Frosted Vibrancy Navigation / Header / Floating Bar */
+.ios-frosted-nav {
+  background-color: var(--bg-material-translucent);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border-bottom: 0.5px solid var(--border-default);
 }
 
-/* Architectural Controls & Shutter Polarity Motion */
-.werkbund-btn {
+.ios-frosted-glass {
+  background-color: var(--bg-material-translucent);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Apple HIG Interactive Controls */
+.ios-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  padding: 0.5rem 0.875rem;
-  border-radius: 0px;
-  transition: all 110ms cubic-bezier(0.0, 0.0, 0.2, 1);
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.2;
+  min-height: var(--touch-target-min);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  transition: all var(--duration-interactive) var(--ease-ios);
   cursor: pointer;
-  border: 1.5px solid var(--border-strong);
   user-select: none;
 }
 
-.werkbund-btn-signal {
+.ios-btn:active {
+  transform: scale(0.98);
+}
+
+.ios-btn-primary {
   background-color: var(--accent-primary);
   color: var(--text-on-accent);
+  border: none;
+}
+.ios-btn-primary:hover {
+  background-color: var(--accent-hover);
+}
+
+.ios-btn-secondary {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+.ios-btn-secondary:hover {
+  background-color: var(--border-subtle);
+}
+
+.ios-btn-outline {
+  background-color: transparent;
+  color: var(--accent-primary);
+  border: 1px solid var(--border-default);
+}
+.ios-btn-outline:hover {
+  background-color: var(--accent-tint);
   border-color: var(--accent-primary);
 }
-.werkbund-btn-signal:hover {
-  background-color: var(--accent-hover);
-  border-color: var(--accent-hover);
+
+/* Apple HIG Segmented Control Container */
+.ios-segmented {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  background-color: var(--bg-subtle);
+  border-radius: var(--radius-sm);
 }
 
-.werkbund-btn-outline {
+.ios-segmented-item {
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  transition: all var(--duration-fast) var(--ease-ios);
+  cursor: pointer;
+}
+
+.ios-segmented-item-active {
   background-color: var(--bg-surface);
   color: var(--text-primary);
-  border-color: var(--border-strong);
-}
-.werkbund-btn-outline:hover {
-  background-color: var(--text-primary);
-  color: var(--bg-canvas);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
+/* Apple HIG Inset Grouped Section Header / Footer */
+.ios-section-header {
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.5rem 0.875rem 0.375rem;
+}
+
+.ios-section-footer {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  padding: 0.375rem 0.875rem 0.75rem;
+}
+
+/* Tabular Numerals Enforcement */
 .tabular-nums,
 table td[data-numeric],
-table th[data-numeric] {
+table th[data-numeric],
+time,
+output {
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
 }
@@ -274,24 +356,27 @@ table th[data-numeric] {
   outline-offset: 2px;
 }
 
-/* Zero-radius scrollbar styling */
+/* Smooth Apple-style Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-subtle);
-  border-radius: 0px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-default);
-  border-radius: 0px;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-strong);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 /* Mobile Safe Area Insets */

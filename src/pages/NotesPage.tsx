@@ -169,14 +169,14 @@ export const NotesPage: React.FC = () => {
     const tokens = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
     return tokens.map((tok, i) => {
       if (tok.startsWith('**') && tok.endsWith('**') && tok.length > 4) {
-        return <strong key={i} className="font-bold text-ink">{tok.slice(2, -2)}</strong>;
+        return <strong key={i} className="font-semibold text-ink">{tok.slice(2, -2)}</strong>;
       }
       if (tok.startsWith('*') && tok.endsWith('*') && tok.length > 2) {
         return <em key={i} className="italic">{tok.slice(1, -1)}</em>;
       }
       if (tok.startsWith('`') && tok.endsWith('`') && tok.length > 2) {
         return (
-          <code key={i} className="px-1.5 py-0.5 bg-subtle border border-border-default text-signal font-mono text-[11px]">
+          <code key={i} className="px-1.5 py-0.5 rounded-md bg-subtle border border-border-subtle text-accent-primary font-mono text-[11px]">
             {tok.slice(1, -1)}
           </code>
         );
@@ -193,39 +193,39 @@ export const NotesPage: React.FC = () => {
       if (line.trim().startsWith('```')) {
         inCodeBlock = !inCodeBlock;
         return (
-          <div key={idx} className="font-mono text-[11px] text-ink-muted bg-subtle px-3 py-1 my-1 border-1.5 border-border-strong select-none">
+          <div key={idx} className="font-mono text-[11px] text-ink-muted bg-subtle/80 px-3 py-1 my-1 rounded-t-lg border border-border-subtle select-none">
             {line}
           </div>
         );
       }
       if (inCodeBlock) {
         return (
-          <pre key={idx} className="font-mono text-xs text-signal bg-subtle px-3 py-0.5 overflow-x-auto leading-relaxed border-l-2 border-signal">
+          <pre key={idx} className="font-mono text-xs text-accent-primary bg-subtle/60 px-3 py-0.5 overflow-x-auto leading-relaxed border-l-2 border-accent-primary">
             <code>{line || ' '}</code>
           </pre>
         );
       }
       if (line.startsWith('# ')) {
-        return <h1 key={idx} className="text-xl font-display font-bold text-ink uppercase tracking-tight mt-4 mb-2">{renderInlineMarkdown(line.substring(2))}</h1>;
+        return <h1 key={idx} className="text-xl font-display font-bold text-ink tracking-tight mt-4 mb-2">{renderInlineMarkdown(line.substring(2))}</h1>;
       }
       if (line.startsWith('## ')) {
-        return <h2 key={idx} className="text-lg font-display font-bold text-ink uppercase tracking-tight mt-3 mb-1.5">{renderInlineMarkdown(line.substring(3))}</h2>;
+        return <h2 key={idx} className="text-lg font-display font-bold text-ink tracking-tight mt-3 mb-1.5">{renderInlineMarkdown(line.substring(3))}</h2>;
       }
       if (line.startsWith('### ')) {
-        return <h3 key={idx} className="text-base font-display font-bold text-ink uppercase tracking-tight mt-2.5 mb-1">{renderInlineMarkdown(line.substring(4))}</h3>;
+        return <h3 key={idx} className="text-base font-display font-semibold text-ink tracking-tight mt-2.5 mb-1">{renderInlineMarkdown(line.substring(4))}</h3>;
       }
       if (line.startsWith('- [x] ') || line.startsWith('- [X] ')) {
         return (
-          <div key={idx} className="flex items-center space-x-2 ml-2 my-1 text-xs text-ink-muted line-through">
-            <span className="w-3.5 h-3.5 bg-signal border border-border-strong flex items-center justify-center text-canvas text-[9px] font-bold">✓</span>
+          <div key={idx} className="flex items-center space-x-2 ml-1 my-1 text-xs text-ink-muted line-through">
+            <span className="w-4 h-4 rounded-full bg-accent-primary text-white flex items-center justify-center text-[10px] font-bold">✓</span>
             <span>{renderInlineMarkdown(line.substring(6))}</span>
           </div>
         );
       }
       if (line.startsWith('- [ ] ')) {
         return (
-          <div key={idx} className="flex items-center space-x-2 ml-2 my-1 text-xs text-ink">
-            <span className="w-3.5 h-3.5 border-1.5 border-border-strong bg-canvas" />
+          <div key={idx} className="flex items-center space-x-2 ml-1 my-1 text-xs text-ink">
+            <span className="w-4 h-4 rounded-full border border-border-strong bg-surface" />
             <span>{renderInlineMarkdown(line.substring(6))}</span>
           </div>
         );
@@ -234,12 +234,12 @@ export const NotesPage: React.FC = () => {
         return <li key={idx} className="ml-4 list-disc text-xs text-ink leading-relaxed">{renderInlineMarkdown(line.substring(2))}</li>;
       }
       if (line.startsWith('> ')) {
-        return <blockquote key={idx} className="border-l-4 border-signal pl-3 italic text-xs text-ink-secondary my-1.5">{renderInlineMarkdown(line.substring(2))}</blockquote>;
+        return <blockquote key={idx} className="border-l-3 border-accent-primary pl-3 italic text-xs text-ink-secondary my-2">{renderInlineMarkdown(line.substring(2))}</blockquote>;
       }
       if (!line.trim()) {
         return <div key={idx} className="h-2" />;
       }
-      return <p key={idx} className="text-xs text-ink leading-relaxed my-1">{renderInlineMarkdown(line)}</p>;
+      return <p key={idx} className="text-xs text-ink leading-relaxed my-1.5">{renderInlineMarkdown(line)}</p>;
     });
   };
 
@@ -261,54 +261,54 @@ export const NotesPage: React.FC = () => {
   }, [notes, search]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 font-sans">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-1.5 border-border-strong pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-subtle">
         <div>
-          <div className="werkbund-coord mb-1">[MODULE-02] DOCUMENTATION & NOTES VAULT</div>
-          <h1 className="text-2xl font-display font-bold uppercase tracking-tight text-ink">
+          <div className="text-xs font-semibold text-accent-primary uppercase tracking-wider mb-0.5">Notes & Markdown</div>
+          <h1 className="text-2xl font-display font-bold text-ink tracking-tight">
             Notes Vault
           </h1>
           <p className="text-xs text-ink-secondary mt-0.5">
-            Architectural markdown knowledge vault with instant preview, tag taxonomy, and pinning.
+            Apple-style markdown knowledge vault with instant preview, tag taxonomy, and pinning.
           </p>
         </div>
 
         <button
           onClick={handleCreateNote}
-          className="werkbund-btn werkbund-btn-signal self-start sm:self-auto"
+          className="ios-btn ios-btn-primary rounded-[10px] self-start sm:self-auto text-xs font-semibold min-h-[40px] px-4"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4" />
           <span>New Note</span>
         </button>
       </div>
 
-      {/* Main Asymmetric Split: Continuous Grid Skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-0 border-1.5 border-border-strong bg-border-strong">
+      {/* Main Asymmetric Split: Inset Grouped Container */}
+      <div className="ios-inset-grouped grid grid-cols-1 md:grid-cols-12 min-h-[580px] shadow-sm">
         {/* Left column: Notes Directory */}
-        <div className="md:col-span-4 bg-surface p-4 flex flex-col border-b-1.5 md:border-b-0 md:border-r-1.5 border-border-strong min-h-[500px]">
+        <div className="md:col-span-4 bg-surface p-4 flex flex-col border-b md:border-b-0 md:border-r border-border-subtle">
           {/* Search bar */}
           <div className="relative mb-3">
-            <Search className="w-3.5 h-3.5 text-ink-muted absolute left-2.5 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-ink-muted absolute left-3 top-2.5" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="SEARCH NOTES OR #TAGS..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs font-mono uppercase tracking-wider border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal"
+              placeholder="Search notes or #tags..."
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-full border border-border-subtle bg-subtle/60 text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20"
             />
           </div>
 
-          <div className="flex items-center justify-between werkbund-coord text-[10px] mb-2 px-1">
-            <span>INDEX [{filteredNotes.length}]</span>
-            <span>SORT: PINNED / NEWEST</span>
+          <div className="flex items-center justify-between text-[11px] text-ink-muted mb-2 px-1 font-medium">
+            <span>{filteredNotes.length} Notes</span>
+            <span>Sorted by Pinned / Date</span>
           </div>
 
           {/* Notes list */}
-          <div className="flex-1 overflow-y-auto space-y-1.5 max-h-[560px] pr-0.5">
+          <div className="flex-1 overflow-y-auto space-y-1.5 max-h-[540px] pr-0.5">
             {filteredNotes.length === 0 ? (
-              <div className="py-12 text-center text-xs font-mono text-ink-muted border-1.5 border-dashed border-border-default">
-                [NULL] NO NOTES FOUND.
+              <div className="py-12 text-center text-xs text-ink-muted border border-dashed border-border-default rounded-[12px]">
+                No notes found.
               </div>
             ) : (
               filteredNotes.map((note) => {
@@ -317,32 +317,28 @@ export const NotesPage: React.FC = () => {
                   <div
                     key={note.id}
                     onClick={() => selectNote(note)}
-                    className={`p-3 cursor-pointer transition-colors duration-fast border-1.5 ${
+                    className={`p-3 rounded-[12px] cursor-pointer transition-all duration-fast border ${
                       isSelected
-                        ? 'bg-ink text-canvas border-border-strong'
-                        : 'bg-surface hover:bg-subtle text-ink border-border-subtle hover:border-border-strong'
+                        ? 'bg-accent-primary/10 border-accent-primary/30 text-ink shadow-sm'
+                        : 'bg-surface hover:bg-subtle/50 text-ink border-transparent hover:border-border-subtle'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold truncate pr-2 uppercase">
+                      <h4 className="text-xs font-semibold truncate pr-2 text-ink">
                         {note.title}
                       </h4>
-                      {note.isPinned && <Pin className="w-3 h-3 text-signal-secondary flex-shrink-0" />}
+                      {note.isPinned && <Pin className="w-3.5 h-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />}
                     </div>
 
-                    <p className={`text-[11px] line-clamp-1 mt-1 ${isSelected ? 'text-canvas/80' : 'text-ink-secondary'}`}>
+                    <p className="text-[11px] text-ink-secondary line-clamp-1 mt-1">
                       {note.content.replace(/[#*`>-]/g, '').trim()}
                     </p>
 
-                    <div className="flex items-center space-x-1 mt-2 overflow-x-hidden">
+                    <div className="flex items-center space-x-1.5 mt-2 overflow-x-hidden">
                       {note.tags.map((t: string) => (
                         <span
                           key={t}
-                          className={`text-[9px] px-1 py-0.5 border font-mono uppercase ${
-                            isSelected
-                              ? 'bg-canvas text-ink border-canvas font-bold'
-                              : 'bg-subtle text-ink border-border-strong'
-                          }`}
+                          className="text-[10px] px-2 py-0.5 rounded-full bg-subtle text-ink-secondary font-medium"
                         >
                           #{t}
                         </span>
@@ -360,35 +356,33 @@ export const NotesPage: React.FC = () => {
           {selectedNoteId ? (
             <>
               {/* Top Toolbar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b-1.5 border-border-strong gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-border-subtle gap-3">
                 <input
                   type="text"
                   value={activeTitle}
                   onChange={(e) => setActiveTitle(e.target.value)}
                   placeholder="Note Title..."
-                  className="text-lg font-display font-bold uppercase tracking-tight bg-transparent text-ink focus:outline-none flex-1 border-b border-transparent focus:border-border-strong pb-1"
+                  className="text-lg font-display font-bold tracking-tight bg-transparent text-ink focus:outline-none flex-1 border-b border-transparent focus:border-border-default pb-1"
                 />
 
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setActivePinned(!activePinned)}
-                    className={`p-1.5 border-1.5 border-border-strong transition-colors duration-fast ${
+                    className={`p-2 rounded-lg border transition-colors ${
                       activePinned
-                        ? 'bg-signal-secondary text-ink font-bold'
-                        : 'bg-surface text-ink-muted hover:text-ink hover:bg-subtle'
+                        ? 'bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400'
+                        : 'bg-surface border-border-subtle text-ink-muted hover:text-ink hover:bg-subtle'
                     }`}
                     title={activePinned ? 'Unpin note' : 'Pin note'}
                   >
-                    <Pin className="w-3.5 h-3.5" />
+                    <Pin className={`w-3.5 h-3.5 ${activePinned ? 'fill-current' : ''}`} />
                   </button>
 
-                  <div className="flex border-1.5 border-border-strong p-0.5 text-xs font-mono bg-subtle">
+                  <div className="ios-segmented">
                     <button
                       onClick={() => setMode('edit')}
-                      className={`px-2.5 py-1 transition-colors duration-fast flex items-center space-x-1 uppercase font-bold text-[10px] ${
-                        mode === 'edit'
-                          ? 'bg-ink text-canvas'
-                          : 'text-ink-secondary hover:text-ink'
+                      className={`ios-segmented-item flex items-center space-x-1 ${
+                        mode === 'edit' ? 'ios-segmented-item-active' : ''
                       }`}
                     >
                       <Edit3 className="w-3 h-3" />
@@ -396,10 +390,8 @@ export const NotesPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setMode('preview')}
-                      className={`px-2.5 py-1 transition-colors duration-fast flex items-center space-x-1 uppercase font-bold text-[10px] ${
-                        mode === 'preview'
-                          ? 'bg-ink text-canvas'
-                          : 'text-ink-secondary hover:text-ink'
+                      className={`ios-segmented-item flex items-center space-x-1 ${
+                        mode === 'preview' ? 'ios-segmented-item-active' : ''
                       }`}
                     >
                       <Eye className="w-3 h-3" />
@@ -409,15 +401,15 @@ export const NotesPage: React.FC = () => {
 
                   <button
                     onClick={handleSaveActiveNote}
-                    className="werkbund-btn werkbund-btn-signal text-xs py-1.5 px-3"
+                    className="ios-btn ios-btn-primary rounded-lg text-xs font-semibold py-1.5 px-3 min-h-[34px]"
                   >
-                    {isSaved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+                    {isSaved ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Save className="w-3.5 h-3.5" />}
                     <span>{isSaved ? 'Saved' : 'Save'}</span>
                   </button>
 
                   <button
                     onClick={() => handleDeleteNote(selectedNoteId)}
-                    className="p-1.5 border-1.5 border-border-strong text-ink hover:bg-status-danger hover:text-white transition-colors duration-fast"
+                    className="p-2 rounded-lg text-ink-muted hover:text-status-danger hover:bg-status-danger/10 transition-colors"
                     title="Delete Note"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -426,14 +418,14 @@ export const NotesPage: React.FC = () => {
               </div>
 
               {/* Tags row */}
-              <div className="flex items-center space-x-2 py-2 text-xs border-b-1.5 border-border-strong bg-subtle/50 px-2 mt-2">
-                <Tag className="w-3.5 h-3.5 text-signal" />
+              <div className="flex items-center space-x-2 py-2 text-xs border-b border-border-subtle bg-subtle/30 px-2.5 mt-2 rounded-[8px]">
+                <Tag className="w-3.5 h-3.5 text-accent-primary flex-shrink-0" />
                 <input
                   type="text"
                   value={activeTags}
                   onChange={(e) => setActiveTags(e.target.value)}
-                  placeholder="tags separated by comma (e.g. project, idea, todo)"
-                  className="bg-transparent flex-1 text-ink focus:outline-none text-xs font-mono uppercase tracking-wider"
+                  placeholder="Tags separated by comma (e.g. project, idea, todo)"
+                  className="bg-transparent flex-1 text-ink focus:outline-none text-xs"
                 />
               </div>
 
@@ -442,11 +434,11 @@ export const NotesPage: React.FC = () => {
                 {mode === 'edit' ? (
                   <>
                     {/* Markdown Quick Formatting Toolbar */}
-                    <div className="flex items-center flex-wrap gap-1 pb-2.5 mb-2.5 border-b-1.5 border-border-subtle text-ink">
+                    <div className="flex items-center flex-wrap gap-1 pb-2.5 mb-2.5 border-b border-border-subtle text-ink">
                       <button
                         type="button"
                         onClick={() => insertMarkdown('**', '**')}
-                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        className="p-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-subtle transition-colors"
                         title="Bold (**text**)"
                       >
                         <Bold className="w-3.5 h-3.5" />
@@ -454,16 +446,16 @@ export const NotesPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => insertMarkdown('*', '*')}
-                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        className="p-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-subtle transition-colors"
                         title="Italic (*text*)"
                       >
                         <Italic className="w-3.5 h-3.5" />
                       </button>
-                      <span className="w-px h-4 bg-border-strong mx-1" />
+                      <span className="w-px h-4 bg-border-subtle mx-1" />
                       <button
                         type="button"
                         onClick={() => insertMarkdown('# ')}
-                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        className="p-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-subtle transition-colors"
                         title="Heading 1 (# )"
                       >
                         <Heading1 className="w-3.5 h-3.5" />
@@ -471,16 +463,16 @@ export const NotesPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => insertMarkdown('## ')}
-                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        className="p-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-subtle transition-colors"
                         title="Heading 2 (## )"
                       >
                         <Heading2 className="w-3.5 h-3.5" />
                       </button>
-                      <span className="w-px h-4 bg-border-strong mx-1" />
+                      <span className="w-px h-4 bg-border-subtle mx-1" />
                       <button
                         type="button"
                         onClick={() => insertMarkdown('- [ ] ')}
-                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        className="p-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-subtle transition-colors"
                         title="Checklist item (- [ ] )"
                       >
                         <CheckSquare className="w-3.5 h-3.5" />
@@ -488,16 +480,16 @@ export const NotesPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => insertMarkdown('- ')}
-                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        className="p-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-subtle transition-colors"
                         title="Bullet list (- )"
                       >
                         <List className="w-3.5 h-3.5" />
                       </button>
-                      <span className="w-px h-4 bg-border-strong mx-1" />
+                      <span className="w-px h-4 bg-border-subtle mx-1" />
                       <button
                         type="button"
                         onClick={() => insertMarkdown('`', '`')}
-                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        className="p-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-subtle transition-colors"
                         title="Inline Code (`code`)"
                       >
                         <Code className="w-3.5 h-3.5" />
@@ -505,7 +497,7 @@ export const NotesPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => insertMarkdown('> ')}
-                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        className="p-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-subtle transition-colors"
                         title="Blockquote (> )"
                       >
                         <Quote className="w-3.5 h-3.5" />
@@ -530,13 +522,13 @@ export const NotesPage: React.FC = () => {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-ink-muted">
               <FileText className="w-12 h-12 text-border-default mb-3" />
-              <h3 className="text-base font-display font-bold uppercase text-ink">No Note Selected</h3>
-              <p className="text-xs text-ink-secondary mt-1 max-w-xs font-mono">
+              <h3 className="text-base font-display font-semibold text-ink">No Note Selected</h3>
+              <p className="text-xs text-ink-secondary mt-1 max-w-xs">
                 Select an existing note from the vault index or create a new document.
               </p>
               <button
                 onClick={handleCreateNote}
-                className="werkbund-btn werkbund-btn-signal mt-4"
+                className="ios-btn ios-btn-primary mt-4 rounded-[10px] text-xs font-semibold"
               >
                 Create First Note
               </button>

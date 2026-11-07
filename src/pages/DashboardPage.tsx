@@ -14,7 +14,7 @@ import {
   Copy,
   Check,
   RefreshCw,
-  Terminal,
+  Sparkles,
   DownloadCloud
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -81,49 +81,51 @@ export const DashboardPage: React.FC = () => {
   }, [expenses]);
 
   const appCards = [
-    { code: '01', title: 'Tasks (Kanban)', desc: `${pendingTasks} active items pending`, path: '/tasks', icon: CheckSquare },
-    { code: '02', title: 'Notes Vault', desc: `${notes.length} markdown notes stored`, path: '/notes', icon: FileText },
-    { code: '03', title: 'Daily Habits', desc: `${completedHabitsToday}/${habits.length} routines done today`, path: '/habits', icon: Flame },
-    { code: '04', title: 'Expenses & Budget', desc: `Net: Rp ${netBalance.toLocaleString('id-ID')}`, path: '/expenses', icon: Wallet },
-    { code: '05', title: 'Snippets Vault', desc: 'Code repository with tags', path: '/snippets', icon: Code2 },
-    { code: '06', title: 'SwissKnife Dev Tools', desc: 'JSON, Base64, UUID, Regex', path: '/swissknife', icon: Wrench },
-    { code: '07', title: 'Dropzone File Sharing', desc: 'Upload to Firebase Storage', path: '/dropzone', icon: CloudUpload },
-    { code: '08', title: 'URL Shortlinks', desc: 'Fast redirects & tracking', path: '/shortlinks', icon: Link2 },
-    { code: '09', title: 'Media Downloader', desc: 'Universal video & audio saver', path: '/downloader', icon: DownloadCloud },
+    { code: '01', title: 'Tasks (Kanban)', desc: `${pendingTasks} active items pending`, path: '/tasks', icon: CheckSquare, color: 'bg-accent-primary' },
+    { code: '02', title: 'Notes Vault', desc: `${notes.length} markdown notes stored`, path: '/notes', icon: FileText, color: 'bg-amber-500' },
+    { code: '03', title: 'Daily Habits', desc: `${completedHabitsToday}/${habits.length} routines done today`, path: '/habits', icon: Flame, color: 'bg-rose-500' },
+    { code: '04', title: 'Expenses & Budget', desc: `Net: Rp ${netBalance.toLocaleString('id-ID')}`, path: '/expenses', icon: Wallet, color: 'bg-emerald-600' },
+    { code: '05', title: 'Snippets Vault', desc: 'Code repository with tags', path: '/snippets', icon: Code2, color: 'bg-indigo-600' },
+    { code: '06', title: 'SwissKnife Dev Tools', desc: 'JSON, Base64, UUID, Regex', path: '/swissknife', icon: Wrench, color: 'bg-slate-700 dark:bg-slate-600' },
+    { code: '07', title: 'Dropzone File Sharing', desc: 'Upload to Firebase Storage', path: '/dropzone', icon: CloudUpload, color: 'bg-sky-500' },
+    { code: '08', title: 'URL Shortlinks', desc: 'Fast redirects & tracking', path: '/shortlinks', icon: Link2, color: 'bg-teal-600' },
+    { code: '09', title: 'Media Downloader', desc: 'Universal video & audio saver', path: '/downloader', icon: DownloadCloud, color: 'bg-purple-600' },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Overview Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-surface border-1.5 border-border-strong">
+    <div className="space-y-6 font-sans">
+      {/* Overview Banner - iOS Inset Grouped */}
+      <div className="ios-inset-grouped p-5 sm:p-6 bg-surface flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div>
-          <div className="flex items-center space-x-1.5 werkbund-coord mb-1.5">
-            <Terminal className="w-3.5 h-3.5 text-signal" />
-            <span>[SYS-OVERVIEW] WORKSPACE ARCHITECTURE</span>
+          <div className="flex items-center space-x-1.5 text-xs text-accent-primary font-semibold mb-1">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Workspace Overview</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-display font-bold text-ink uppercase tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-ink tracking-tight">
             Welcome, {user?.displayName || 'Workspace Owner'}
           </h1>
-          <p className="text-xs text-ink-secondary mt-1">
-            Modular developer toolkit and daily operations cockpit built on continuous architectural grids.
+          <p className="text-xs sm:text-sm text-ink-secondary mt-1 max-w-xl leading-relaxed">
+            Your unified Apple HIG productivity studio and developer cockpit with real-time cloud sync.
           </p>
         </div>
 
         {/* Quick Password Tool Card */}
-        <div className="p-3 bg-subtle border-1.5 border-border-strong flex items-center space-x-3 self-start md:self-auto">
-          <KeyRound className="w-4 h-4 text-signal flex-shrink-0" />
+        <div className="p-3 bg-subtle/70 rounded-[12px] border border-border-subtle flex items-center space-x-3 self-start md:self-auto shadow-sm">
+          <div className="w-8 h-8 rounded-[8px] bg-accent-primary/10 text-accent-primary flex items-center justify-center flex-shrink-0">
+            <KeyRound className="w-4 h-4" />
+          </div>
           <div>
-            <div className="werkbund-coord text-[10px]">Quick Password</div>
-            <div className="font-mono text-xs font-bold text-ink max-w-[140px] truncate tabular-nums">
+            <div className="text-[11px] text-ink-muted font-medium">Quick Password</div>
+            <div className="font-mono text-xs font-semibold text-ink max-w-[140px] truncate tabular-nums">
               {quickPassword}
             </div>
           </div>
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 pl-1">
             <button
               type="button"
               aria-label="Copy quick password"
               onClick={copyPassword}
-              className="p-1.5 border border-border-strong bg-canvas text-ink hover:bg-ink hover:text-canvas transition-colors duration-fast"
+              className="p-1.5 rounded-lg border border-border-subtle bg-surface text-ink hover:bg-subtle transition-colors"
               title="Copy Password"
             >
               {copiedPass ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Copy className="w-3.5 h-3.5" />}
@@ -132,7 +134,7 @@ export const DashboardPage: React.FC = () => {
               type="button"
               aria-label="Regenerate quick password"
               onClick={regenerateQuickPassword}
-              className="p-1.5 border border-border-strong bg-canvas text-ink hover:bg-ink hover:text-canvas transition-colors duration-fast"
+              className="p-1.5 rounded-lg border border-border-subtle bg-surface text-ink hover:bg-subtle transition-colors"
               title="Regenerate Password"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -141,98 +143,111 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Metrics Row: Shared-Border Werkbund Grid */}
-      <div className="werkbund-grid grid-cols-2 lg:grid-cols-4">
-        <Link
-          to="/tasks"
-          className="group block transition-colors duration-fast hover:bg-subtle relative"
-        >
-          <div className="flex items-center justify-between text-xs">
-            <span className="werkbund-coord">[KPI-01] Tasks to Do</span>
-            <CheckSquare className="w-3.5 h-3.5 text-ink-muted group-hover:text-signal transition-colors" />
-          </div>
-          <div className="mt-2 text-2xl font-display font-bold text-ink tabular-nums tracking-tight">
-            {pendingTasks}
-          </div>
-          <div className="werkbund-coord text-[10px] mt-1 tabular-nums">{tasks.length} total tasks</div>
-        </Link>
+      {/* Metrics Row - Inset Grouped Squircles */}
+      <div>
+        <div className="ios-section-header">
+          Key Metrics
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <Link
+            to="/tasks"
+            className="ios-inset-grouped p-4 sm:p-5 hover:bg-subtle/40 transition-colors block group shadow-sm"
+          >
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-ink-secondary font-medium">Tasks to Do</span>
+              <div className="w-7 h-7 rounded-[8px] bg-accent-primary/10 text-accent-primary flex items-center justify-center">
+                <CheckSquare className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="mt-2 text-2xl sm:text-3xl font-display font-bold text-ink tabular-nums tracking-tight">
+              {pendingTasks}
+            </div>
+            <div className="text-[11px] text-ink-muted mt-1 tabular-nums">{tasks.length} total tasks</div>
+          </Link>
 
-        <Link
-          to="/habits"
-          className="group block transition-colors duration-fast hover:bg-subtle relative"
-        >
-          <div className="flex items-center justify-between text-xs">
-            <span className="werkbund-coord">[KPI-02] Habits Today</span>
-            <Flame className="w-3.5 h-3.5 text-ink-muted group-hover:text-signal-secondary transition-colors" />
-          </div>
-          <div className="mt-2 text-2xl font-display font-bold text-ink tabular-nums tracking-tight">
-            {completedHabitsToday} / {habits.length}
-          </div>
-          <div className="werkbund-coord text-[10px] mt-1 tabular-nums">Routines completed</div>
-        </Link>
+          <Link
+            to="/notes"
+            className="ios-inset-grouped p-4 sm:p-5 hover:bg-subtle/40 transition-colors block group shadow-sm"
+          >
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-ink-secondary font-medium">Active Notes</span>
+              <div className="w-7 h-7 rounded-[8px] bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                <FileText className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="mt-2 text-2xl sm:text-3xl font-display font-bold text-ink tabular-nums tracking-tight">
+              {notes.length}
+            </div>
+            <div className="text-[11px] text-ink-muted mt-1">Markdown Vault</div>
+          </Link>
 
-        <Link
-          to="/expenses"
-          className="group block transition-colors duration-fast hover:bg-subtle relative"
-        >
-          <div className="flex items-center justify-between text-xs">
-            <span className="werkbund-coord">[KPI-03] Net Balance</span>
-            <Wallet className="w-3.5 h-3.5 text-ink-muted group-hover:text-signal transition-colors" />
-          </div>
-          <div className={`mt-2 text-xl font-mono font-bold truncate tabular-nums ${netBalance >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
-            Rp {netBalance.toLocaleString('id-ID')}
-          </div>
-          <div className="werkbund-coord text-[10px] mt-1">Income - Expenses</div>
-        </Link>
+          <Link
+            to="/habits"
+            className="ios-inset-grouped p-4 sm:p-5 hover:bg-subtle/40 transition-colors block group shadow-sm"
+          >
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-ink-secondary font-medium">Habit Streaks</span>
+              <div className="w-7 h-7 rounded-[8px] bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                <Flame className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="mt-2 text-2xl sm:text-3xl font-display font-bold text-ink tabular-nums tracking-tight">
+              {completedHabitsToday}/{habits.length}
+            </div>
+            <div className="text-[11px] text-ink-muted mt-1">Completed today</div>
+          </Link>
 
-        <Link
-          to="/notes"
-          className="group block transition-colors duration-fast hover:bg-subtle relative"
-        >
-          <div className="flex items-center justify-between text-xs">
-            <span className="werkbund-coord">[KPI-04] Notes Vault</span>
-            <FileText className="w-3.5 h-3.5 text-ink-muted group-hover:text-signal transition-colors" />
-          </div>
-          <div className="mt-2 text-2xl font-display font-bold text-ink tabular-nums tracking-tight">
-            {notes.length}
-          </div>
-          <div className="werkbund-coord text-[10px] mt-1 tabular-nums">Markdown notes</div>
-        </Link>
+          <Link
+            to="/expenses"
+            className="ios-inset-grouped p-4 sm:p-5 hover:bg-subtle/40 transition-colors block group shadow-sm"
+          >
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-ink-secondary font-medium">Net Balance</span>
+              <div className="w-7 h-7 rounded-[8px] bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                <Wallet className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="mt-2 text-2xl sm:text-3xl font-display font-bold text-ink tabular-nums tracking-tight truncate">
+              Rp {netBalance.toLocaleString('id-ID')}
+            </div>
+            <div className="text-[11px] text-ink-muted mt-1">{expenses.length} records logged</div>
+          </Link>
+        </div>
       </div>
 
-      {/* Modules Grid: Continuous Shared-Border Grid */}
+      {/* App Launchers - Apple HIG Inset Grouped Tiles */}
       <div>
-        <div className="werkbund-coord mb-2.5">
-          [DIR-01] APPLICATIONS DIRECTORY
+        <div className="ios-section-header">
+          Productivity & Developer Suite
         </div>
-        <div className="werkbund-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {appCards.map((app) => {
-            const Icon = app.icon;
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          {appCards.map((card) => {
+            const Icon = card.icon;
             return (
               <Link
-                key={app.path}
-                to={app.path}
-                className="group flex flex-col justify-between transition-colors duration-fast hover:bg-subtle"
+                key={card.path}
+                to={card.path}
+                className="ios-inset-grouped p-4 sm:p-5 hover:shadow-md hover:border-accent-primary/40 transition-all duration-fast group flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <div className="w-8 h-8 bg-subtle border-1.5 border-border-strong flex items-center justify-center">
-                      <Icon className="w-4 h-4 text-ink group-hover:text-signal transition-colors" />
+                    <div className={`w-11 h-11 rounded-[12px] ${card.color} text-white flex items-center justify-center shadow-sm transition-transform duration-fast group-hover:scale-105`}>
+                      <Icon className="w-5 h-5" />
                     </div>
-                    <span className="werkbund-coord text-[10px]">
-                      [{app.code}]
+                    <span className="text-[11px] font-mono text-ink-muted opacity-60">
+                      {card.code}
                     </span>
                   </div>
-                  <h3 className="font-display font-bold text-sm text-ink uppercase tracking-tight group-hover:text-signal transition-colors">
-                    {app.title}
+                  <h3 className="text-base font-semibold text-ink group-hover:text-accent-primary transition-colors">
+                    {card.title}
                   </h3>
-                  <p className="text-xs text-ink-secondary mt-1">
-                    {app.desc}
+                  <p className="text-xs text-ink-secondary mt-1 leading-relaxed">
+                    {card.desc}
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t-1.5 border-border-strong flex items-center justify-between text-[11px] font-mono text-ink-muted group-hover:text-ink transition-colors">
-                  <span className="uppercase tracking-wider">Open Tool</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between text-xs font-medium text-accent-primary">
+                  <span>Open Tool</span>
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform duration-fast group-hover:translate-x-1" />
                 </div>
               </Link>
             );

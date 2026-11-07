@@ -153,16 +153,16 @@ export const ExpensesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 font-sans">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-1.5 border-border-strong pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-subtle">
         <div>
-          <div className="werkbund-coord mb-1">[MODULE-04] FINANCIAL CASHFLOW & BUDGET</div>
-          <h1 className="text-2xl font-display font-bold uppercase tracking-tight text-ink">
+          <div className="text-xs font-semibold text-accent-primary uppercase tracking-wider mb-0.5">Financial Ledger</div>
+          <h1 className="text-2xl font-display font-bold text-ink tracking-tight">
             Expenses & Budget
           </h1>
           <p className="text-xs text-ink-secondary mt-0.5">
-            Architectural cashflow ledger with category analytics, CSV data portability, and net balance monitoring.
+            Apple Card inspired cashflow ledger with category analytics, CSV export, and balance tracking.
           </p>
         </div>
 
@@ -170,7 +170,7 @@ export const ExpensesPage: React.FC = () => {
           <button
             onClick={exportCsv}
             disabled={expenses.length === 0}
-            className="werkbund-btn werkbund-btn-outline disabled:opacity-40"
+            className="ios-btn ios-btn-secondary rounded-[10px] text-xs font-semibold min-h-[40px] px-3.5 disabled:opacity-40"
             title="Download CSV ledger"
           >
             <Download className="w-3.5 h-3.5" />
@@ -179,62 +179,65 @@ export const ExpensesPage: React.FC = () => {
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="werkbund-btn werkbund-btn-signal"
+            className="ios-btn ios-btn-primary rounded-[10px] text-xs font-semibold min-h-[40px] px-4"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             <span>New Transaction</span>
           </button>
         </div>
       </div>
 
-      {/* Financial Summary Cards: Shared-Border Grid */}
-      <div className="werkbund-grid grid-cols-1 md:grid-cols-3">
-        <div>
+      {/* Financial Summary Cards - iOS Inset Grouped */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        <div className="ios-inset-grouped p-4 sm:p-5 shadow-sm bg-surface">
           <div className="flex items-center justify-between text-xs">
-            <span className="werkbund-coord">[LEDGER-01] TOTAL INCOME</span>
-            <ArrowDownLeft className="w-4 h-4 text-status-success" />
+            <span className="text-ink-secondary font-medium">Total Income</span>
+            <div className="w-7 h-7 rounded-full bg-status-success/10 text-status-success flex items-center justify-center">
+              <ArrowDownLeft className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-2 text-2xl font-display font-bold text-status-success tabular-nums tracking-tight">
+          <div className="mt-2 text-2xl sm:text-3xl font-display font-bold text-status-success tabular-nums tracking-tight">
             Rp {totalIncome.toLocaleString('id-ID')}
           </div>
-          <div className="werkbund-coord text-[10px] mt-1">ALL REGISTERED EARNINGS</div>
+          <div className="text-[11px] text-ink-muted mt-1">All registered earnings</div>
         </div>
 
-        <div>
+        <div className="ios-inset-grouped p-4 sm:p-5 shadow-sm bg-surface">
           <div className="flex items-center justify-between text-xs">
-            <span className="werkbund-coord">[LEDGER-02] TOTAL EXPENSES</span>
-            <ArrowUpRight className="w-4 h-4 text-status-danger" />
+            <span className="text-ink-secondary font-medium">Total Expenses</span>
+            <div className="w-7 h-7 rounded-full bg-status-danger/10 text-status-danger flex items-center justify-center">
+              <ArrowUpRight className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-2 text-2xl font-display font-bold text-status-danger tabular-nums tracking-tight">
+          <div className="mt-2 text-2xl sm:text-3xl font-display font-bold text-status-danger tabular-nums tracking-tight">
             Rp {totalExpense.toLocaleString('id-ID')}
           </div>
-          <div className="werkbund-coord text-[10px] mt-1">ALL REGISTERED EXPENDITURES</div>
+          <div className="text-[11px] text-ink-muted mt-1">All registered expenditures</div>
         </div>
 
-        <div>
+        <div className="ios-inset-grouped p-4 sm:p-5 shadow-sm bg-surface">
           <div className="flex items-center justify-between text-xs">
-            <span className="werkbund-coord">[LEDGER-03] NET BALANCE</span>
-            <Wallet className="w-4 h-4 text-signal" />
+            <span className="text-ink-secondary font-medium">Net Balance</span>
+            <div className="w-7 h-7 rounded-full bg-accent-primary/10 text-accent-primary flex items-center justify-center">
+              <Wallet className="w-4 h-4" />
+            </div>
           </div>
-          <div className={`mt-2 text-2xl font-display font-bold tabular-nums tracking-tight ${netBalance >= 0 ? 'text-ink' : 'text-status-danger'}`}>
+          <div className={`mt-2 text-2xl sm:text-3xl font-display font-bold tabular-nums tracking-tight ${netBalance >= 0 ? 'text-ink' : 'text-status-danger'}`}>
             Rp {netBalance.toLocaleString('id-ID')}
           </div>
-          <div className="werkbund-coord text-[10px] mt-1">NET REMAINING SURPLUS</div>
+          <div className="text-[11px] text-ink-muted mt-1">Net remaining surplus</div>
         </div>
       </div>
 
       {/* Categorical Spend Distribution */}
       {sortedCategories.length > 0 && totalExpense > 0 && (
-        <div className="bg-surface border-1.5 border-border-strong p-4">
-          <div className="flex items-center justify-between mb-3 pb-2 border-b-1.5 border-border-strong">
-            <div>
-              <div className="werkbund-coord mb-0.5">[ANALYTICS-01]</div>
-              <span className="font-display font-bold text-xs uppercase tracking-wider text-ink">
-                Top Expenditure Categories
-              </span>
-            </div>
-            <span className="werkbund-coord text-[10px] tabular-nums">
-              TOTAL EXPENSE: RP {totalExpense.toLocaleString('id-ID')}
+        <div className="ios-inset-grouped p-4 sm:p-5 bg-surface shadow-sm">
+          <div className="flex items-center justify-between mb-3 pb-2 border-b border-border-subtle">
+            <span className="font-semibold text-xs text-ink uppercase tracking-wider">
+              Top Expenditure Categories
+            </span>
+            <span className="text-[11px] text-ink-muted tabular-nums font-mono">
+              Total: Rp {totalExpense.toLocaleString('id-ID')}
             </span>
           </div>
 
@@ -243,15 +246,15 @@ export const ExpensesPage: React.FC = () => {
               const pct = Math.round((amount / totalExpense) * 100);
               return (
                 <div key={cat} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-ink font-bold uppercase">{cat}</span>
+                  <div className="flex items-center justify-between text-xs font-medium">
+                    <span className="text-ink">{cat}</span>
                     <span className="text-ink-secondary tabular-nums">
                       Rp {amount.toLocaleString('id-ID')} ({pct}%)
                     </span>
                   </div>
-                  <div className="w-full bg-subtle border-1.5 border-border-strong h-3 p-0.5">
+                  <div className="w-full bg-subtle rounded-full h-2 overflow-hidden">
                     <div
-                      className="bg-signal-secondary h-full transition-all duration-fast"
+                      className="bg-accent-primary h-full rounded-full transition-all duration-fast"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -262,86 +265,74 @@ export const ExpensesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filter row */}
-      <div className="flex items-center justify-between bg-surface p-2 border-1.5 border-border-strong">
-        <div className="flex items-center space-x-1.5">
+      {/* Filter Segmented Control */}
+      <div className="flex items-center justify-between">
+        <div className="ios-segmented">
           <button
             onClick={() => setFilterType('all')}
-            className={`px-3 py-1 text-xs font-mono uppercase tracking-wider border-1.5 transition-colors duration-fast ${
-              filterType === 'all'
-                ? 'bg-ink text-canvas border-border-strong font-bold'
-                : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
-            }`}
+            className={`ios-segmented-item ${filterType === 'all' ? 'ios-segmented-item-active' : ''}`}
           >
             All ({expenses.length})
           </button>
           <button
             onClick={() => setFilterType('expense')}
-            className={`px-3 py-1 text-xs font-mono uppercase tracking-wider border-1.5 transition-colors duration-fast ${
-              filterType === 'expense'
-                ? 'bg-status-danger text-white border-status-danger font-bold'
-                : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
-            }`}
+            className={`ios-segmented-item ${filterType === 'expense' ? 'ios-segmented-item-active text-status-danger' : ''}`}
           >
             Expenses
           </button>
           <button
             onClick={() => setFilterType('income')}
-            className={`px-3 py-1 text-xs font-mono uppercase tracking-wider border-1.5 transition-colors duration-fast ${
-              filterType === 'income'
-                ? 'bg-status-success text-white border-status-success font-bold'
-                : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
-            }`}
+            className={`ios-segmented-item ${filterType === 'income' ? 'ios-segmented-item-active text-status-success' : ''}`}
           >
             Income
           </button>
         </div>
       </div>
 
-      {/* Transaction List: Architectural Table */}
-      <div className="bg-surface border-1.5 border-border-strong overflow-hidden">
-        <div className="divide-y-1.5 divide-border-strong">
+      {/* Transaction List: Apple Inset Grouped Table */}
+      <div className="ios-inset-grouped bg-surface shadow-sm overflow-hidden">
+        <div className="divide-y divide-border-subtle">
           {filteredExpenses.length === 0 ? (
-            <div className="py-12 text-center text-xs font-mono text-ink-muted">
-              [NULL] NO TRANSACTIONS RECORDED IN THIS CATEGORY.
+            <div className="py-12 text-center text-xs text-ink-muted">
+              No transactions recorded in this category.
             </div>
           ) : (
             filteredExpenses.map((exp) => (
               <div
                 key={exp.id}
-                className="py-2.5 px-4 flex items-center justify-between hover:bg-subtle transition-colors duration-fast"
+                className="py-3 px-4 flex items-center justify-between hover:bg-subtle/50 transition-colors duration-fast min-h-[52px]"
               >
-                <div className="flex items-center space-x-3 min-w-0">
+                <div className="flex items-center space-x-3.5 min-w-0">
                   <div
-                    className={`w-7 h-7 border-1.5 border-border-strong flex items-center justify-center flex-shrink-0 ${
+                    className={`w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0 ${
                       exp.type === 'income'
-                        ? 'bg-status-success text-white font-bold'
-                        : 'bg-status-danger text-white font-bold'
+                        ? 'bg-status-success/10 text-status-success'
+                        : 'bg-status-danger/10 text-status-danger'
                     }`}
                   >
                     {exp.type === 'income' ? (
-                      <ArrowDownLeft className="w-3.5 h-3.5" />
+                      <ArrowDownLeft className="w-4 h-4" />
                     ) : (
-                      <ArrowUpRight className="w-3.5 h-3.5" />
+                      <ArrowUpRight className="w-4 h-4" />
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-ink uppercase truncate">
+                    <h4 className="text-xs font-semibold text-ink truncate">
                       {exp.description}
                     </h4>
-                    <div className="flex items-center space-x-2 text-[10px] font-mono text-ink-muted mt-0.5">
-                      <span className="px-1.5 py-0.2 border border-border-strong bg-subtle text-ink font-bold uppercase">
+                    <div className="flex items-center space-x-2 text-[11px] text-ink-muted mt-0.5">
+                      <span className="px-2 py-0.2 rounded-full bg-subtle text-ink-secondary text-[10px] font-medium">
                         {exp.category}
                       </span>
                       <span>•</span>
-                      <span className="tabular-nums">{exp.date}</span>
+                      <span className="tabular-nums font-mono">{exp.date}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 flex-shrink-0">
+                <div className="flex items-center space-x-3.5 flex-shrink-0">
                   <span
-                    className={`text-xs font-mono font-bold tabular-nums ${
+                    className={`text-xs font-semibold tabular-nums ${
                       exp.type === 'income'
                         ? 'text-status-success'
                         : 'text-status-danger'
@@ -352,7 +343,7 @@ export const ExpensesPage: React.FC = () => {
 
                   <button
                     onClick={() => handleDeleteExpense(exp.id)}
-                    className="p-1 border border-border-strong bg-canvas text-ink-muted hover:text-status-danger hover:border-status-danger transition-colors duration-fast"
+                    className="p-1.5 rounded-lg text-ink-muted hover:text-status-danger hover:bg-status-danger/10 transition-colors"
                     title="Delete record"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -364,10 +355,10 @@ export const ExpensesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* New Transaction Modal */}
+      {/* New Transaction Modal: Apple Modal Sheet */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A0A0A]/75"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-200"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsModalOpen(false);
           }}
@@ -376,34 +367,32 @@ export const ExpensesPage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="record-transaction-modal-title"
-            className="w-full max-w-sm bg-elevated border-1.5 border-border-strong p-6"
+            className="w-full max-w-sm bg-elevated/95 backdrop-blur-2xl border border-border-subtle rounded-[20px] p-6 shadow-2xl"
           >
-            <div className="flex items-center justify-between mb-4 pb-2 border-b-1.5 border-border-strong">
+            <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-border-subtle">
               <div>
-                <span className="werkbund-coord text-[10px]">[TRANSACTION-NEW]</span>
-                <h3 id="record-transaction-modal-title" className="font-display font-bold text-sm uppercase text-ink">
+                <span className="text-[11px] text-accent-primary font-semibold uppercase tracking-wider">Ledger Entry</span>
+                <h3 id="record-transaction-modal-title" className="font-display font-bold text-base text-ink">
                   Record Transaction
                 </h3>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
                 aria-label="Close modal"
-                className="p-1 text-ink-muted hover:text-ink border-1.5 border-transparent hover:border-border-strong"
+                className="p-1.5 text-ink-muted hover:text-ink rounded-full hover:bg-subtle transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateExpense} className="space-y-3">
+            <form onSubmit={handleCreateExpense} className="space-y-3.5">
               {/* Type Switcher */}
-              <div className="grid grid-cols-2 gap-1.5 p-1 border-1.5 border-border-strong bg-subtle text-xs font-mono">
+              <div className="ios-segmented w-full grid grid-cols-2 p-1">
                 <button
                   type="button"
                   onClick={() => setType('expense')}
-                  className={`py-1.5 border transition-colors duration-fast uppercase font-bold text-[11px] ${
-                    type === 'expense'
-                      ? 'bg-status-danger text-white border-status-danger'
-                      : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
+                  className={`ios-segmented-item text-center ${
+                    type === 'expense' ? 'ios-segmented-item-active text-status-danger font-semibold' : ''
                   }`}
                 >
                   Expense
@@ -411,10 +400,8 @@ export const ExpensesPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setType('income')}
-                  className={`py-1.5 border transition-colors duration-fast uppercase font-bold text-[11px] ${
-                    type === 'income'
-                      ? 'bg-status-success text-white border-status-success'
-                      : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
+                  className={`ios-segmented-item text-center ${
+                    type === 'income' ? 'ios-segmented-item-active text-status-success font-semibold' : ''
                   }`}
                 >
                   Income
@@ -422,7 +409,7 @@ export const ExpensesPage: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="exp-amount-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                <label htmlFor="exp-amount-input" className="block text-xs font-medium text-ink-secondary mb-1">
                   Amount (IDR) *
                 </label>
                 <input
@@ -434,20 +421,20 @@ export const ExpensesPage: React.FC = () => {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="e.g. 50000"
-                  className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal tabular-nums"
+                  className="w-full px-3 py-2 text-xs rounded-[10px] border border-border-default bg-surface text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary tabular-nums min-h-[44px]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label htmlFor="exp-category-select" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                  <label htmlFor="exp-category-select" className="block text-xs font-medium text-ink-secondary mb-1">
                     Category
                   </label>
                   <select
                     id="exp-category-select"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-2 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink uppercase font-bold focus:outline-none"
+                    className="w-full px-3 py-2 text-xs rounded-[10px] border border-border-default bg-surface text-ink font-medium focus:outline-none focus:ring-2 focus:ring-accent-primary/20 min-h-[44px]"
                   >
                     {categories.map((c) => (
                       <option key={c} value={c}>{c}</option>
@@ -456,7 +443,7 @@ export const ExpensesPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="exp-date-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                  <label htmlFor="exp-date-input" className="block text-xs font-medium text-ink-secondary mb-1">
                     Date
                   </label>
                   <input
@@ -465,13 +452,13 @@ export const ExpensesPage: React.FC = () => {
                     required
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-2 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink focus:outline-none"
+                    className="w-full px-3 py-2 text-xs rounded-[10px] border border-border-default bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-accent-primary/20 min-h-[44px]"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="exp-desc-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                <label htmlFor="exp-desc-input" className="block text-xs font-medium text-ink-secondary mb-1">
                   Description / Vendor
                 </label>
                 <input
@@ -480,21 +467,21 @@ export const ExpensesPage: React.FC = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Server hosting, Lunch meeting"
-                  className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal"
+                  className="w-full px-3 py-2 text-xs rounded-[10px] border border-border-default bg-surface text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary min-h-[44px]"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-3 border-t-1.5 border-border-strong">
+              <div className="flex justify-end space-x-2 pt-3 border-t border-border-subtle">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="werkbund-btn werkbund-btn-outline"
+                  className="ios-btn ios-btn-secondary rounded-[10px] text-xs font-semibold py-2 px-4"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="werkbund-btn werkbund-btn-signal"
+                  className="ios-btn ios-btn-primary rounded-[10px] text-xs font-semibold py-2 px-4 shadow-sm"
                 >
                   Record
                 </button>

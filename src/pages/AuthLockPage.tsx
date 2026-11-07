@@ -101,75 +101,72 @@ export const AuthLockPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col justify-between bg-[var(--bg-canvas)] text-[var(--text-primary)] transition-colors p-4 sm:p-6 font-sans">
-      {/* Top Header - Werkbund Subway Wayfinding Band */}
-      <header className="w-full max-w-5xl mx-auto flex items-center justify-between border-b-[1.5px] border-[var(--border-strong)] pb-3">
+    <div className="min-h-screen w-full flex flex-col justify-between bg-canvas text-ink transition-colors p-4 sm:p-6 font-sans">
+      {/* Top Header */}
+      <header className="w-full max-w-5xl mx-auto flex items-center justify-between border-b border-border-subtle pb-3">
         <div className="flex items-center space-x-3">
-          <div className="w-7 h-7 bg-[var(--text-primary)] text-[var(--bg-canvas)] flex items-center justify-center font-black text-xs font-mono rounded-none">
+          <div className="w-8 h-8 rounded-[10px] bg-accent-primary text-white flex items-center justify-center font-bold text-sm shadow-sm">
             S
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-display font-black text-[var(--text-primary)] text-base tracking-tight uppercase">Superapps</span>
-              <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold uppercase bg-[var(--bg-subtle)] text-[var(--color-primary)] border-[1.5px] border-[var(--border-strong)] rounded-none">
+              <span className="font-display font-bold text-ink text-base tracking-tight">Superapps</span>
+              <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-status-warning/15 text-status-warning border border-status-warning/20">
                 Protected
               </span>
             </div>
-            <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase tracking-wider hidden sm:block">Private Workspace</p>
+            <p className="text-[11px] text-ink-muted font-medium hidden sm:block">Private Workspace</p>
           </div>
         </div>
 
         {/* Theme switcher */}
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark')}
-          className="p-1.5 rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-surface)] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] transition-colors duration-100 ease-linear shadow-none"
+          className="w-9 h-9 rounded-full border border-border-subtle bg-surface text-ink hover:bg-subtle flex items-center justify-center transition-colors shadow-sm"
           title={`Theme: ${theme}`}
         >
           {theme === 'system' ? (
-            <Monitor className="w-3.5 h-3.5" />
+            <Monitor className="w-4 h-4" />
           ) : resolvedTheme === 'dark' ? (
-            <Moon className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+            <Moon className="w-4 h-4 text-accent-primary" />
           ) : (
-            <Sun className="w-3.5 h-3.5 text-amber-500" />
+            <Sun className="w-4 h-4 text-amber-500" />
           )}
         </button>
       </header>
 
       {/* Main Lock Card */}
       <main className="flex-1 flex items-center justify-center py-8">
-        <div className="w-full max-w-sm space-y-4">
+        <div className="w-full max-w-sm space-y-5">
           {/* Lock Icon & Status Header */}
-          <div className="text-center space-y-1.5">
-            <div className="inline-flex p-3 rounded-none bg-[var(--bg-surface)] border-[1.5px] border-[var(--border-strong)] text-[var(--color-primary)] mb-1 shadow-none">
-              <ShieldAlert className="w-6 h-6" />
+          <div className="text-center space-y-2">
+            <div className="inline-flex p-3 rounded-[16px] bg-accent-primary/10 text-accent-primary mb-1 shadow-sm">
+              <ShieldAlert className="w-7 h-7" />
             </div>
-            <div className="font-mono text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest">
-              [ACCESS CONTROL ENFORCED]
-            </div>
-            <h1 className="text-2xl font-display font-black tracking-tight text-[var(--text-primary)] uppercase">
+            <h1 className="text-2xl font-display font-bold tracking-tight text-ink">
               Private Workspace Locked
             </h1>
-            <p className="text-xs font-mono text-[var(--text-muted)] max-w-xs mx-auto leading-relaxed">
+            <p className="text-xs text-ink-secondary max-w-xs mx-auto leading-relaxed">
               Public guest access is disabled on this workspace by administrator policy. Please sign in with an authorized account to continue.
             </p>
           </div>
 
-          <div className="rounded-none bg-[var(--bg-surface)] border-[1.5px] border-[var(--border-strong)] p-5 shadow-none space-y-4">
+          <div className="rounded-[20px] bg-elevated/95 backdrop-blur-2xl border border-border-subtle p-6 shadow-xl space-y-4">
             {error && (
-              <div className="p-3 rounded-none bg-rose-500/10 border-[1.5px] border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-mono flex items-start space-x-2">
+              <div className="p-3 rounded-[10px] bg-status-danger/10 border border-status-danger/30 text-status-danger text-xs font-medium flex items-start space-x-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span className="text-[11px] leading-tight font-bold">{error}</span>
+                <span className="text-[11px] leading-tight font-semibold">{error}</span>
               </div>
             )}
 
-            {/* Google Sign In (when Firebase configured) */}
+            {/* Google Sign In */}
             {isFirebaseConfigured && (
               <>
                 <button
                   type="button"
                   onClick={handleGoogle}
                   disabled={loading}
-                  className="w-full flex items-center justify-center space-x-2 py-2.5 px-3 rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-canvas)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] text-[var(--text-primary)] font-mono text-xs font-bold uppercase tracking-wider transition-colors duration-100 ease-linear shadow-none disabled:opacity-50"
+                  className="w-full flex items-center justify-center space-x-2 py-2.5 px-3 rounded-[10px] border border-border-default bg-surface hover:bg-subtle text-ink font-medium text-xs transition-all duration-fast shadow-sm disabled:opacity-50 min-h-[44px]"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
                     <path
@@ -192,10 +189,10 @@ export const AuthLockPage: React.FC = () => {
                   <span>Sign in with Google</span>
                 </button>
 
-                <div className="relative my-2 flex items-center justify-center">
-                  <div className="border-t-[1.5px] border-[var(--border-strong)] w-full" />
-                  <span className="bg-[var(--bg-surface)] px-2 text-[10px] text-[var(--text-muted)] font-mono font-bold uppercase tracking-wider absolute">
-                    OR CREDENTIALS
+                <div className="relative my-2.5 flex items-center justify-center">
+                  <div className="border-t border-border-subtle w-full" />
+                  <span className="bg-elevated px-2.5 text-[11px] text-ink-muted uppercase tracking-wider font-medium absolute">
+                    or credentials
                   </span>
                 </div>
               </>
@@ -204,7 +201,7 @@ export const AuthLockPage: React.FC = () => {
             {/* Email / Password Form */}
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <label htmlFor="auth-lock-email" className="block text-[11px] font-mono font-bold uppercase text-[var(--text-primary)] mb-1">
+                <label htmlFor="auth-lock-email" className="block text-xs font-medium text-ink-secondary mb-1">
                   Email Address
                 </label>
                 <input
@@ -215,12 +212,12 @@ export const AuthLockPage: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="name@example.com"
-                  className="w-full px-3 py-2 text-xs font-mono rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-canvas)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--color-primary)]"
+                  className="w-full px-3 py-2.5 text-xs rounded-[10px] border border-border-default bg-surface text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary min-h-[44px]"
                 />
               </div>
 
               <div>
-                <label htmlFor="auth-lock-password" className="block text-[11px] font-mono font-bold uppercase text-[var(--text-primary)] mb-1">
+                <label htmlFor="auth-lock-password" className="block text-xs font-medium text-ink-secondary mb-1">
                   Password
                 </label>
                 <div className="relative">
@@ -233,13 +230,13 @@ export const AuthLockPage: React.FC = () => {
                     required
                     minLength={6}
                     placeholder="••••••••"
-                    className="w-full px-3 py-2 pr-9 text-xs font-mono rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-canvas)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--color-primary)]"
+                    className="w-full px-3 py-2.5 pr-10 text-xs rounded-[10px] border border-border-default bg-surface text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary min-h-[44px]"
                   />
                   <button
                     type="button"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2.5 top-2.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    className="absolute right-3 top-3 text-ink-muted hover:text-ink"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -249,25 +246,25 @@ export const AuthLockPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-none bg-[var(--color-primary)] text-white hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] font-mono text-xs font-bold uppercase tracking-wider transition-colors duration-100 ease-linear shadow-none disabled:opacity-50"
+                className="ios-btn ios-btn-primary w-full py-2.5 rounded-[10px] text-xs font-semibold shadow-sm min-h-[44px]"
               >
-                {isSignUp ? <UserPlus className="w-3.5 h-3.5" /> : <LogIn className="w-3.5 h-3.5" />}
+                {isSignUp ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
                 <span>{isSignUp ? 'Create Account' : 'Authenticate & Unlock'}</span>
               </button>
             </form>
 
             {/* Offline / Local Admin Helper Button (only when Firebase unconfigured in dev/test) */}
             {!isFirebaseConfigured && !import.meta.env.PROD && (
-              <div className="pt-2 border-t-[1.5px] border-[var(--border-strong)] space-y-2">
-                <div className="p-2.5 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] text-[10px] font-mono text-[var(--text-muted)]">
+              <div className="pt-2 border-t border-border-subtle space-y-2">
+                <div className="p-2.5 rounded-[10px] bg-subtle/70 border border-border-subtle text-[11px] text-ink-muted">
                   <span>Local Dev Mode: Firebase is unconfigured. Workspace owner can authenticate locally as </span>
-                  <strong className="text-[var(--text-primary)]">the designated workspace superadmin</strong>.
+                  <strong className="text-ink">the designated workspace superadmin</strong>.
                 </div>
                 <button
                   type="button"
                   onClick={handleLocalSuperadminUnlock}
                   disabled={loading}
-                  className="w-full py-2 px-3 rounded-none border-[1.5px] border-[var(--color-primary)] bg-[var(--bg-canvas)] hover:bg-[var(--color-primary)] hover:text-white text-[var(--color-primary)] font-mono text-xs font-bold uppercase tracking-wider transition-colors duration-100 ease-linear"
+                  className="ios-btn ios-btn-secondary w-full py-2 rounded-[10px] text-xs font-semibold min-h-[40px]"
                 >
                   Unlock as Superadmin (Local)
                 </button>
@@ -275,17 +272,17 @@ export const AuthLockPage: React.FC = () => {
             )}
 
             {/* Registration toggle */}
-            <div className="pt-1 text-center font-mono text-[11px]">
+            <div className="pt-1 text-center text-xs">
               {systemSettings.allowUserRegistration ? (
                 <button
                   type="button"
                   onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-[var(--text-primary)] hover:underline uppercase font-bold"
+                  className="text-accent-primary hover:underline font-medium"
                 >
                   {isSignUp ? 'Already registered? Sign in' : 'New team member? Register account'}
                 </button>
               ) : (
-                <span className="text-[var(--text-muted)] uppercase tracking-wider">
+                <span className="text-[11px] text-ink-muted">
                   Registration is closed by administrator.
                 </span>
               )}
@@ -295,7 +292,7 @@ export const AuthLockPage: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-3 text-center text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--text-muted)] border-t-[1.5px] border-[var(--border-strong)]">
+      <footer className="w-full py-3 text-center text-[11px] font-medium text-ink-muted border-t border-border-subtle">
         apps.k31.my.id • Policy-Based Workspace Security
       </footer>
     </div>

@@ -64,40 +64,40 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile })
 
   return (
     <>
-      {/* Mobile Backdrop */}
+      {/* Mobile Backdrop with Frosted Vibrancy */}
       {isOpenMobile && (
         <div
           aria-hidden="true"
-          className="fixed inset-0 z-40 bg-[#0A0A0A]/75 md:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden transition-opacity"
           onClick={onCloseMobile}
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed md:sticky top-0 z-40 h-screen transition-all duration-fast ease-out border-r-1.5 border-border-strong bg-subtle flex flex-col justify-between ${
+        className={`fixed md:sticky top-0 z-40 h-screen transition-all duration-interactive border-r border-border-subtle bg-subtle/80 backdrop-blur-xl flex flex-col justify-between ${
           collapsed ? 'w-16' : 'w-64'
-        } ${isOpenMobile ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+        } ${isOpenMobile ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'}`}
       >
         <div>
           {/* Header */}
-          <div className="h-14 flex items-center justify-between px-3.5 border-b-1.5 border-border-strong bg-canvas">
+          <div className="h-14 flex items-center justify-between px-3.5 border-b border-border-subtle bg-canvas/60">
             {!collapsed && (
               <div className="flex items-center space-x-2.5">
-                <div className="w-7 h-7 bg-ink text-canvas border-1.5 border-border-strong flex items-center justify-center font-bold text-xs font-mono">
+                <div className="w-8 h-8 rounded-[10px] bg-accent-primary text-white flex items-center justify-center font-bold text-sm shadow-sm">
                   S
                 </div>
                 <div className="leading-tight">
-                  <span className="font-display font-bold text-xs text-ink uppercase tracking-wider">Workspace</span>
-                  <div className="flex items-center space-x-1 text-[10px] text-ink-muted font-mono">
-                    <span className="w-1.5 h-1.5 bg-signal" />
-                    <span>WERKBUND V1</span>
+                  <span className="font-display font-semibold text-xs text-ink tracking-tight">Workspace</span>
+                  <div className="flex items-center space-x-1 text-[11px] text-ink-muted">
+                    <span className="w-1.5 h-1.5 rounded-full bg-status-success" />
+                    <span>Apple HIG iOS</span>
                   </div>
                 </div>
               </div>
             )}
             {collapsed && (
-              <div className="mx-auto w-7 h-7 bg-ink text-canvas border-1.5 border-border-strong flex items-center justify-center font-bold text-xs font-mono">
+              <div className="mx-auto w-8 h-8 rounded-[10px] bg-accent-primary text-white flex items-center justify-center font-bold text-sm shadow-sm">
                 S
               </div>
             )}
@@ -106,7 +106,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile })
               type="button"
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               onClick={() => setCollapsed(!collapsed)}
-              className="hidden md:flex p-1 border-1.5 border-border-strong text-ink bg-surface hover:bg-ink hover:text-canvas transition-colors duration-fast"
+              className="hidden md:flex w-7 h-7 rounded-full border border-border-subtle text-ink-secondary bg-surface/80 hover:bg-surface hover:text-ink items-center justify-center transition-colors shadow-sm"
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
@@ -114,7 +114,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile })
           </div>
 
           {/* Navigation Links */}
-          <nav className="p-2 space-y-1 overflow-y-auto max-h-[calc(100vh-10rem)]">
+          <nav className="p-2.5 space-y-1 overflow-y-auto max-h-[calc(100vh-10.5rem)]">
+            {!collapsed && (
+              <div className="ios-section-header">
+                Apps & Tools
+              </div>
+            )}
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -124,21 +129,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile })
                   end={item.path === '/'}
                   onClick={onCloseMobile}
                   className={({ isActive }) =>
-                    `flex items-center px-2.5 py-1.5 text-xs font-mono transition-colors duration-fast border-1.5 ${
+                    `flex items-center px-3 py-2 text-[13px] rounded-[10px] transition-all duration-fast font-medium min-h-[40px] ${
                       isActive
-                        ? 'bg-ink text-canvas border-border-strong font-bold'
-                        : 'text-ink-secondary bg-surface/60 border-border-subtle hover:border-border-strong hover:bg-surface hover:text-ink'
+                        ? 'bg-accent-primary text-white shadow-sm font-semibold'
+                        : 'text-ink-secondary hover:bg-surface/80 hover:text-ink'
                     } ${collapsed ? 'justify-center' : 'justify-between'}`
                   }
                   title={collapsed ? item.name : undefined}
                 >
                   <div className="flex items-center space-x-2.5 min-w-0">
                     <Icon className="w-4 h-4 flex-shrink-0" />
-                    {!collapsed && <span className="truncate uppercase tracking-wider">{item.name}</span>}
+                    {!collapsed && <span className="truncate">{item.name}</span>}
                   </div>
                   {!collapsed && (
-                    <span className="text-[10px] font-mono opacity-70">
-                      [{item.code}]
+                    <span className="text-[11px] opacity-60 tabular-nums font-mono">
+                      {item.code}
                     </span>
                   )}
                 </NavLink>
@@ -148,30 +153,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile })
         </div>
 
         {/* Footer info & PWA install */}
-        <div className="p-2.5 border-t-1.5 border-border-strong bg-canvas space-y-2">
+        <div className="p-3 border-t border-border-subtle bg-canvas/40 space-y-2">
           {installPrompt && !collapsed && (
             <button
               onClick={handleInstallClick}
-              className="werkbund-btn werkbund-btn-signal w-full py-1.5 text-xs"
+              className="ios-btn ios-btn-primary w-full py-2 text-xs font-semibold rounded-[10px] min-h-[38px]"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>INSTALL PWA</span>
+              <span>Install PWA</span>
             </button>
           )}
 
           {!collapsed ? (
-            <div className="border-1.5 border-border-strong bg-surface p-2 text-xs">
-              <div className="flex items-center space-x-1.5 text-[11px] font-mono text-ink font-bold">
-                <Globe className="w-3 h-3 text-signal" />
+            <div className="ios-inset-grouped p-2.5 bg-surface/70">
+              <div className="flex items-center space-x-1.5 text-xs text-ink font-semibold">
+                <Globe className="w-3.5 h-3.5 text-accent-primary" />
                 <span>apps.k31.my.id</span>
               </div>
-              <p className="werkbund-coord mt-1">
-                SPA + FIREBASE DUAL PERSISTENCE
+              <p className="text-[11px] text-ink-muted mt-0.5">
+                SPA + Firebase Dual Persistence
               </p>
             </div>
           ) : (
             <div className="flex justify-center p-1" title="apps.k31.my.id">
-              <Globe className="w-4 h-4 text-signal" />
+              <Globe className="w-4 h-4 text-accent-primary" />
             </div>
           )}
         </div>

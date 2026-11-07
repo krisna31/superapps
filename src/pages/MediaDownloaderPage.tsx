@@ -145,7 +145,6 @@ export const MediaDownloaderPage: React.FC = () => {
       const ext = item.type === 'video' ? 'mp4' : 'jpg';
       const name = `${result?.platform || 'media'}-album-${i + 1}.${ext}`;
       await downloadMediaFile(item.url, name);
-      // Small pause between multiple trigger clicks
       await new Promise((r) => setTimeout(r, 400));
     }
     setDownloadingItem(null);
@@ -195,7 +194,7 @@ export const MediaDownloaderPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showConfigModal]);
 
-  // Platform visual badges (Werkbund architectural index format)
+  // Platform visual badges (Apple HIG pill chips)
   const renderPlatformBadge = (platform: MediaPlatform) => {
     const labelMap: Partial<Record<MediaPlatform, string>> = {
       instagram: 'Instagram',
@@ -208,10 +207,10 @@ export const MediaDownloaderPage: React.FC = () => {
     const isDirect = !labelMap[platform];
     return (
       <span
-        className={`px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border-[1.5px] rounded-none ${
+        className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-full ${
           isDirect
-            ? 'bg-[var(--bg-subtle)] text-[var(--text-secondary)] border-[var(--border-strong)]'
-            : 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
+            ? 'bg-subtle text-ink-secondary border border-border-subtle'
+            : 'bg-accent-primary/10 text-accent-primary border border-accent-primary/20'
         }`}
       >
         {label}
@@ -220,22 +219,15 @@ export const MediaDownloaderPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Top Header - Werkbund Subway Wayfinding Band */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-[1.5px] border-[var(--border-strong)] pb-3.5">
+    <div className="space-y-4 font-sans">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-subtle">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="font-mono text-xs font-bold px-1.5 py-0.5 bg-[var(--text-primary)] text-[var(--bg-canvas)] rounded-none">
-              [APP-07]
-            </span>
-            <h1 className="text-2xl font-display font-black tracking-tight text-[var(--text-primary)] uppercase">
-              Media Downloader
-            </h1>
-            <span className="px-2 py-0.5 bg-[var(--bg-subtle)] text-[var(--color-primary)] border-[1.5px] border-[var(--border-strong)] font-mono text-[10px] font-bold uppercase rounded-none">
-              Multi-Source
-            </span>
-          </div>
-          <p className="text-xs font-mono text-[var(--text-muted)] mt-1 uppercase tracking-wide">
+          <div className="text-xs font-semibold text-accent-primary uppercase tracking-wider mb-0.5">Media Utilities</div>
+          <h1 className="text-2xl font-display font-bold text-ink tracking-tight">
+            Media Downloader
+          </h1>
+          <p className="text-xs text-ink-secondary mt-0.5">
             Download high-resolution video and audio from Instagram Reels, Facebook, TikTok, Twitter/X, YouTube, and direct web links.
           </p>
         </div>
@@ -244,7 +236,7 @@ export const MediaDownloaderPage: React.FC = () => {
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setShowConfigModal(true)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-primary)] bg-[var(--bg-surface)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] rounded-none transition-colors duration-100 ease-linear shadow-none"
+            className="ios-btn ios-btn-secondary rounded-[10px] text-xs font-semibold min-h-[40px] px-3.5"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>API Settings</span>
@@ -252,9 +244,9 @@ export const MediaDownloaderPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Extractor Card */}
-      <div className="bg-[var(--bg-surface)] border-[1.5px] border-[var(--border-strong)] rounded-none p-4 space-y-3.5 shadow-none">
-        <form onSubmit={handleExtract} className="space-y-3">
+      {/* Main Extractor Card - Inset Grouped */}
+      <div className="ios-inset-grouped p-4 sm:p-5 bg-surface shadow-sm space-y-4">
+        <form onSubmit={handleExtract} className="space-y-3.5">
           {/* URL Input Bar */}
           <div className="relative flex items-center">
             <input
@@ -269,7 +261,7 @@ export const MediaDownloaderPage: React.FC = () => {
                 if (error) setError(null);
               }}
               placeholder="Paste Instagram Reel, Facebook Video, TikTok, YouTube, or direct video URL..."
-              className="w-full pl-3 pr-28 py-2.5 text-xs font-mono bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] rounded-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--color-primary)] shadow-none"
+              className="w-full pl-3.5 pr-28 py-2.5 text-xs rounded-[10px] bg-subtle/50 border border-border-default text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary min-h-[44px]"
             />
             
             <div className="absolute right-1.5 flex items-center space-x-1">
@@ -281,16 +273,16 @@ export const MediaDownloaderPage: React.FC = () => {
                     setResult(null);
                     setError(null);
                   }}
-                  className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-none"
+                  className="p-1.5 text-ink-muted hover:text-ink rounded-full"
                   title="Clear"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               )}
               <button
                 type="button"
                 onClick={handlePaste}
-                className="flex items-center space-x-1 px-2.5 py-1 text-[11px] font-mono font-bold uppercase text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] bg-[var(--bg-subtle)] border-[1.5px] border-[var(--border-strong)] rounded-none transition-colors duration-100 ease-linear"
+                className="ios-btn ios-btn-secondary rounded-[8px] px-2.5 py-1 text-xs font-semibold min-h-[32px]"
                 title="Paste from clipboard"
               >
                 <ClipboardPaste className="w-3.5 h-3.5" />
@@ -300,38 +292,34 @@ export const MediaDownloaderPage: React.FC = () => {
           </div>
 
           {/* Controls: Platform badge, Format Mode, Quality, and Extract Button */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-2.5">
               {/* Detected Platform Indicator */}
               <div className="flex items-center space-x-1.5 text-xs">
-                <span className="text-[11px] font-mono font-bold text-[var(--text-muted)] uppercase">Target:</span>
+                <span className="text-xs text-ink-muted font-medium">Target:</span>
                 {renderPlatformBadge(detectedPlatform)}
               </div>
 
               {/* Format Toggle (Video vs Audio) */}
-              <div className="flex items-center border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-canvas)] rounded-none p-0.5 text-xs font-mono">
+              <div className="ios-segmented">
                 <button
                   type="button"
                   onClick={() => setDownloadMode('auto')}
-                  className={`flex items-center space-x-1 px-3 py-1 text-[11px] font-mono font-bold uppercase tracking-wider rounded-none transition-colors duration-100 ease-linear ${
-                    downloadMode === 'auto'
-                      ? 'bg-[var(--text-primary)] text-[var(--bg-canvas)] shadow-none'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                  className={`ios-segmented-item flex items-center space-x-1 ${
+                    downloadMode === 'auto' ? 'ios-segmented-item-active font-semibold' : ''
                   }`}
                 >
-                  <Film className="w-3 h-3" />
+                  <Film className="w-3.5 h-3.5" />
                   <span>Video (MP4)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setDownloadMode('audio')}
-                  className={`flex items-center space-x-1 px-3 py-1 text-[11px] font-mono font-bold uppercase tracking-wider rounded-none transition-colors duration-100 ease-linear ${
-                    downloadMode === 'audio'
-                      ? 'bg-[var(--text-primary)] text-[var(--bg-canvas)] shadow-none'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                  className={`ios-segmented-item flex items-center space-x-1 ${
+                    downloadMode === 'audio' ? 'ios-segmented-item-active font-semibold' : ''
                   }`}
                 >
-                  <Music className="w-3 h-3" />
+                  <Music className="w-3.5 h-3.5" />
                   <span>Audio (MP3)</span>
                 </button>
               </div>
@@ -343,7 +331,7 @@ export const MediaDownloaderPage: React.FC = () => {
                     aria-label="Video quality"
                     value={videoQuality}
                     onChange={(e: any) => setVideoQuality(e.target.value)}
-                    className="text-[11px] font-mono font-bold py-1 px-2.5 bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] rounded-none text-[var(--text-primary)] focus:outline-none uppercase"
+                    className="text-xs font-medium py-1.5 px-3 bg-subtle/60 border border-border-subtle rounded-[10px] text-ink focus:outline-none focus:ring-1 focus:ring-accent-primary"
                   >
                     <option value="1080">1080p FHD</option>
                     <option value="720">720p HD</option>
@@ -358,7 +346,7 @@ export const MediaDownloaderPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading || !url.trim()}
-              className="flex items-center space-x-1.5 px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider rounded-none bg-[var(--color-primary)] text-white hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-100 ease-linear shadow-none"
+              className="ios-btn ios-btn-primary rounded-[10px] px-4 py-2 text-xs font-semibold shadow-sm min-h-[40px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
@@ -378,22 +366,22 @@ export const MediaDownloaderPage: React.FC = () => {
         {/* Error Alert with 1-Click Direct Resolvers */}
         {error && (
           <div className="space-y-3">
-            <div className="p-3 rounded-none bg-rose-500/10 border-[1.5px] border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-start space-x-2">
+            <div className="p-3 rounded-[12px] bg-status-danger/10 border border-status-danger/30 text-status-danger text-xs flex items-start space-x-2.5">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <span className="font-mono font-bold uppercase">[ERR-EXTRACTION] Extraction Notice:</span>
-                <p className="text-[11px] font-mono">{error}</p>
+                <span className="font-semibold block">Extraction Notice:</span>
+                <p className="text-[11px] leading-relaxed">{error}</p>
               </div>
             </div>
 
-            {/* Direct Resolver Bridges (Works without self-hosted Cobalt) */}
-            <div className="p-3 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] space-y-2.5">
+            {/* Direct Resolver Bridges */}
+            <div className="p-3.5 rounded-[14px] bg-subtle/50 border border-border-subtle space-y-2.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                 <div className="flex items-center space-x-2">
-                  <span className="text-[10px] font-mono uppercase font-bold text-white bg-[var(--color-primary)] px-2 py-0.5 rounded-none">
+                  <span className="text-[10px] font-semibold text-white bg-accent-primary px-2 py-0.5 rounded-full">
                     Direct Resolver Bridges
                   </span>
-                  <span className="text-xs font-mono font-bold text-[var(--text-primary)]">
+                  <span className="text-xs font-medium text-ink">
                     1-Click web extractors (No custom server required):
                   </span>
                 </div>
@@ -405,10 +393,10 @@ export const MediaDownloaderPage: React.FC = () => {
                       setCopiedId('ytdlp-btn');
                       setTimeout(() => setCopiedId(null), 2000);
                     }}
-                    className="flex items-center space-x-1 text-[11px] font-mono font-bold uppercase px-2.5 py-1 rounded-none bg-[var(--bg-surface)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] text-[var(--text-primary)] border-[1.5px] border-[var(--border-strong)] transition-colors duration-100 ease-linear"
+                    className="ios-btn ios-btn-secondary rounded-[8px] px-2.5 py-1 text-xs font-medium min-h-[32px]"
                     title="Copy ready-to-run yt-dlp CLI command for terminal"
                   >
-                    {copiedId === 'ytdlp-btn' ? <Check className="w-3 h-3 text-[var(--color-primary)]" /> : <Terminal className="w-3 h-3" />}
+                    {copiedId === 'ytdlp-btn' ? <Check className="w-3 h-3 text-status-success" /> : <Terminal className="w-3 h-3" />}
                     <span>{copiedId === 'ytdlp-btn' ? 'Copied yt-dlp!' : 'Copy yt-dlp CLI'}</span>
                   </button>
 
@@ -419,9 +407,9 @@ export const MediaDownloaderPage: React.FC = () => {
                       setCopiedId('url-btn');
                       setTimeout(() => setCopiedId(null), 2000);
                     }}
-                    className="flex items-center space-x-1 text-[11px] font-mono font-bold uppercase px-2.5 py-1 rounded-none bg-[var(--bg-surface)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] text-[var(--text-primary)] border-[1.5px] border-[var(--border-strong)] transition-colors duration-100 ease-linear"
+                    className="ios-btn ios-btn-secondary rounded-[8px] px-2.5 py-1 text-xs font-medium min-h-[32px]"
                   >
-                    {copiedId === 'url-btn' ? <Check className="w-3 h-3 text-[var(--color-primary)]" /> : <Copy className="w-3 h-3" />}
+                    {copiedId === 'url-btn' ? <Check className="w-3 h-3 text-status-success" /> : <Copy className="w-3 h-3" />}
                     <span>{copiedId === 'url-btn' ? 'Copied URL!' : 'Copy Media URL'}</span>
                   </button>
                 </div>
@@ -434,17 +422,17 @@ export const MediaDownloaderPage: React.FC = () => {
                     href={portal.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 rounded-none border-[1.5px] border-[var(--border-strong)] hover:border-[var(--color-primary)] bg-[var(--bg-surface)] transition-colors flex items-center justify-between group shadow-none"
+                    className="p-3 rounded-[12px] border border-border-subtle hover:border-accent-primary bg-surface transition-colors flex items-center justify-between group shadow-sm"
                   >
                     <div className="min-w-0 pr-2">
-                      <span className="font-mono font-bold uppercase text-xs text-[var(--text-primary)] group-hover:text-[var(--color-primary)] transition-colors block">
+                      <span className="font-semibold text-xs text-ink group-hover:text-accent-primary transition-colors block">
                         {portal.name}
                       </span>
-                      <span className="text-[10px] font-mono text-[var(--text-muted)] truncate block">
+                      <span className="text-[11px] text-ink-muted truncate block">
                         {portal.description}
                       </span>
                     </div>
-                    <ExternalLink className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--color-primary)] flex-shrink-0 transition-colors" />
+                    <ExternalLink className="w-3.5 h-3.5 text-ink-muted group-hover:text-accent-primary flex-shrink-0 transition-colors" />
                   </a>
                 ))}
               </div>
@@ -455,30 +443,30 @@ export const MediaDownloaderPage: React.FC = () => {
 
       {/* Extraction Result Stage */}
       {result && (
-        <div className="bg-[var(--bg-surface)] border-[1.5px] border-[var(--border-strong)] rounded-none p-4 space-y-4 shadow-none">
-          <div className="flex items-center justify-between border-b-[1.5px] border-[var(--border-strong)] pb-2.5">
+        <div className="ios-inset-grouped p-4 sm:p-5 bg-surface shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-border-subtle pb-3">
             <div className="flex items-center space-x-2">
-              <span className="font-mono text-xs font-bold text-[var(--color-primary)]">[OUTPUT]</span>
-              <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-primary)]">
+              <span className="text-xs font-semibold text-accent-primary">Preview</span>
+              <h2 className="text-xs font-semibold text-ink">
                 Extracted Media Preview
               </h2>
               {renderPlatformBadge(result.platform)}
             </div>
             {result.filename && (
-              <span className="text-[11px] font-mono text-[var(--text-muted)] truncate max-w-xs">
+              <span className="text-[11px] text-ink-muted truncate max-w-xs font-mono">
                 {result.filename}
               </span>
             )}
           </div>
 
-          {/* 1. Single Video / Audio Stream Result */}
+          {/* Single Video / Audio Stream Result */}
           {result.url && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
               {/* Media Preview Player */}
-              <div className="rounded-none bg-black overflow-hidden flex items-center justify-center min-h-[220px] max-h-[340px] border-[1.5px] border-[var(--border-strong)]">
+              <div className="rounded-[14px] bg-black overflow-hidden flex items-center justify-center min-h-[220px] max-h-[340px] border border-border-subtle shadow-inner">
                 {downloadMode === 'audio' ? (
                   <div className="p-6 text-center space-y-3 w-full">
-                    <div className="w-12 h-12 mx-auto rounded-none bg-[var(--bg-surface)] text-[var(--color-primary)] flex items-center justify-center border-[1.5px] border-[var(--border-strong)]">
+                    <div className="w-12 h-12 mx-auto rounded-full bg-surface text-accent-primary flex items-center justify-center shadow-sm">
                       <Music className="w-6 h-6" />
                     </div>
                     <audio controls className="w-full mt-2" src={result.url}>
@@ -499,22 +487,22 @@ export const MediaDownloaderPage: React.FC = () => {
 
               {/* Action Details & Buttons */}
               <div className="space-y-3">
-                <div className="p-3 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] text-xs font-mono space-y-1.5">
-                  <div className="flex justify-between border-b border-[var(--border-subtle)] pb-1">
-                    <span className="text-[var(--text-muted)] uppercase">Format:</span>
-                    <span className="font-bold text-[var(--text-primary)] uppercase">
+                <div className="ios-inset-grouped p-3.5 bg-subtle/50 text-xs space-y-2">
+                  <div className="flex justify-between border-b border-border-subtle pb-1.5">
+                    <span className="text-ink-muted">Format:</span>
+                    <span className="font-semibold text-ink">
                       {downloadMode === 'audio' ? 'MP3 Audio Stream' : 'MP4 High Definition'}
                     </span>
                   </div>
-                  <div className="flex justify-between border-b border-[var(--border-subtle)] pb-1">
-                    <span className="text-[var(--text-muted)] uppercase">Quality:</span>
-                    <span className="font-bold text-[var(--text-primary)]">
+                  <div className="flex justify-between border-b border-border-subtle pb-1.5">
+                    <span className="text-ink-muted">Quality:</span>
+                    <span className="font-semibold text-ink">
                       {downloadMode === 'audio' ? 'Original Bitrate' : `${videoQuality}p`}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)] uppercase">File Name:</span>
-                    <span className="font-bold text-[var(--text-primary)] truncate max-w-[200px]" title={result.filename}>
+                    <span className="text-ink-muted">File Name:</span>
+                    <span className="font-semibold text-ink truncate max-w-[200px]" title={result.filename}>
                       {result.filename || 'media.mp4'}
                     </span>
                   </div>
@@ -524,7 +512,7 @@ export const MediaDownloaderPage: React.FC = () => {
                   <button
                     onClick={() => handleDownload(result.url!, result.filename, 'single-main')}
                     disabled={downloadingItem === 'single-main'}
-                    className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-none bg-[var(--color-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors duration-100 ease-linear shadow-none"
+                    className="ios-btn ios-btn-primary w-full py-2.5 rounded-[10px] text-xs font-semibold shadow-sm min-h-[44px]"
                   >
                     {downloadingItem === 'single-main' ? (
                       <>
@@ -542,11 +530,11 @@ export const MediaDownloaderPage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => copyToClipboard(result.url!, 'stream-url')}
-                      className="flex items-center justify-center space-x-1.5 px-3 py-2 text-xs font-mono font-bold uppercase text-[var(--text-primary)] bg-[var(--bg-surface)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] rounded-none transition-colors duration-100 ease-linear shadow-none"
+                      className="ios-btn ios-btn-secondary rounded-[10px] text-xs font-semibold min-h-[40px]"
                     >
                       {copiedId === 'stream-url' ? (
                         <>
-                          <Check className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                          <Check className="w-3.5 h-3.5 text-status-success" />
                           <span>Link Copied</span>
                         </>
                       ) : (
@@ -561,7 +549,7 @@ export const MediaDownloaderPage: React.FC = () => {
                       href={sanitizeRedirectUrl(result.url) || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center space-x-1.5 px-3 py-2 text-xs font-mono font-bold uppercase text-[var(--text-primary)] bg-[var(--bg-surface)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] rounded-none transition-colors duration-100 ease-linear shadow-none"
+                      className="ios-btn ios-btn-secondary rounded-[10px] text-xs font-semibold min-h-[40px] inline-flex items-center justify-center"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                       <span>Open in New Tab</span>
@@ -572,13 +560,13 @@ export const MediaDownloaderPage: React.FC = () => {
             </div>
           )}
 
-          {/* 2. Picker / Carousel Album Result (Instagram Carousel / TikTok Slideshow) */}
+          {/* 2. Picker / Carousel Album Result */}
           {result.status === 'picker' && result.picker && (
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)]">
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-[12px] bg-subtle/50 border border-border-subtle">
                 <div className="flex items-center space-x-2">
-                  <Layers className="w-4 h-4 text-[var(--color-primary)]" />
-                  <span className="text-xs font-mono font-bold text-[var(--text-primary)] uppercase">
+                  <Layers className="w-4 h-4 text-accent-primary" />
+                  <span className="text-xs font-semibold text-ink">
                     Album Assets: {result.picker.length} items detected
                   </span>
                 </div>
@@ -587,9 +575,9 @@ export const MediaDownloaderPage: React.FC = () => {
                   {result.audioUrl && (
                     <button
                       onClick={() => handleDownload(result.audioUrl!, result.audioFilename || 'album-soundtrack.mp3', 'album-audio')}
-                      className="flex items-center space-x-1 px-3 py-1.5 text-xs font-mono font-bold uppercase text-[var(--text-primary)] bg-[var(--bg-surface)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] rounded-none transition-colors duration-100 ease-linear"
+                      className="ios-btn ios-btn-secondary rounded-[8px] text-xs font-medium px-3 py-1.5 min-h-[34px]"
                     >
-                      <Music className="w-3 h-3 text-[var(--color-primary)]" />
+                      <Music className="w-3 h-3 text-accent-primary" />
                       <span>Download Audio Track</span>
                     </button>
                   )}
@@ -597,7 +585,7 @@ export const MediaDownloaderPage: React.FC = () => {
                   <button
                     onClick={() => handleDownloadAllPicker(result.picker!)}
                     disabled={downloadingItem === 'all-picker'}
-                    className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider bg-[var(--color-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] text-white rounded-none transition-colors duration-100 ease-linear shadow-none"
+                    className="ios-btn ios-btn-primary rounded-[8px] text-xs font-semibold px-3 py-1.5 min-h-[34px]"
                   >
                     {downloadingItem === 'all-picker' ? (
                       <>
@@ -619,7 +607,7 @@ export const MediaDownloaderPage: React.FC = () => {
                 {result.picker.map((item, idx) => (
                   <div
                     key={idx}
-                    className="group relative rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-canvas)] overflow-hidden flex flex-col justify-between shadow-none"
+                    className="group relative rounded-[14px] border border-border-subtle bg-surface overflow-hidden flex flex-col justify-between shadow-sm"
                   >
                     <div className="aspect-square w-full bg-black flex items-center justify-center overflow-hidden">
                       {item.type === 'video' ? (
@@ -638,20 +626,20 @@ export const MediaDownloaderPage: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="p-2 flex items-center justify-between border-t-[1.5px] border-[var(--border-strong)] bg-[var(--bg-surface)] text-[10px] font-mono">
-                      <span className="font-bold text-[var(--text-primary)]">
+                    <div className="p-2.5 flex items-center justify-between border-t border-border-subtle bg-surface text-xs">
+                      <span className="font-semibold text-ink text-[11px]">
                         #{idx + 1} {item.type.toUpperCase()}
                       </span>
                       <button
                         onClick={() => handleDownload(item.url, `${result.platform}-item-${idx + 1}.${item.type === 'video' ? 'mp4' : 'jpg'}`, `picker-${idx}`)}
                         disabled={downloadingItem === `picker-${idx}`}
-                        className="p-1 text-[var(--text-primary)] hover:text-[var(--color-primary)] transition-colors"
+                        className="p-1.5 rounded-lg text-ink hover:text-accent-primary transition-colors"
                         title="Download item"
                       >
                         {downloadingItem === `picker-${idx}` ? (
-                          <RefreshCw className="w-3 h-3 animate-spin" />
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                         ) : (
-                          <Download className="w-3 h-3" />
+                          <Download className="w-3.5 h-3.5" />
                         )}
                       </button>
                     </div>
@@ -664,18 +652,17 @@ export const MediaDownloaderPage: React.FC = () => {
       )}
 
       {/* Download History Ledger */}
-      <div className="rounded-none bg-[var(--bg-surface)] border-[1.5px] border-[var(--border-strong)] overflow-hidden shadow-none">
-        <div className="p-3 border-b-[1.5px] border-[var(--border-strong)] flex items-center justify-between text-[11px] font-mono">
+      <div className="ios-inset-grouped bg-surface shadow-sm overflow-hidden">
+        <div className="p-3.5 border-b border-border-subtle flex items-center justify-between text-xs bg-subtle/50">
           <div className="flex items-center space-x-2">
-            <span className="font-mono text-xs font-bold text-[var(--color-primary)]">[LEDGER]</span>
-            <span className="font-bold text-[var(--text-primary)] uppercase tracking-wider">
-              Download History Ledger ({history.length})
+            <span className="font-semibold text-ink">
+              Download History ({history.length})
             </span>
           </div>
           {history.length > 0 && (
             <button
               onClick={handleClearHistory}
-              className="text-rose-600 dark:text-rose-400 hover:underline text-[11px] font-mono font-bold uppercase transition-colors"
+              className="text-status-danger hover:underline text-xs font-semibold transition-colors"
             >
               Clear All
             </button>
@@ -683,33 +670,33 @@ export const MediaDownloaderPage: React.FC = () => {
         </div>
 
         {history.length === 0 ? (
-          <div className="p-8 text-center text-xs text-[var(--text-muted)] font-mono uppercase tracking-wider">
+          <div className="p-8 text-center text-xs text-ink-muted">
             No media downloads logged yet. Paste a URL above to start.
           </div>
         ) : (
-          <div className="divide-y-[1.5px] divide-[var(--border-strong)]">
+          <div className="divide-y divide-border-subtle">
             {history.map((item) => (
               <div
                 key={item.id}
-                className="p-3 flex items-center justify-between hover:bg-[var(--bg-subtle)] transition-colors text-xs font-mono"
+                className="p-3.5 flex items-center justify-between hover:bg-subtle/40 transition-colors text-xs min-h-[52px]"
               >
-                <div className="flex items-center space-x-3 min-w-0 pr-3">
-                  <div className="w-8 h-8 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] text-[var(--text-primary)] flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center space-x-3.5 min-w-0 pr-3">
+                  <div className="w-9 h-9 rounded-[10px] bg-accent-primary/10 text-accent-primary flex items-center justify-center flex-shrink-0">
                     {item.format === 'audio' ? (
-                      <Music className="w-4 h-4 text-[var(--color-primary)]" />
+                      <Music className="w-4 h-4" />
                     ) : (
-                      <Video className="w-4 h-4 text-[var(--text-primary)]" />
+                      <Video className="w-4 h-4" />
                     )}
                   </div>
 
                   <div className="min-w-0">
                     <div className="flex items-center space-x-2">
-                      <span className="font-bold text-[var(--text-primary)] truncate max-w-sm">
+                      <span className="font-semibold text-ink truncate max-w-sm">
                         {item.title || item.filename || 'Media Item'}
                       </span>
                       {renderPlatformBadge(item.platform)}
                     </div>
-                    <div className="flex items-center space-x-2 text-[10px] text-[var(--text-muted)] font-mono mt-0.5">
+                    <div className="flex items-center space-x-2 text-[11px] text-ink-muted mt-0.5">
                       <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                       <span>•</span>
                       <span>{new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -727,7 +714,7 @@ export const MediaDownloaderPage: React.FC = () => {
                 <div className="flex items-center space-x-1.5 flex-shrink-0">
                   <button
                     onClick={() => handleDownload(item.downloadUrl, item.filename, item.id)}
-                    className="p-1.5 text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] rounded-none transition-colors duration-100 ease-linear shadow-none"
+                    className="p-2 rounded-lg border border-border-subtle bg-surface text-ink hover:bg-subtle transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
                     title="Download file"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -735,11 +722,11 @@ export const MediaDownloaderPage: React.FC = () => {
 
                   <button
                     onClick={() => copyToClipboard(item.originalUrl, `orig-${item.id}`)}
-                    className="p-1.5 text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] rounded-none transition-colors duration-100 ease-linear shadow-none"
+                    className="p-2 rounded-lg border border-border-subtle bg-surface text-ink hover:bg-subtle transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
                     title="Copy original link"
                   >
                     {copiedId === `orig-${item.id}` ? (
-                      <Check className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                      <Check className="w-3.5 h-3.5 text-status-success" />
                     ) : (
                       <Copy className="w-3.5 h-3.5" />
                     )}
@@ -750,7 +737,7 @@ export const MediaDownloaderPage: React.FC = () => {
                       href={sanitizeRedirectUrl(item.originalUrl)!}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] rounded-none transition-colors duration-100 ease-linear shadow-none"
+                      className="p-2 rounded-lg border border-border-subtle bg-surface text-ink hover:bg-subtle hover:text-accent-primary transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
                       title="Visit original post"
                       aria-label="Visit original post"
                     >
@@ -760,7 +747,7 @@ export const MediaDownloaderPage: React.FC = () => {
 
                   <button
                     onClick={() => handleDeleteHistory(item)}
-                    className="p-1.5 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white border-[1.5px] border-[var(--border-strong)] rounded-none transition-colors duration-100 ease-linear shadow-none"
+                    className="p-2 rounded-lg border border-border-subtle bg-surface text-ink-muted hover:text-status-danger hover:bg-status-danger/10 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
                     title="Delete record"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -772,10 +759,10 @@ export const MediaDownloaderPage: React.FC = () => {
         )}
       </div>
 
-      {/* Custom Cobalt Instance Modal - Pure Werkbund Scrim & Structural Border */}
+      {/* Custom Cobalt Instance Modal - Apple Modal Sheet */}
       {showConfigModal && (
         <div
-          className="fixed inset-0 z-50 bg-[var(--scrim-unblurred)] flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowConfigModal(false);
           }}
@@ -784,31 +771,31 @@ export const MediaDownloaderPage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="media-settings-modal-title"
-            className="w-full max-w-md rounded-none bg-[var(--bg-surface)] border-[1.5px] border-[var(--border-strong)] p-5 space-y-4 shadow-none"
+            className="w-full max-w-md rounded-[20px] bg-elevated/95 backdrop-blur-2xl border border-border-subtle p-6 space-y-4 shadow-2xl"
           >
-            <div className="flex items-center justify-between border-b-[1.5px] border-[var(--border-strong)] pb-3">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
               <div className="flex items-center space-x-2">
-                <SlidersHorizontal className="w-4 h-4 text-[var(--color-primary)]" />
-                <h3 id="media-settings-modal-title" className="text-sm font-display font-black uppercase tracking-wider text-[var(--text-primary)]">
+                <SlidersHorizontal className="w-4 h-4 text-accent-primary" />
+                <h3 id="media-settings-modal-title" className="text-base font-display font-bold text-ink">
                   Media Extractor Settings
                 </h3>
               </div>
               <button
                 onClick={() => setShowConfigModal(false)}
                 aria-label="Close modal"
-                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-none"
+                className="p-1.5 text-ink-muted hover:text-ink rounded-full hover:bg-subtle transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs font-mono">
-              <p className="text-[var(--text-muted)] leading-relaxed">
-                Superapps uses open-source Cobalt and multi-engine extractors for zero-cost media downloads. You can also connect your own self-hosted Cobalt instance or yt-dlp API server (e.g. Metube / yt-dlp-host) below for 100% private extraction.
+            <div className="space-y-3.5 text-xs">
+              <p className="text-ink-secondary leading-relaxed">
+                Superapps uses open-source Cobalt and multi-engine extractors for zero-cost media downloads. You can also connect your own self-hosted Cobalt instance or yt-dlp API server below for 100% private extraction.
               </p>
 
               <div className="space-y-1">
-                <label htmlFor="custom-cobalt-url" className="font-mono text-[11px] font-bold text-[var(--text-primary)] uppercase">
+                <label htmlFor="custom-cobalt-url" className="text-xs font-medium text-ink-secondary">
                   Custom Instance / yt-dlp Backend URL (Optional)
                 </label>
                 <input
@@ -817,12 +804,12 @@ export const MediaDownloaderPage: React.FC = () => {
                   value={customInstance}
                   onChange={(e) => setCustomInstance(e.target.value)}
                   placeholder="https://my-cobalt.example.com"
-                  className="w-full px-3 py-2 font-mono text-xs bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] rounded-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--color-primary)]"
+                  className="w-full px-3 py-2 text-xs bg-surface border border-border-default rounded-[10px] text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary min-h-[44px]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="custom-cobalt-key" className="font-mono text-[11px] font-bold text-[var(--text-primary)] uppercase">
+                <label htmlFor="custom-cobalt-key" className="text-xs font-medium text-ink-secondary">
                   API Key / Bearer Token (Optional)
                 </label>
                 <input
@@ -831,28 +818,28 @@ export const MediaDownloaderPage: React.FC = () => {
                   value={customApiKey}
                   onChange={(e) => setCustomApiKey(e.target.value)}
                   placeholder="Bearer token or API key for protected instances"
-                  className="w-full px-3 py-2 font-mono text-xs bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] rounded-none text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--color-primary)]"
+                  className="w-full px-3 py-2 text-xs bg-surface border border-border-default rounded-[10px] text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary min-h-[44px]"
                 />
               </div>
 
-              <div className="p-3 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] text-[11px] font-mono space-y-1">
-                <span className="font-bold text-[var(--text-primary)] uppercase">Default Fallback Instances:</span>
-                <ul className="text-[var(--text-muted)] list-disc list-inside space-y-0.5">
+              <div className="p-3.5 rounded-[12px] bg-subtle/60 border border-border-subtle text-[11px] space-y-1.5">
+                <span className="font-semibold text-ink">Default Fallback Instances:</span>
+                <ul className="text-ink-muted list-disc list-inside space-y-0.5">
                   {DEFAULT_COBALT_INSTANCES.map((inst, i) => (
-                    <li key={i} className="truncate">{inst}</li>
+                    <li key={i} className="truncate font-mono">{inst}</li>
                   ))}
                 </ul>
               </div>
 
               {configSaved && (
-                <div className="p-2.5 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--color-primary)] text-[var(--color-primary)] font-mono text-[11px] font-bold uppercase flex items-center space-x-1.5">
+                <div className="p-2.5 rounded-[10px] bg-status-success/10 border border-status-success/30 text-status-success text-xs font-semibold flex items-center space-x-1.5">
                   <Check className="w-3.5 h-3.5" />
                   <span>Instance configuration saved!</span>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end space-x-2 pt-3 border-t-[1.5px] border-[var(--border-strong)]">
+            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-border-subtle">
               <button
                 type="button"
                 onClick={() => {
@@ -866,14 +853,14 @@ export const MediaDownloaderPage: React.FC = () => {
                     setShowConfigModal(false);
                   }, 800);
                 }}
-                className="px-3 py-1.5 text-xs font-mono font-bold uppercase text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-none"
+                className="ios-btn ios-btn-secondary rounded-[10px] text-xs font-semibold py-2 px-3.5"
               >
                 Reset to Default
               </button>
               <button
                 type="button"
                 onClick={handleSaveConfig}
-                className="px-4 py-1.5 text-xs font-mono font-bold uppercase tracking-wider rounded-none bg-[var(--color-primary)] text-white hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] transition-colors duration-100 ease-linear shadow-none"
+                className="ios-btn ios-btn-primary rounded-[10px] text-xs font-semibold py-2 px-4 shadow-sm"
               >
                 Save Settings
               </button>

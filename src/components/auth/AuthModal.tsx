@@ -71,7 +71,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A0A0A]/75"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
@@ -79,36 +79,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         aria-modal="true"
         aria-labelledby="auth-modal-title"
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-sm bg-elevated border-1.5 border-border-strong p-6"
+        className="relative w-full max-w-sm bg-elevated/95 backdrop-blur-2xl border border-border-subtle rounded-[20px] p-6 shadow-2xl"
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-1 text-ink-muted hover:text-ink border-1.5 border-transparent hover:border-border-strong transition-colors duration-fast"
+          className="absolute top-4 right-4 p-1.5 text-ink-muted hover:text-ink rounded-full hover:bg-subtle transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
           aria-label="Close modal"
         >
           <X className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center space-x-3 mb-5 pb-3 border-b-1.5 border-border-strong">
-          <div className="w-8 h-8 bg-ink text-canvas border-1.5 border-border-strong flex items-center justify-center font-bold text-xs font-mono">
+        <div className="flex items-center space-x-3 mb-5 pb-3 border-b border-border-subtle">
+          <div className="w-9 h-9 rounded-[10px] bg-accent-primary text-white flex items-center justify-center font-bold text-sm shadow-sm">
             S
           </div>
           <div>
-            <h2 id="auth-modal-title" className="text-sm font-display font-bold uppercase tracking-wider text-ink">
+            <h2 id="auth-modal-title" className="text-base font-display font-bold text-ink">
               {isGuest ? 'Link & Sync Account' : isSignUp ? 'Create Superapps Account' : 'Sign in to Superapps'}
             </h2>
-            <p className="werkbund-coord mt-0.5">
-              {isGuest ? '[AUTH-LINK] MIGRATE TO CLOUD' : '[AUTH-SYS] CLOUD SYNCHRONIZATION'}
+            <p className="text-[11px] text-ink-muted font-medium">
+              {isGuest ? 'Migrate to Cloud Firestore' : 'Cloud Synchronization'}
             </p>
           </div>
         </div>
 
         {isGuest && (
-          <div className="mb-4 p-3 bg-subtle border-1.5 border-border-strong text-xs flex items-start space-x-2.5">
-            <Cloud className="w-4 h-4 flex-shrink-0 mt-0.5 text-signal" />
+          <div className="mb-4 p-3 bg-subtle/70 rounded-[12px] border border-border-subtle text-xs flex items-start space-x-2.5">
+            <Cloud className="w-4 h-4 flex-shrink-0 mt-0.5 text-accent-primary" />
             <div className="space-y-1">
-              <p className="font-bold text-ink uppercase tracking-wider font-mono text-[11px]">
+              <p className="font-semibold text-ink text-[12px]">
                 Seamless Guest Data Migration
               </p>
               <p className="text-[11px] leading-relaxed text-ink-secondary">
@@ -119,11 +119,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         )}
 
         {!isFirebaseConfigured && (
-          <div className="mb-4 p-3 bg-surface border-1.5 border-status-warning text-status-warning text-xs flex flex-col space-y-1">
+          <div className="mb-4 p-3 bg-status-warning/10 rounded-[12px] border border-status-warning/30 text-status-warning text-xs flex flex-col space-y-1">
             <div className="flex items-start space-x-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-status-warning" />
               <div>
-                <p className="font-bold uppercase tracking-wider font-mono text-[11px]">Local / Guest Mode Active</p>
+                <p className="font-semibold text-[12px]">Local / Guest Mode Active</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-ink-secondary">
                   Firebase configuration not detected. Cloud synchronization and accounts require Firebase credentials. You can continue using all modules locally in Guest Mode.
                 </p>
@@ -133,7 +133,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         )}
 
         {error && (
-          <div className="mb-4 p-3 bg-surface border-1.5 border-status-danger text-status-danger text-xs font-mono">
+          <div className="mb-4 p-3 bg-status-danger/10 rounded-[12px] border border-status-danger/30 text-status-danger text-xs font-medium">
             {error}
           </div>
         )}
@@ -144,9 +144,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               onClick={handleGoogle}
               disabled={loading}
               data-testid="link-with-google-btn"
-              className="werkbund-btn werkbund-btn-outline w-full py-2 mb-3"
+              className="w-full flex items-center justify-center space-x-2 py-2.5 px-3 rounded-[10px] border border-border-default bg-surface hover:bg-subtle text-ink font-medium text-xs transition-all duration-fast shadow-sm disabled:opacity-50 min-h-[44px]"
             >
-              <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -167,10 +167,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <span>{isGuest ? 'Link with Google' : 'Continue with Google'}</span>
             </button>
 
-            <div className="relative my-3 flex items-center justify-center">
-              <div className="border-t-1.5 border-border-strong w-full" />
-              <span className="bg-elevated px-2 text-[10px] text-ink-muted uppercase tracking-wider font-mono absolute">
-                OR EMAIL CREDENTIALS
+            <div className="relative my-3.5 flex items-center justify-center">
+              <div className="border-t border-border-subtle w-full" />
+              <span className="bg-elevated px-2.5 text-[11px] text-ink-muted uppercase tracking-wider font-medium absolute">
+                or email credentials
               </span>
             </div>
           </>
@@ -178,7 +178,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label htmlFor="modal-email" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+            <label htmlFor="modal-email" className="block text-xs font-medium text-ink-secondary mb-1">
               Email address
             </label>
             <input
@@ -192,12 +192,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="you@domain.com"
-              className="w-full px-3 py-2 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:ring-0 focus:border-signal"
+              className="w-full px-3 py-2.5 text-xs rounded-[10px] border border-border-default bg-surface text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary min-h-[44px]"
             />
           </div>
 
           <div>
-            <label htmlFor="modal-password" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+            <label htmlFor="modal-password" className="block text-xs font-medium text-ink-secondary mb-1">
               Password
             </label>
             <input
@@ -209,7 +209,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               required
               minLength={6}
               placeholder="••••••••"
-              className="w-full px-3 py-2 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:ring-0 focus:border-signal"
+              className="w-full px-3 py-2.5 text-xs rounded-[10px] border border-border-default bg-surface text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary min-h-[44px]"
             />
           </div>
 
@@ -217,28 +217,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             type="submit"
             disabled={loading}
             data-testid="link-with-email-btn"
-            className="werkbund-btn werkbund-btn-signal w-full py-2 mt-2"
+            className="ios-btn ios-btn-primary w-full py-2.5 mt-2 rounded-[10px] text-xs font-semibold shadow-sm min-h-[44px]"
           >
-            {isGuest ? <UserCheck className="w-3.5 h-3.5" /> : isSignUp ? <UserPlus className="w-3.5 h-3.5" /> : <LogIn className="w-3.5 h-3.5" />}
+            {isGuest ? <UserCheck className="w-4 h-4" /> : isSignUp ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
             <span>{isGuest ? 'Link with Email' : isSignUp ? 'Create Account' : 'Sign In'}</span>
           </button>
         </form>
 
         <div className="mt-4 text-center">
           {isGuest ? (
-            <p className="werkbund-coord">
-              ENTER CREDENTIALS TO LINK LOCAL VAULT TO CLOUD.
+            <p className="text-[11px] text-ink-muted">
+              Enter credentials to link local vault to cloud.
             </p>
           ) : systemSettings.allowUserRegistration ? (
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-[11px] font-mono text-signal hover:underline uppercase tracking-wider"
+              className="text-xs font-medium text-accent-primary hover:underline"
             >
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
           ) : (
-            <span className="werkbund-coord">
+            <span className="text-[11px] text-ink-muted">
               Registration is closed by administrator.
             </span>
           )}

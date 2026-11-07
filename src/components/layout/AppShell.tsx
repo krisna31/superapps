@@ -30,7 +30,7 @@ export const AppShell: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Android Hardware Back Button & Mobile History Handling
+  // Hardware Back Button & Mobile History Handling
   useEffect(() => {
     const handleBackButton = (e: Event) => {
       if (isSidebarOpenMobile) {
@@ -68,11 +68,11 @@ export const AppShell: React.FC = () => {
       <div
         role="status"
         aria-live="polite"
-        className="min-h-screen bg-canvas text-ink flex flex-col items-center justify-center space-y-3"
+        className="min-h-screen bg-canvas text-ink flex flex-col items-center justify-center space-y-3 font-sans"
       >
-        <div className="w-8 h-8 border-2 border-signal border-t-transparent animate-spin" />
-        <span className="werkbund-coord text-xs">
-          [SYS-01] INITIALIZING WORKSPACE
+        <div className="w-8 h-8 border-2 border-accent-primary/20 border-t-accent-primary rounded-full animate-spin" />
+        <span className="text-xs font-medium text-ink-muted tracking-tight">
+          Loading Workspace...
         </span>
       </div>
     );
@@ -84,12 +84,12 @@ export const AppShell: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-canvas text-ink flex transition-colors safe-top safe-bottom safe-left safe-right">
+    <div className="min-h-screen bg-canvas text-ink flex transition-colors safe-top safe-bottom safe-left safe-right font-sans antialiased">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-ink focus:text-canvas focus:border-1.5 focus:border-border-strong focus:text-xs focus:font-mono focus:tracking-wider"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-3.5 focus:py-2 focus:bg-surface focus:text-ink focus:rounded-lg focus:shadow-md focus:border focus:border-border-subtle focus:text-xs focus:font-medium"
       >
-        [00] Skip to main content
+        Skip to main content
       </a>
 
       {/* Sidebar */}
@@ -106,7 +106,7 @@ export const AppShell: React.FC = () => {
           onToggleSidebar={() => setIsSidebarOpenMobile((prev) => !prev)}
         />
 
-        <main id="main-content" className="flex-1 p-3 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto">
+        <main id="main-content" className="flex-1 p-3.5 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>

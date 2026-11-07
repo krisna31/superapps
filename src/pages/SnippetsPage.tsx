@@ -7,7 +7,8 @@ import {
   Check, 
   Trash2, 
   Tag, 
-  X 
+  X,
+  Code2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { dataService } from '@/services/dataService';
@@ -121,24 +122,24 @@ export const SnippetsPage: React.FC = () => {
   }, [snippets, search, selectedLanguage]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 font-sans">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-1.5 border-border-strong pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-subtle">
         <div>
-          <div className="werkbund-coord mb-1">[MODULE-05] MULTI-LANGUAGE CODE REPOSITORY</div>
-          <h1 className="text-2xl font-display font-bold uppercase tracking-tight text-ink">
+          <div className="text-xs font-semibold text-accent-primary uppercase tracking-wider mb-0.5">Developer Vault</div>
+          <h1 className="text-2xl font-display font-bold text-ink tracking-tight">
             Snippets Vault
           </h1>
           <p className="text-xs text-ink-secondary mt-0.5">
-            Architectural code repository, syntax templates, and regex vaults in Space Mono.
+            Multi-language code repository, syntax templates, and reusable logic blocks.
           </p>
         </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="werkbund-btn werkbund-btn-signal self-start sm:self-auto"
+          className="ios-btn ios-btn-primary rounded-[10px] self-start sm:self-auto text-xs font-semibold min-h-[40px] px-4"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4" />
           <span>New Snippet</span>
         </button>
       </div>
@@ -146,49 +147,53 @@ export const SnippetsPage: React.FC = () => {
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-2.5">
         <div className="relative flex-1">
-          <Search className="w-3.5 h-3.5 text-ink-muted absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-ink-muted absolute left-3 top-2.5" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="SEARCH SNIPPETS, TAGS, CODE..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs font-mono uppercase tracking-wider border-1.5 border-border-strong bg-surface text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal"
+            placeholder="Search snippets, tags, code..."
+            className="w-full pl-9 pr-3 py-2 text-xs bg-surface border border-border-subtle rounded-[10px] text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all min-h-[40px]"
           />
         </div>
 
-        <select
-          aria-label="Filter by language"
-          value={selectedLanguage}
-          onChange={(e) => setSelectedLanguage(e.target.value)}
-          className="px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-surface text-ink uppercase font-bold focus:outline-none"
-        >
-          <option value="all">All Languages</option>
-          {languages.map((l) => (
-            <option key={l} value={l}>{l.toUpperCase()}</option>
-          ))}
-        </select>
+        <div className="sm:w-52">
+          <select
+            aria-label="Filter by language"
+            value={selectedLanguage}
+            onChange={(e) => setSelectedLanguage(e.target.value)}
+            className="w-full px-3 py-2 text-xs bg-surface border border-border-subtle rounded-[10px] text-ink font-medium focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all min-h-[40px] capitalize cursor-pointer"
+          >
+            <option value="all">All Languages ({snippets.length})</option>
+            {languages.map((l) => (
+              <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Snippets Grid: Continuous Shared-Border Grid */}
+      {/* Snippets Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {filteredSnippets.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-xs font-mono text-ink-muted border-1.5 border-dashed border-border-strong bg-surface">
-            [NULL] NO SNIPPETS MATCHING QUERY. CLICK "NEW SNIPPET" TO SCAFFOLD CODE.
+          <div className="col-span-full py-16 text-center text-xs text-ink-muted ios-inset-grouped bg-surface p-8 shadow-sm">
+            <Code2 className="w-8 h-8 mx-auto mb-2 text-ink-muted opacity-40" />
+            <p className="font-medium text-ink">No snippets matching query</p>
+            <p className="text-ink-secondary mt-1">Click "New Snippet" above to add your first code snippet.</p>
           </div>
         ) : (
           filteredSnippets.map((s) => (
             <div
               key={s.id}
-              className="bg-surface border-1.5 border-border-strong flex flex-col justify-between"
+              className="ios-inset-grouped bg-surface shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-ios-md transition-shadow duration-200"
             >
               {/* Header */}
-              <div className="p-3 border-b-1.5 border-border-strong flex items-center justify-between bg-subtle">
+              <div className="p-3.5 border-b border-border-subtle flex items-start justify-between bg-subtle/40">
                 <div className="min-w-0 pr-2">
                   <div className="flex items-center space-x-2">
-                    <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-ink text-canvas border border-border-strong uppercase">
+                    <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-accent-primary/10 text-accent-primary border border-accent-primary/20 rounded-full capitalize">
                       {s.language}
                     </span>
-                    <h3 className="text-xs font-bold text-ink uppercase truncate">
+                    <h3 className="text-xs font-semibold text-ink truncate">
                       {s.title}
                     </h3>
                   </div>
@@ -199,10 +204,10 @@ export const SnippetsPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex items-center space-x-1 flex-shrink-0">
+                <div className="flex items-center space-x-1.5 flex-shrink-0">
                   <button
                     onClick={() => handleCopyCode(s.id, s.code)}
-                    className="p-1.5 border border-border-strong bg-canvas text-ink hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                    className="p-1.5 rounded-[8px] bg-surface border border-border-subtle text-ink-secondary hover:text-ink hover:bg-subtle transition-all"
                     title="Copy code"
                   >
                     {copiedId === s.id ? (
@@ -214,7 +219,7 @@ export const SnippetsPage: React.FC = () => {
 
                   <button
                     onClick={() => handleDeleteSnippet(s.id)}
-                    className="p-1.5 border border-border-strong bg-canvas text-ink hover:bg-status-danger hover:text-white transition-colors duration-fast"
+                    className="p-1.5 rounded-[8px] bg-surface border border-border-subtle text-ink-secondary hover:text-status-danger hover:bg-status-danger/10 transition-all"
                     title="Delete snippet"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -223,21 +228,21 @@ export const SnippetsPage: React.FC = () => {
               </div>
 
               {/* Code block */}
-              <div className="bg-canvas p-3.5 overflow-x-auto max-h-60 border-b-1.5 border-border-strong">
-                <pre className="font-mono text-xs text-ink leading-relaxed tabular-nums">
+              <div className="bg-canvas/80 p-3.5 overflow-x-auto max-h-60 border-b border-border-subtle">
+                <pre className="font-mono text-xs text-ink leading-relaxed tabular-nums selection:bg-accent-primary/20">
                   <code>{s.code}</code>
                 </pre>
               </div>
 
               {/* Tags footer */}
               {s.tags.length > 0 && (
-                <div className="p-2 px-3 bg-subtle flex items-center space-x-2">
-                  <Tag className="w-3 h-3 text-signal flex-shrink-0" />
+                <div className="p-2.5 px-3.5 bg-subtle/30 flex items-center space-x-2">
+                  <Tag className="w-3 h-3 text-accent-primary flex-shrink-0" />
                   <div className="flex items-center space-x-1.5 overflow-x-auto">
                     {s.tags.map((t: string) => (
                       <span
                         key={t}
-                        className="text-[9px] px-1.5 py-0.2 border border-border-strong bg-canvas text-ink font-mono font-bold uppercase"
+                        className="text-[10px] px-2 py-0.5 rounded-full bg-surface border border-border-subtle text-ink-secondary font-medium"
                       >
                         #{t}
                       </span>
@@ -250,10 +255,10 @@ export const SnippetsPage: React.FC = () => {
         )}
       </div>
 
-      {/* New Snippet Modal */}
+      {/* New Snippet Modal Sheet */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A0A0A]/75"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-fade-in"
           onClick={() => setIsModalOpen(false)}
         >
           <div
@@ -261,29 +266,32 @@ export const SnippetsPage: React.FC = () => {
             aria-modal="true"
             aria-labelledby="new-snippet-modal-title"
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg bg-elevated border-1.5 border-border-strong p-6"
+            className="w-full max-w-lg bg-elevated rounded-[20px] border border-border-subtle shadow-ios-xl overflow-hidden animate-slide-up"
           >
-            <div className="flex items-center justify-between mb-4 pb-2 border-b-1.5 border-border-strong">
+            {/* Sheet grabber */}
+            <div className="w-9 h-1 bg-border-strong/60 rounded-full mx-auto my-2" />
+
+            <div className="px-5 py-3 border-b border-border-subtle flex items-center justify-between">
               <div>
-                <span className="werkbund-coord text-[10px]">[SNIPPET-NEW]</span>
-                <h3 id="new-snippet-modal-title" className="font-display font-bold text-sm uppercase text-ink">
-                  Add New Snippet
+                <span className="text-[10px] font-semibold text-accent-primary uppercase tracking-wider block">Code Repository</span>
+                <h3 id="new-snippet-modal-title" className="text-base font-semibold text-ink">
+                  New Code Snippet
                 </h3>
               </div>
               <button
                 type="button"
                 aria-label="Close modal"
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 text-ink-muted hover:text-ink border-1.5 border-transparent hover:border-border-strong"
+                className="p-1 rounded-full text-ink-muted hover:text-ink hover:bg-subtle transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateSnippet} className="space-y-3">
-              <div className="grid grid-cols-3 gap-2">
+            <form onSubmit={handleCreateSnippet} className="p-5 space-y-3.5">
+              <div className="grid grid-cols-3 gap-2.5">
                 <div className="col-span-2">
-                  <label htmlFor="snippet-title-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                  <label htmlFor="snippet-title-input" className="block text-xs font-medium text-ink-secondary mb-1">
                     Title *
                   </label>
                   <input
@@ -293,29 +301,29 @@ export const SnippetsPage: React.FC = () => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Supabase Auth RLS Policy"
-                    className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal"
+                    className="w-full px-3 py-2 text-xs bg-canvas border border-border-subtle rounded-[10px] text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all min-h-[38px]"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="snippet-lang-select" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                  <label htmlFor="snippet-lang-select" className="block text-xs font-medium text-ink-secondary mb-1">
                     Language
                   </label>
                   <select
                     id="snippet-lang-select"
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="w-full px-2 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink uppercase font-bold focus:outline-none"
+                    className="w-full px-2.5 py-2 text-xs bg-canvas border border-border-subtle rounded-[10px] text-ink font-medium focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all min-h-[38px] capitalize cursor-pointer"
                   >
                     {languages.map((l) => (
-                      <option key={l} value={l}>{l.toUpperCase()}</option>
+                      <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>
                     ))}
                   </select>
                 </div>
               </div>
 
               <div>
-                <label htmlFor="snippet-code-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                <label htmlFor="snippet-code-input" className="block text-xs font-medium text-ink-secondary mb-1">
                   Code Body *
                 </label>
                 <textarea
@@ -325,12 +333,12 @@ export const SnippetsPage: React.FC = () => {
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="// Paste or write syntax snippet here..."
-                  className="w-full px-3 py-2 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal leading-relaxed"
+                  className="w-full px-3 py-2.5 text-xs font-mono bg-canvas border border-border-subtle rounded-[10px] text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all leading-relaxed"
                 />
               </div>
 
               <div>
-                <label htmlFor="snippet-desc-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                <label htmlFor="snippet-desc-input" className="block text-xs font-medium text-ink-secondary mb-1">
                   Description / Context
                 </label>
                 <input
@@ -339,12 +347,12 @@ export const SnippetsPage: React.FC = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Optional usage notes or context..."
-                  className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal"
+                  className="w-full px-3 py-2 text-xs bg-canvas border border-border-subtle rounded-[10px] text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all min-h-[38px]"
                 />
               </div>
 
               <div>
-                <label htmlFor="snippet-tags-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                <label htmlFor="snippet-tags-input" className="block text-xs font-medium text-ink-secondary mb-1">
                   Tags (comma separated)
                 </label>
                 <input
@@ -353,21 +361,21 @@ export const SnippetsPage: React.FC = () => {
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                   placeholder="e.g. auth, security, postgres, helper"
-                  className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal"
+                  className="w-full px-3 py-2 text-xs bg-canvas border border-border-subtle rounded-[10px] text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all min-h-[38px]"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-3 border-t-1.5 border-border-strong">
+              <div className="flex justify-end space-x-2 pt-3 border-t border-border-subtle">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="werkbund-btn werkbund-btn-outline"
+                  className="ios-btn ios-btn-secondary rounded-[10px] text-xs font-medium px-4 min-h-[38px]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="werkbund-btn werkbund-btn-signal"
+                  className="ios-btn ios-btn-primary rounded-[10px] text-xs font-semibold px-4 min-h-[38px]"
                 >
                   Save Snippet
                 </button>

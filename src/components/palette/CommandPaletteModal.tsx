@@ -11,7 +11,7 @@ import {
   Wrench, 
   CloudUpload, 
   Link2, 
-  Video,
+  Video, 
   Moon, 
   Sun, 
   ShieldCheck, 
@@ -230,18 +230,18 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-[#0A0A0A]/75"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/40 backdrop-blur-md transition-all duration-fast"
       onClick={onClose}
     >
       <div 
         role="dialog"
         aria-modal="true"
         aria-label="Command Palette"
-        className="w-full max-w-lg bg-elevated border-1.5 border-border-strong overflow-hidden"
+        className="w-full max-w-lg bg-elevated/95 backdrop-blur-2xl border border-border-subtle rounded-[20px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center px-3.5 py-2.5 border-b-1.5 border-border-strong bg-subtle">
-          <Search className="w-4 h-4 text-ink-muted mr-2.5 flex-shrink-0" />
+        <div className="flex items-center px-4 py-3 border-b border-border-subtle bg-subtle/50">
+          <Search className="w-4 h-4 text-ink-muted mr-3 flex-shrink-0" />
           <input
             ref={inputRef}
             aria-label="Search commands"
@@ -254,11 +254,11 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
-            placeholder="TYPE COMMAND OR MODULE JUMP..."
-            className="w-full bg-transparent text-xs font-mono uppercase tracking-wider text-ink placeholder:text-ink-muted focus:outline-none"
+            placeholder="Search commands or jump to tool..."
+            className="w-full bg-transparent text-sm text-ink placeholder:text-ink-muted focus:outline-none"
           />
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-mono bg-canvas border border-border-strong text-ink font-bold">
-            ESC
+          <kbd className="hidden sm:inline-block px-2 py-0.5 text-[11px] font-mono bg-surface rounded-md border border-border-subtle text-ink-muted shadow-sm">
+            esc
           </kbd>
         </div>
 
@@ -266,11 +266,11 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
           ref={listRef}
           role="listbox"
           aria-label="Commands"
-          className="max-h-72 overflow-y-auto p-1.5 space-y-1 bg-surface"
+          className="max-h-72 overflow-y-auto p-2 space-y-1"
         >
           {filteredCommands.length === 0 ? (
-            <div className="py-6 text-center text-xs font-mono text-ink-muted">
-              [NULL] NO MATCHING COMMANDS FOUND.
+            <div className="py-8 text-center text-xs text-ink-muted">
+              No matching commands found.
             </div>
           ) : (
             filteredCommands.map((cmd, idx) => {
@@ -288,18 +288,20 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
                     onClose();
                   }}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-left text-xs font-mono transition-colors duration-fast border-1.5 ${
+                  className={`w-full flex items-center justify-between px-3 py-2.5 text-left text-xs rounded-[10px] transition-colors duration-fast ${
                     isSelected
-                      ? 'bg-ink text-canvas border-border-strong font-bold'
-                      : 'text-ink bg-surface border-transparent hover:border-border-default'
+                      ? 'bg-accent-primary text-white font-medium shadow-sm'
+                      : 'text-ink hover:bg-subtle/80'
                   }`}
                 >
-                  <div className="flex items-center space-x-2.5">
-                    <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-signal' : 'text-ink-muted'}`} />
-                    <span className="uppercase tracking-wider">{cmd.title}</span>
+                  <div className="flex items-center space-x-3">
+                    <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-ink-muted'}`} />
+                    <span className="font-medium">{cmd.title}</span>
                   </div>
-                  <span className={`text-[10px] font-mono uppercase tracking-wider ${isSelected ? 'text-canvas/80' : 'text-ink-muted'}`}>
-                    [{cmd.category}]
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-subtle text-ink-muted'
+                  }`}>
+                    {cmd.category}
                   </span>
                 </button>
               );
@@ -307,9 +309,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
           )}
         </div>
 
-        <div className="flex items-center justify-between px-3 py-2 border-t-1.5 border-border-strong bg-subtle text-[10px] font-mono text-ink-muted">
-          <span>NAVIGATE <kbd className="px-1 border border-border-strong bg-canvas text-ink">↑</kbd> <kbd className="px-1 border border-border-strong bg-canvas text-ink">↓</kbd></span>
-          <span>SELECT <kbd className="px-1 border border-border-strong bg-canvas text-ink">↵</kbd></span>
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border-subtle bg-subtle/40 text-[11px] text-ink-muted">
+          <span>Navigate <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border-subtle font-mono text-ink">↑</kbd> <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border-subtle font-mono text-ink">↓</kbd></span>
+          <span>Select <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border-subtle font-mono text-ink">↵</kbd></span>
         </div>
       </div>
     </div>

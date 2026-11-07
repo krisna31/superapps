@@ -45,27 +45,27 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return (
         <div
           role="alert"
-          className="min-h-[60vh] flex items-center justify-center p-6 text-ink"
+          className="min-h-[60vh] flex items-center justify-center p-6 text-ink font-sans"
         >
-          <div className="max-w-md w-full bg-elevated border-1.5 border-border-strong p-6 space-y-4 text-center">
-            <div className="w-12 h-12 bg-surface border-1.5 border-status-danger text-status-danger flex items-center justify-center mx-auto">
+          <div className="max-w-md w-full bg-elevated rounded-[20px] border border-border-subtle p-6 space-y-4 text-center shadow-lg">
+            <div className="w-12 h-12 rounded-[14px] bg-status-danger/10 text-status-danger flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
 
-            <div className="space-y-1">
-              <div className="werkbund-coord text-status-danger">
-                [ERR-500] UNCAUGHT RUNTIME EXCEPTION
-              </div>
-              <h2 className="text-base font-display font-bold uppercase tracking-tight text-ink">
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-status-danger">
+                System Exception
+              </span>
+              <h2 className="text-lg font-display font-bold text-ink">
                 Something went wrong in this module
               </h2>
-              <p className="text-xs text-ink-secondary">
+              <p className="text-xs text-ink-secondary leading-relaxed">
                 An unexpected runtime or network chunk error occurred. Your workspace data remains safe in local persistence.
               </p>
             </div>
 
             {this.state.error?.message && (
-              <div className="p-3 bg-subtle border-1.5 border-border-strong text-[11px] font-mono text-status-danger break-words text-left">
+              <div className="p-3 bg-subtle/80 rounded-[10px] border border-border-subtle text-xs font-mono text-status-danger break-words text-left">
                 {this.state.error.message}
               </div>
             )}
@@ -74,7 +74,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <button
                 type="button"
                 onClick={this.handleReload}
-                className="werkbund-btn werkbund-btn-signal text-xs py-2 px-3"
+                className="ios-btn ios-btn-primary rounded-[10px] text-xs font-semibold px-4 py-2 min-h-[40px]"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Reload Module</span>
@@ -82,7 +82,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <button
                 type="button"
                 onClick={this.handleGoHome}
-                className="werkbund-btn werkbund-btn-outline text-xs py-2 px-3"
+                className="ios-btn ios-btn-secondary rounded-[10px] text-xs font-semibold px-4 py-2 min-h-[40px]"
               >
                 <Home className="w-3.5 h-3.5" />
                 <span>Dashboard</span>

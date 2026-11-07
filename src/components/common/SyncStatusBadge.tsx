@@ -112,20 +112,20 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
 
   const getBadgeStyle = () => {
     if (status === 'offline') {
-      return 'bg-subtle text-ink-muted border-border-default';
+      return 'bg-subtle text-ink-muted border-border-default hover:bg-border-subtle';
     }
     if (status === 'guest') {
-      return 'bg-surface text-ink border-border-strong';
+      return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/15';
     }
     if (status === 'syncing') {
-      return 'bg-surface text-status-warning border-status-warning';
+      return 'bg-accent-primary/10 text-accent-primary border-accent-primary/30 hover:bg-accent-primary/15';
     }
-    return 'bg-surface text-ink border-border-strong';
+    return 'bg-status-success/10 text-status-success border-status-success/30 hover:bg-status-success/15';
   };
 
   return (
     <div className={`relative inline-block ${className}`} ref={popoverRef}>
-      {/* Interactive Status Pill Button */}
+      {/* Interactive Status Pill Button - Apple HIG Style */}
       <button
         type="button"
         data-testid="sync-status-badge"
@@ -142,7 +142,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
         onMouseLeave={() => {
           if (!isPinned) setShowPopover(false);
         }}
-        className={`flex items-center space-x-1.5 px-2.5 py-1 border-1.5 text-xs font-mono font-bold transition-colors duration-fast cursor-pointer select-none ${getBadgeStyle()}`}
+        className={`flex items-center space-x-1.5 px-3 py-1 rounded-full border text-xs font-medium transition-all duration-fast cursor-pointer select-none shadow-sm min-h-[32px] ${getBadgeStyle()}`}
       >
         {status === 'offline' && (
           <>
@@ -152,46 +152,48 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
         )}
         {status === 'guest' && (
           <>
-            <span className="w-2 h-2 bg-signal-secondary" />
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
             <span className="hidden sm:inline">Guest (Local)</span>
           </>
         )}
         {status === 'syncing' && (
           <>
-            <RefreshCw className="w-3.5 h-3.5 animate-spin text-status-warning" />
+            <RefreshCw className="w-3.5 h-3.5 animate-spin text-accent-primary" />
             <span className="hidden sm:inline">Syncing...</span>
           </>
         )}
         {status === 'synced' && (
           <>
-            <span className="w-2 h-2 bg-status-success" />
+            <span className="w-2 h-2 rounded-full bg-status-success" />
             <Check className="w-3.5 h-3.5 text-status-success" />
             <span className="hidden sm:inline">Synced</span>
           </>
         )}
       </button>
 
-      {/* Dropdown Popover Card */}
+      {/* Dropdown Popover Card - Apple HIG Frosted Vibrancy */}
       {showPopover && (
         <div
           role="dialog"
           aria-label="Synchronization details"
-          className="absolute right-0 mt-2 w-80 bg-elevated border-1.5 border-border-strong p-3.5 z-50 text-xs font-mono"
+          className="absolute right-0 mt-2 w-80 bg-elevated/95 backdrop-blur-xl border border-border-subtle rounded-[16px] p-4 z-50 text-xs shadow-xl animate-in fade-in zoom-in-95 duration-150"
         >
-          <div className="flex items-center justify-between font-bold text-ink mb-2.5 pb-2 border-b-1.5 border-border-strong">
-            <div className="flex items-center space-x-1.5">
-              <Cloud className="w-4 h-4 text-signal" />
-              <span className="uppercase tracking-wider">Synchronization Center</span>
+          <div className="flex items-center justify-between font-semibold text-ink mb-3 pb-2.5 border-b border-border-subtle">
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 rounded-[8px] bg-accent-primary/10 text-accent-primary flex items-center justify-center">
+                <Cloud className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-semibold text-[13px]">Synchronization Center</span>
             </div>
             <span
-              className={`text-[10px] font-mono px-1.5 py-0.5 border border-border-strong uppercase font-bold ${
+              className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
                 status === 'offline'
                   ? 'bg-subtle text-ink-muted'
                   : status === 'syncing'
-                  ? 'bg-surface text-status-warning'
+                  ? 'bg-accent-primary/10 text-accent-primary'
                   : status === 'guest'
-                  ? 'bg-surface text-ink'
-                  : 'bg-ink text-canvas'
+                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                  : 'bg-status-success/10 text-status-success'
               }`}
             >
               {status === 'offline'
@@ -205,12 +207,12 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
           </div>
 
           {syncError && (
-            <div className="mb-2.5 p-2 bg-surface border-1.5 border-status-danger text-status-danger text-[11px] flex items-start justify-between space-x-2">
+            <div className="mb-3 p-2.5 bg-status-danger/10 border border-status-danger/30 rounded-[10px] text-status-danger text-xs flex items-start justify-between space-x-2">
               <div className="flex items-start space-x-2">
-                <AlertTriangle className="w-3.5 h-3.5 text-status-danger flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="w-4 h-4 text-status-danger flex-shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold block uppercase">Sync Error ({syncError.collection})</span>
-                  <span className="text-[10px] opacity-90">{syncError.message}</span>
+                  <span className="font-semibold block">Sync Error ({syncError.collection})</span>
+                  <span className="text-[11px] opacity-90">{syncError.message}</span>
                 </div>
               </div>
               <button
@@ -219,7 +221,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                   clearLastSyncError();
                   setSyncError(null);
                 }}
-                className="text-status-danger hover:opacity-75 text-xs font-bold px-1"
+                className="text-status-danger hover:opacity-75 text-sm font-bold px-1"
                 title="Dismiss"
               >
                 ×
@@ -227,11 +229,11 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
             </div>
           )}
 
-          {/* Detailed status metrics */}
-          <div className="space-y-1.5 mb-2.5 py-2 px-2.5 bg-subtle border-1.5 border-border-strong text-[11px]">
+          {/* Detailed status metrics - iOS Inset Grouped */}
+          <div className="ios-inset-grouped mb-3 py-2 px-3 space-y-2 bg-subtle/50 text-xs">
             <div className="flex items-center justify-between">
-              <span className="werkbund-coord">Cloud Connection</span>
-              <span className="font-bold text-ink">
+              <span className="text-ink-muted">Cloud Connection</span>
+              <span className="font-medium text-ink">
                 {status === 'offline'
                   ? 'Offline (No internet)'
                   : status === 'syncing'
@@ -246,8 +248,8 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="werkbund-coord">Storage Mode</span>
-              <span className="font-bold text-ink">
+              <span className="text-ink-muted">Storage Mode</span>
+              <span className="font-medium text-ink">
                 {status === 'offline'
                   ? 'Offline Local Cache'
                   : status === 'syncing'
@@ -260,8 +262,8 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="werkbund-coord">Last Sync</span>
-              <span className="font-mono text-ink tabular-nums">
+              <span className="text-ink-muted">Last Sync</span>
+              <span className="text-ink font-mono tabular-nums">
                 {status === 'offline'
                   ? `${formatLastSync(lastSyncTime)} (Paused)`
                   : status === 'syncing'
@@ -275,12 +277,12 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
 
           {/* Contextual actions and details */}
           {status === 'guest' && (
-            <div className="space-y-2">
-              <p className="text-ink-secondary text-[11px] leading-relaxed">
+            <div className="space-y-2.5">
+              <p className="text-ink-secondary text-[12px] leading-relaxed">
                 You are currently in <strong>Guest Mode</strong>. All your notes, tasks, habits, expenses, and snippets are saved locally in this browser.
               </p>
-              <div className="p-2 border-1.5 border-border-strong bg-subtle text-ink text-[11px] flex items-center space-x-2">
-                <Database className="w-3.5 h-3.5 flex-shrink-0 text-signal" />
+              <div className="p-2.5 rounded-[10px] bg-subtle/70 border border-border-subtle text-ink text-[12px] flex items-center space-x-2">
+                <Database className="w-4 h-4 flex-shrink-0 text-accent-primary" />
                 <span>Link your account to backup and sync your guest items to Cloud Firestore!</span>
               </div>
               <button
@@ -291,7 +293,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                   onOpenAuthModal();
                 }}
                 data-testid="link-account-btn"
-                className="werkbund-btn werkbund-btn-signal w-full py-1.5 text-xs"
+                className="ios-btn ios-btn-primary w-full py-2 rounded-[10px] text-xs font-semibold"
               >
                 Sign In / Link Account
               </button>
@@ -299,23 +301,23 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
           )}
 
           {status === 'offline' && (
-            <p className="werkbund-coord leading-relaxed">
+            <p className="text-ink-secondary text-[12px] leading-relaxed">
               Superapps is running offline. All updates are staged locally in IndexedDB/localStorage and will automatically sync once connectivity resumes.
             </p>
           )}
 
           {status === 'synced' && (
-            <div className="space-y-1.5">
-              <p className="text-ink-secondary text-[11px] leading-relaxed">
+            <div className="space-y-2">
+              <p className="text-ink-secondary text-[12px] leading-relaxed">
                 {isLocalSession
                   ? 'Running in local superadmin fallback session. Changes are saved to local browser storage.'
                   : isFirebaseConfigured
                   ? 'All changes synchronize across open tabs and devices in real-time with dual persistence to browser storage and Cloud Firestore.'
                   : 'Running in local storage fallback mode. Configure Firebase secrets in GitHub Actions to enable cloud synchronization across devices.'}
               </p>
-              <div className="flex items-center justify-between text-[11px] text-ink-muted pt-1 border-t-1.5 border-border-strong">
-                <span className="werkbund-coord">Account</span>
-                <span className="font-mono text-ink font-bold truncate max-w-[150px]">
+              <div className="flex items-center justify-between text-xs text-ink-muted pt-2 border-t border-border-subtle">
+                <span>Account</span>
+                <span className="text-ink font-medium truncate max-w-[150px]">
                   {user?.email || user?.displayName || 'User'}
                 </span>
               </div>
