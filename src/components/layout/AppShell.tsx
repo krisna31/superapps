@@ -33,7 +33,6 @@ export const AppShell: React.FC = () => {
   // Android Hardware Back Button & Mobile History Handling
   useEffect(() => {
     const handleBackButton = (e: Event) => {
-      // Priority 1: Close active mobile drawer or modals first
       if (isSidebarOpenMobile) {
         setIsSidebarOpenMobile(false);
         e.preventDefault();
@@ -50,14 +49,12 @@ export const AppShell: React.FC = () => {
         return;
       }
 
-      // Priority 2: If on sub-route, navigate back to Dashboard
       if (location.pathname !== '/') {
         navigate(-1);
       }
     };
 
     window.addEventListener('popstate', handleBackButton);
-    // Tauri custom event if dispatched by native mobile layer
     window.addEventListener('tauri-back-button' as any, handleBackButton);
 
     return () => {
@@ -71,10 +68,12 @@ export const AppShell: React.FC = () => {
       <div
         role="status"
         aria-live="polite"
-        className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center space-y-2.5"
+        className="min-h-screen bg-canvas text-ink flex flex-col items-center justify-center space-y-3"
       >
-        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-mono text-slate-500 dark:text-slate-400">Initializing workspace...</span>
+        <div className="w-8 h-8 border-2 border-signal border-t-transparent animate-spin" />
+        <span className="werkbund-coord text-xs">
+          [SYS-01] INITIALIZING WORKSPACE
+        </span>
       </div>
     );
   }
@@ -85,12 +84,12 @@ export const AppShell: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex transition-colors safe-top safe-bottom safe-left safe-right">
+    <div className="min-h-screen bg-canvas text-ink flex transition-colors safe-top safe-bottom safe-left safe-right">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-1.5 focus:rounded-md focus:bg-slate-900 focus:text-white dark:focus:bg-white dark:focus:text-slate-900 focus:text-xs focus:font-mono focus:shadow-md"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-ink focus:text-canvas focus:border-1.5 focus:border-border-strong focus:text-xs focus:font-mono focus:tracking-wider"
       >
-        Skip to main content
+        [00] Skip to main content
       </a>
 
       {/* Sidebar */}

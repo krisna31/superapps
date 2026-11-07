@@ -5,11 +5,26 @@
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#090d16" />
+    <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://*.firebaseio.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss://*.firebaseio.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self';" />
-    <meta name="description" content="Superapps Workspace - 8 Productivity and Developer Tools in 1 PWA" />
+    <meta name="description" content="Superapps Workspace - 8 Productivity and Developer Tools in 1 PWA | Werkbund Grid Architecture" />
     <title>Superapps Workspace</title>
+    <!-- Google Fonts for Werkbund Grid Theme: Bricolage Grotesque (no ital axis), Public Sans, Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Public+Sans:ital,wght@0,100..900;1,100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+    <!-- Zero-FOUC Theme Polarity Initializer -->
+    <script type="text/javascript">
+      (function() {
+        var saved = localStorage.getItem('superapps_theme') || localStorage.getItem('ui-theme-mode');
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var mode = (saved === 'light' || saved === 'dark') ? saved : (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', mode);
+        document.documentElement.classList.toggle('dark', mode === 'dark');
+      })();
+    </script>
     <!-- GitHub Pages SPA routing script -->
     <script type="text/javascript">
       (function(l) {
@@ -23,7 +38,7 @@
       }(window.location))
     </script>
   </head>
-  <body class="bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
+  <body class="bg-canvas text-ink font-sans min-h-screen antialiased selection:bg-[#0033EE] selection:text-white dark:selection:bg-[#5C85FF] dark:selection:text-[#0A0A0A]">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

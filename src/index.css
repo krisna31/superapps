@@ -1,72 +1,300 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Public+Sans:ital,wght@0,100..900;1,100..900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --bg-main: #f8fafc;
-    --card-bg: #ffffff;
-    --border-color: #e2e8f0;
-    --text-primary: #0f172a;
-    --text-secondary: #64748b;
-    --scrollbar-thumb: #cbd5e1;
-    --scrollbar-track: transparent;
+  :root,
+  [data-theme="light"],
+  .light {
     color-scheme: light;
-    accent-color: #10b981;
+
+    /* 1. Gallery Plaster White Ladders */
+    --bg-canvas: #F7F7F5;
+    --bg-subtle: #EBEBE8;
+    --bg-surface: #FFFFFF;
+    --bg-elevated: #FFFFFF;
+
+    /* 2. Maximum Stark AAA Ink Hierarchy */
+    --text-primary: #0A0A0A;   /* 19.80:1 vs surface */
+    --text-secondary: #383838; /* 11.73:1 vs surface */
+    --text-muted: #595959;     /* 7.00:1 vs surface */
+
+    /* 3. Exposed Structural Grid Skeleton */
+    --border-subtle: #D4D4D0;
+    --border-default: #8F8F8A;
+    --border-strong: #0A0A0A;  /* 1.5px-2px shared grid skeleton */
+
+    /* 4. International Ultramarine & Signal Red-Orange */
+    --accent-primary: #0033EE;
+    --accent-hover: #0022AA;
+    --accent-tint: rgba(0, 51, 238, 0.08);
+    --text-on-accent: #FFFFFF;
+    --accent-secondary: #C93B00;
+
+    --status-success: #006633;
+    --status-warning: #8F5200;
+    --status-danger: #CC1100;
+    --status-info: #0033EE;
+
+    /* 5. 6-Color Bauhaus Primary + Structural Data Scale */
+    --chart-1: #0033EE;
+    --chart-2: #C93B00;
+    --chart-3: #0A0A0A;
+    --chart-4: #006633;
+    --chart-5: #8F5200;
+    --chart-6: #6E6E6A;
+
+    /* Legacy mapping helpers */
+    --bg-main: var(--bg-canvas);
+    --card-bg: var(--bg-surface);
+    --border-color: var(--border-strong);
+    --scrollbar-thumb: #8F8F8A;
+    --scrollbar-track: var(--bg-subtle);
+
+    /* 6. Typography, Zero-Radius Geometry & Shutter Polarity Motion */
+    --font-display: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-sans: 'Public Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --radius-xs: 0px;
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 2px;
+
+    --ctrl-sm: 32px;
+    --ctrl-md: 38px;
+    --ctrl-lg: 46px;
+
+    --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+    --duration-fast: 110ms;
+    --duration-panel: 150ms;
+
+    accent-color: var(--accent-primary);
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
 
+  /* System Dark Polarity Fallback (Pitch Architectural Carbon) */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]):not(.light) {
+      color-scheme: dark;
+      --bg-canvas: #0A0A0A;
+      --bg-subtle: #121212;
+      --bg-surface: #171717;
+      --bg-elevated: #222222;
+      --text-primary: #FAFAFA;
+      --text-secondary: #C2C2C2;
+      --text-muted: #8E8E8E;
+      --border-subtle: #292929;
+      --border-default: #525252;
+      --border-strong: #FAFAFA;
+      --accent-primary: #5C85FF;
+      --accent-hover: #7DA0FF;
+      --accent-tint: rgba(92, 133, 255, 0.16);
+      --text-on-accent: #0A0A0A;
+      --accent-secondary: #E5FF00;
+      --status-success: #33D67A;
+      --status-warning: #FFB800;
+      --status-danger: #FF5C4D;
+      --status-info: #5C85FF;
+      --chart-1: #5C85FF;
+      --chart-2: #E5FF00;
+      --chart-3: #FAFAFA;
+      --chart-4: #33D67A;
+      --chart-5: #FF5C4D;
+      --chart-6: #8E8E8E;
+
+      --bg-main: var(--bg-canvas);
+      --card-bg: var(--bg-surface);
+      --border-color: var(--border-strong);
+      --scrollbar-thumb: #525252;
+      --scrollbar-track: var(--bg-subtle);
+    }
+  }
+
+  /* Explicit Persisted Dark Mode Override */
+  [data-theme="dark"],
   .dark {
-    --bg-main: #090d16;
-    --card-bg: #0f172a;
-    --border-color: #1e293b;
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --scrollbar-thumb: #334155;
-    --scrollbar-track: transparent;
     color-scheme: dark;
-    accent-color: #10b981;
+    --bg-canvas: #0A0A0A;
+    --bg-subtle: #121212;
+    --bg-surface: #171717;
+    --bg-elevated: #222222;
+    --text-primary: #FAFAFA;   /* 17.18:1 vs surface */
+    --text-secondary: #C2C2C2; /* 10.06:1 vs surface */
+    --text-muted: #8E8E8E;     /* 5.47:1 vs surface */
+    --border-subtle: #292929;
+    --border-default: #525252;
+    --border-strong: #FAFAFA;
+    --accent-primary: #5C85FF;
+    --accent-hover: #7DA0FF;
+    --accent-tint: rgba(92, 133, 255, 0.16);
+    --text-on-accent: #0A0A0A;
+    --accent-secondary: #E5FF00;
+    --status-success: #33D67A;
+    --status-warning: #FFB800;
+    --status-danger: #FF5C4D;
+    --status-info: #5C85FF;
+    --chart-1: #5C85FF;
+    --chart-2: #E5FF00;
+    --chart-3: #FAFAFA;
+    --chart-4: #33D67A;
+    --chart-5: #FF5C4D;
+    --chart-6: #8E8E8E;
+
+    --bg-main: var(--bg-canvas);
+    --card-bg: var(--bg-surface);
+    --border-color: var(--border-strong);
+    --scrollbar-thumb: #525252;
+    --scrollbar-track: var(--bg-subtle);
   }
 
   body {
-    background-color: var(--bg-main);
+    margin: 0;
+    background-color: var(--bg-canvas);
     color: var(--text-primary);
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem; /* 15px Public Sans for body */
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
     overflow-wrap: break-word;
     overflow-x: hidden;
   }
 
-  h1, h2, h3 {
+  /* CRITICAL: Never italicize Bricolage Grotesque (no ital axis); use wdth 88 for poster tension */
+  .werkbund-display,
+  h1 {
+    font-family: var(--font-display);
+    font-style: normal;
+    font-weight: 750;
+    font-variation-settings: "opsz" 72, "wdth" 88;
+    line-height: 0.96;
+    letter-spacing: -0.035em;
+    color: var(--text-primary);
     text-wrap: balance;
+    margin-top: 0;
+  }
+
+  h2,
+  .werkbund-cell-header {
+    font-family: var(--font-display);
+    font-style: normal;
+    font-weight: 650;
+    font-variation-settings: "opsz" 22, "wdth" 95;
+    line-height: 1.15;
+    letter-spacing: -0.018em;
+    color: var(--text-primary);
+    margin-top: 0;
+  }
+
+  h3 {
+    font-family: var(--font-display);
+    font-style: normal;
+    font-weight: 600;
+    font-variation-settings: "opsz" 18, "wdth" 95;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    color: var(--text-primary);
+    margin-top: 0;
   }
 }
 
-/* Institutional high-utility typography */
-.tabular-nums {
+/* Seamless Shared-Border Architectural Grid Utility */
+.werkbund-grid {
+  display: grid;
+  background-color: var(--border-strong);
+  gap: 1.5px;
+  border: 1.5px solid var(--border-strong);
+}
+
+.werkbund-grid > * {
+  background-color: var(--bg-surface);
+  padding: 18px 20px;
+}
+
+/* Blueprint Coordinates & Indices */
+.werkbund-coord {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 0.75rem; /* Hard 12px floor */
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Architectural Controls & Shutter Polarity Motion */
+.werkbund-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0px;
+  transition: all 110ms cubic-bezier(0.0, 0.0, 0.2, 1);
+  cursor: pointer;
+  border: 1.5px solid var(--border-strong);
+  user-select: none;
+}
+
+.werkbund-btn-signal {
+  background-color: var(--accent-primary);
+  color: var(--text-on-accent);
+  border-color: var(--accent-primary);
+}
+.werkbund-btn-signal:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.werkbund-btn-outline {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.werkbund-btn-outline:hover {
+  background-color: var(--text-primary);
+  color: var(--bg-canvas);
+}
+
+.tabular-nums,
+table td[data-numeric],
+table th[data-numeric] {
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
 }
 
-/* Legacy fallback for WebKit/Blink browsers without standard scrollbar-color */
-@supports not (scrollbar-color: auto) {
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: var(--scrollbar-track);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
-    border-radius: 9999px;
-  }
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
-/* Mobile Safe Area Insets (Android Notches & Gesture Navigation Bars) */
+/* Zero-radius scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-subtle);
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Mobile Safe Area Insets */
 .safe-top {
   padding-top: env(safe-area-inset-top, 0px);
 }
@@ -80,10 +308,11 @@
   padding-right: env(safe-area-inset-right, 0px);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

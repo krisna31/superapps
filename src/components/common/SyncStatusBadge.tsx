@@ -112,15 +112,15 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
 
   const getBadgeStyle = () => {
     if (status === 'offline') {
-      return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700';
+      return 'bg-subtle text-ink-muted border-border-default';
     }
     if (status === 'guest') {
-      return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+      return 'bg-surface text-ink border-border-strong';
     }
     if (status === 'syncing') {
-      return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+      return 'bg-surface text-status-warning border-status-warning';
     }
-    return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
+    return 'bg-surface text-ink border-border-strong';
   };
 
   return (
@@ -142,30 +142,30 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
         onMouseLeave={() => {
           if (!isPinned) setShowPopover(false);
         }}
-        className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition cursor-pointer select-none ${getBadgeStyle()}`}
+        className={`flex items-center space-x-1.5 px-2.5 py-1 border-1.5 text-xs font-mono font-bold transition-colors duration-fast cursor-pointer select-none ${getBadgeStyle()}`}
       >
         {status === 'offline' && (
           <>
-            <CloudOff className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+            <CloudOff className="w-3.5 h-3.5 text-status-danger" />
             <span className="hidden sm:inline">Offline</span>
           </>
         )}
         {status === 'guest' && (
           <>
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <span className="w-2 h-2 bg-signal-secondary" />
             <span className="hidden sm:inline">Guest (Local)</span>
           </>
         )}
         {status === 'syncing' && (
           <>
-            <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-500" />
+            <RefreshCw className="w-3.5 h-3.5 animate-spin text-status-warning" />
             <span className="hidden sm:inline">Syncing...</span>
           </>
         )}
         {status === 'synced' && (
           <>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span className="w-2 h-2 bg-status-success" />
+            <Check className="w-3.5 h-3.5 text-status-success" />
             <span className="hidden sm:inline">Synced</span>
           </>
         )}
@@ -176,22 +176,22 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
         <div
           role="dialog"
           aria-label="Synchronization details"
-          className="absolute right-0 mt-2 w-80 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 shadow-lg z-50 text-xs"
+          className="absolute right-0 mt-2 w-80 bg-elevated border-1.5 border-border-strong p-3.5 z-50 text-xs font-mono"
         >
-          <div className="flex items-center justify-between font-semibold text-slate-900 dark:text-white mb-2.5 pb-2 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between font-bold text-ink mb-2.5 pb-2 border-b-1.5 border-border-strong">
             <div className="flex items-center space-x-1.5">
-              <Cloud className="w-4 h-4 text-emerald-500" />
-              <span>Synchronization Center</span>
+              <Cloud className="w-4 h-4 text-signal" />
+              <span className="uppercase tracking-wider">Synchronization Center</span>
             </div>
             <span
-              className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+              className={`text-[10px] font-mono px-1.5 py-0.5 border border-border-strong uppercase font-bold ${
                 status === 'offline'
-                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                  ? 'bg-subtle text-ink-muted'
                   : status === 'syncing'
-                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                  ? 'bg-surface text-status-warning'
                   : status === 'guest'
-                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                  ? 'bg-surface text-ink'
+                  : 'bg-ink text-canvas'
               }`}
             >
               {status === 'offline'
@@ -205,11 +205,11 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
           </div>
 
           {syncError && (
-            <div className="mb-2.5 p-2 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-[11px] flex items-start justify-between space-x-2">
+            <div className="mb-2.5 p-2 bg-surface border-1.5 border-status-danger text-status-danger text-[11px] flex items-start justify-between space-x-2">
               <div className="flex items-start space-x-2">
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="w-3.5 h-3.5 text-status-danger flex-shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-semibold block">Sync Error ({syncError.collection})</span>
+                  <span className="font-bold block uppercase">Sync Error ({syncError.collection})</span>
                   <span className="text-[10px] opacity-90">{syncError.message}</span>
                 </div>
               </div>
@@ -219,7 +219,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                   clearLastSyncError();
                   setSyncError(null);
                 }}
-                className="text-rose-500 hover:text-rose-700 text-xs font-bold px-1"
+                className="text-status-danger hover:opacity-75 text-xs font-bold px-1"
                 title="Dismiss"
               >
                 ×
@@ -228,10 +228,10 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
           )}
 
           {/* Detailed status metrics */}
-          <div className="space-y-1.5 mb-2.5 py-2 px-2.5 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-[11px]">
+          <div className="space-y-1.5 mb-2.5 py-2 px-2.5 bg-subtle border-1.5 border-border-strong text-[11px]">
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">Cloud Connection</span>
-              <span className="font-medium text-slate-800 dark:text-slate-200">
+              <span className="werkbund-coord">Cloud Connection</span>
+              <span className="font-bold text-ink">
                 {status === 'offline'
                   ? 'Offline (No internet)'
                   : status === 'syncing'
@@ -246,8 +246,8 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">Storage Mode</span>
-              <span className="font-medium text-slate-800 dark:text-slate-200">
+              <span className="werkbund-coord">Storage Mode</span>
+              <span className="font-bold text-ink">
                 {status === 'offline'
                   ? 'Offline Local Cache'
                   : status === 'syncing'
@@ -260,8 +260,8 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">Last Sync</span>
-              <span className="font-mono text-slate-800 dark:text-slate-200 tabular-nums">
+              <span className="werkbund-coord">Last Sync</span>
+              <span className="font-mono text-ink tabular-nums">
                 {status === 'offline'
                   ? `${formatLastSync(lastSyncTime)} (Paused)`
                   : status === 'syncing'
@@ -276,11 +276,11 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
           {/* Contextual actions and details */}
           {status === 'guest' && (
             <div className="space-y-2">
-              <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
+              <p className="text-ink-secondary text-[11px] leading-relaxed">
                 You are currently in <strong>Guest Mode</strong>. All your notes, tasks, habits, expenses, and snippets are saved locally in this browser.
               </p>
-              <div className="p-2 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px] flex items-center space-x-2">
-                <Database className="w-3.5 h-3.5 flex-shrink-0 text-amber-500" />
+              <div className="p-2 border-1.5 border-border-strong bg-subtle text-ink text-[11px] flex items-center space-x-2">
+                <Database className="w-3.5 h-3.5 flex-shrink-0 text-signal" />
                 <span>Link your account to backup and sync your guest items to Cloud Firestore!</span>
               </div>
               <button
@@ -291,7 +291,7 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
                   onOpenAuthModal();
                 }}
                 data-testid="link-account-btn"
-                className="w-full py-1.5 px-3 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs transition"
+                className="werkbund-btn werkbund-btn-signal w-full py-1.5 text-xs"
               >
                 Sign In / Link Account
               </button>
@@ -299,23 +299,23 @@ export const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({ onOpenAuthModa
           )}
 
           {status === 'offline' && (
-            <p className="text-slate-500 text-[11px] leading-relaxed">
+            <p className="werkbund-coord leading-relaxed">
               Superapps is running offline. All updates are staged locally in IndexedDB/localStorage and will automatically sync once connectivity resumes.
             </p>
           )}
 
           {status === 'synced' && (
             <div className="space-y-1.5">
-              <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
+              <p className="text-ink-secondary text-[11px] leading-relaxed">
                 {isLocalSession
                   ? 'Running in local superadmin fallback session. Changes are saved to local browser storage.'
                   : isFirebaseConfigured
                   ? 'All changes synchronize across open tabs and devices in real-time with dual persistence to browser storage and Cloud Firestore.'
                   : 'Running in local storage fallback mode. Configure Firebase secrets in GitHub Actions to enable cloud synchronization across devices.'}
               </p>
-              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800">
-                <span>Account</span>
-                <span className="font-mono text-slate-700 dark:text-slate-300 truncate max-w-[150px]">
+              <div className="flex items-center justify-between text-[11px] text-ink-muted pt-1 border-t-1.5 border-border-strong">
+                <span className="werkbund-coord">Account</span>
+                <span className="font-mono text-ink font-bold truncate max-w-[150px]">
                   {user?.email || user?.displayName || 'User'}
                 </span>
               </div>

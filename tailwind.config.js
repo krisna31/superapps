@@ -8,25 +8,83 @@ export default {
   theme: {
     extend: {
       colors: {
+        canvas: 'var(--bg-canvas)',
+        subtle: 'var(--bg-subtle)',
+        surface: 'var(--bg-surface)',
+        elevated: 'var(--bg-elevated)',
+        ink: {
+          DEFAULT: 'var(--text-primary)',
+          secondary: 'var(--text-secondary)',
+          muted: 'var(--text-muted)',
+        },
+        border: {
+          subtle: 'var(--border-subtle)',
+          DEFAULT: 'var(--border-default)',
+          strong: 'var(--border-strong)',
+        },
+        signal: {
+          DEFAULT: 'var(--accent-primary)',
+          hover: 'var(--accent-hover)',
+          tint: 'var(--accent-tint)',
+          secondary: 'var(--accent-secondary)',
+        },
+        status: {
+          success: 'var(--status-success)',
+          warning: 'var(--status-warning)',
+          danger: 'var(--status-danger)',
+          info: 'var(--status-info)',
+        },
+        // Unified backwards-compatible semantic mapping to Werkbund Grid tokens
         brand: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
+          50: '#F7F7F5',
+          100: '#EBEBE8',
+          200: '#D4D4D0',
+          500: 'var(--accent-primary)',
+          600: 'var(--accent-hover)',
+          700: '#0022AA',
         },
         dark: {
-          bg: '#090d16',
-          card: '#0f172a',
-          cardHover: '#1e293b',
-          border: '#1e293b',
-          muted: '#94a3b8',
+          bg: 'var(--bg-canvas)',
+          card: 'var(--bg-surface)',
+          cardHover: 'var(--bg-subtle)',
+          border: 'var(--border-strong)',
+          muted: 'var(--text-muted)',
         }
       },
+      borderWidth: {
+        '1.5': '1.5px',
+      },
+      borderRadius: {
+        none: '0px',
+        xs: '0px',
+        sm: '0px',
+        DEFAULT: '0px',
+        md: '0px',
+        lg: '2px',
+        xl: '2px',
+        '2xl': '2px',
+        full: '2px',
+      },
+      boxShadow: {
+        none: 'none',
+        sm: 'none',
+        DEFAULT: 'none',
+        md: 'none',
+        lg: 'none',
+        xl: 'none',
+        '2xl': 'none',
+      },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        display: ['"Bricolage Grotesque"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['"Public Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        mono: ['"Space Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+      },
+      transitionDuration: {
+        fast: '110ms',
+        panel: '150ms',
+      },
+      transitionTimingFunction: {
+        werkbund: 'cubic-bezier(0.0, 0.0, 0.2, 1)',
       }
     },
   },

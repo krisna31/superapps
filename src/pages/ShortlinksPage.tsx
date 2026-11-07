@@ -34,7 +34,6 @@ export const ShortlinksPage: React.FC = () => {
   useEffect(() => {
     const unsubscribe = dataService.subscribeToShortlinks(userId, (data) => {
       setLinks(data);
-      // Keep selected analytics modal in sync if new click arrives
       setSelectedAnalyticsLink((prev) => {
         if (!prev) return null;
         return data.find((l) => l.slug === prev.slug) || prev;
@@ -48,7 +47,6 @@ export const ShortlinksPage: React.FC = () => {
     };
   }, [userId, searchParams]);
 
-  // Dismiss modals with Escape key
   useEffect(() => {
     if (!isModalOpen && !selectedAnalyticsLink) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -123,19 +121,20 @@ export const ShortlinksPage: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-1.5 border-border-strong pb-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <div className="werkbund-coord mb-1">[MODULE-08] TRAFFIC REDIRECT & CLICK ANALYTICS</div>
+          <h1 className="text-2xl font-display font-bold uppercase tracking-tight text-ink">
             URL Shortlinks
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Create custom shortlinks with click tracking and visitor analytics
+          <p className="text-xs text-ink-secondary mt-0.5">
+            Architectural vanity URL shortener with real-time geo-analytics and safe routing.
           </p>
         </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs transition self-start sm:self-auto"
+          className="werkbund-btn werkbund-btn-signal self-start sm:self-auto"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>New Shortlink</span>
@@ -143,38 +142,38 @@ export const ShortlinksPage: React.FC = () => {
       </div>
 
       {/* Shortlink List Table */}
-      <div className="rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="p-2.5 px-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-mono">
-          <span className="font-semibold text-slate-500 uppercase tracking-wider">
+      <div className="bg-surface border-1.5 border-border-strong overflow-hidden">
+        <div className="p-3 border-b-1.5 border-border-strong flex items-center justify-between text-xs font-mono bg-subtle">
+          <span className="font-bold text-ink uppercase tracking-wider">
             Active Links ({links.length})
           </span>
-          <span className="text-slate-400 tabular-nums">
+          <span className="text-ink-muted tabular-nums">
             Total Clicks: {links.reduce((acc, l) => acc + l.clicks, 0)}
           </span>
         </div>
 
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="divide-y-1.5 divide-border-strong">
           {links.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400 font-mono">
-              No shortlinks created yet. Click "New Shortlink" to create your first link.
+            <div className="py-12 text-center text-xs font-mono text-ink-muted">
+              [NULL] NO SHORTLINKS CREATED YET. CLICK "NEW SHORTLINK" TO GENERATE A ROUTE.
             </div>
           ) : (
             links.map((link) => (
               <div
                 key={link.slug}
-                className="py-2.5 px-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
+                className="py-3 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-subtle transition-colors duration-fast"
               >
-                <div className="space-y-0.5 min-w-0">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center space-x-2.5">
+                    <span className="font-mono text-xs font-bold text-canvas bg-signal px-2 py-0.5 border border-border-strong">
                       /r/{link.slug}
                     </span>
-                    <span className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">
+                    <span className="text-xs font-bold text-ink uppercase truncate">
                       {link.title || link.slug}
                     </span>
                   </div>
 
-                  <p className="text-[11px] font-mono text-slate-400 max-w-lg truncate">
+                  <p className="text-[11px] font-mono text-ink-secondary max-w-lg truncate">
                     {link.originalUrl}
                   </p>
                 </div>
@@ -182,20 +181,20 @@ export const ShortlinksPage: React.FC = () => {
                 <div className="flex items-center space-x-2 flex-shrink-0">
                   <button
                     onClick={() => setSelectedAnalyticsLink(link)}
-                    className="flex items-center space-x-1.5 px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-mono tabular-nums transition border border-transparent hover:border-slate-300 dark:hover:border-slate-600"
+                    className="flex items-center space-x-1.5 px-2.5 py-1 bg-subtle border-1.5 border-border-strong hover:bg-ink hover:text-canvas text-ink text-xs font-mono tabular-nums font-bold transition-colors duration-fast"
                     title="View detailed click analytics and tracker"
                   >
-                    <BarChart2 className="w-3 h-3 text-sky-500" />
+                    <BarChart2 className="w-3.5 h-3.5 text-signal" />
                     <span>{link.clicks} clicks</span>
                   </button>
 
                   <button
                     onClick={() => handleCopyLink(link.slug)}
-                    className="p-1 rounded text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    className="p-1.5 border border-border-strong bg-canvas text-ink hover:bg-ink hover:text-canvas transition-colors duration-fast"
                     title="Copy full shortlink"
                   >
                     {copiedSlug === link.slug ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <Check className="w-3.5 h-3.5 text-status-success" />
                     ) : (
                       <Copy className="w-3.5 h-3.5" />
                     )}
@@ -205,7 +204,7 @@ export const ShortlinksPage: React.FC = () => {
                     href={`/r/${link.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1 rounded text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    className="p-1.5 border border-border-strong bg-canvas text-ink hover:bg-signal hover:text-canvas transition-colors duration-fast"
                     title="Test redirect"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -213,7 +212,7 @@ export const ShortlinksPage: React.FC = () => {
 
                   <button
                     onClick={() => handleDeleteLink(link.slug)}
-                    className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    className="p-1.5 border border-border-strong bg-canvas text-ink hover:bg-status-danger hover:text-white transition-colors duration-fast"
                     title="Delete link"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -228,7 +227,7 @@ export const ShortlinksPage: React.FC = () => {
       {/* New Shortlink Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A0A0A]/75"
           onClick={() => setIsModalOpen(false)}
         >
           <div
@@ -236,69 +235,68 @@ export const ShortlinksPage: React.FC = () => {
             aria-modal="true"
             aria-labelledby="new-shortlink-modal-title"
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg"
+            className="w-full max-w-sm bg-elevated border-1.5 border-border-strong p-6"
           >
-            <div className="flex items-center justify-between mb-3.5">
-              <h3 id="new-shortlink-modal-title" className="font-semibold text-sm text-slate-900 dark:text-white">Create Shortlink</h3>
+            <div className="flex items-center justify-between mb-4 pb-2 border-b-1.5 border-border-strong">
+              <div>
+                <span className="werkbund-coord text-[10px]">[ROUTE-NEW]</span>
+                <h3 id="new-shortlink-modal-title" className="font-display font-bold text-sm uppercase text-ink">
+                  Create Shortlink
+                </h3>
+              </div>
               <button
                 type="button"
                 aria-label="Close modal"
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="p-1 text-ink-muted hover:text-ink border-1.5 border-transparent hover:border-border-strong"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {error && (
-              <div className="mb-3.5 p-2 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-mono">
+              <div className="p-2.5 mb-3 bg-surface border-1.5 border-status-danger text-status-danger text-xs font-mono">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleCreateShortlink} className="space-y-3">
               <div>
-                <label htmlFor="shortlink-url-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="shortlink-url-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
                   Destination URL *
                 </label>
                 <input
                   id="shortlink-url-input"
                   type="text"
                   required
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck={false}
                   value={originalUrl}
                   onChange={(e) => setOriginalUrl(e.target.value)}
                   placeholder="https://example.com/very/long/url"
-                  className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono"
+                  className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal"
                 />
               </div>
 
               <div>
-                <label htmlFor="shortlink-slug-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
-                  Custom Slug / Alias (Optional)
+                <label htmlFor="shortlink-slug-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                  Custom Slug (optional)
                 </label>
                 <div className="flex items-center">
-                  <span className="px-2.5 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 text-slate-400 rounded-l-md font-mono">
+                  <span className="px-2.5 py-1.5 border-1.5 border-r-0 border-border-strong bg-subtle text-xs font-mono text-ink-muted">
                     /r/
                   </span>
                   <input
                     id="shortlink-slug-input"
                     type="text"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck={false}
                     value={customSlug}
                     onChange={(e) => setCustomSlug(e.target.value)}
-                    placeholder="my-link (leave empty to randomize)"
-                    className="w-full px-2.5 py-1.5 text-xs rounded-r-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono"
+                    placeholder="my-link"
+                    className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="shortlink-title-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="shortlink-title-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
                   Title / Description
                 </label>
                 <input
@@ -307,21 +305,21 @@ export const ShortlinksPage: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Portfolio Website"
-                  className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex justify-end space-x-2 pt-3 border-t-1.5 border-border-strong">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="werkbund-btn werkbund-btn-outline"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 transition"
+                  className="werkbund-btn werkbund-btn-signal"
                 >
                   Create Link
                 </button>
@@ -335,7 +333,6 @@ export const ShortlinksPage: React.FC = () => {
       {selectedAnalyticsLink && (() => {
         const clicks = Array.isArray(selectedAnalyticsLink.recentClicks) ? selectedAnalyticsLink.recentClicks : [];
         
-        // Geo Aggregation
         const countryCounts: Record<string, { name: string; count: number; code?: string }> = {};
         clicks.forEach((c) => {
           const key = c.country || c.countryCode || 'Unknown';
@@ -347,7 +344,6 @@ export const ShortlinksPage: React.FC = () => {
         const sortedCountries = Object.values(countryCounts).sort((a, b) => b.count - a.count);
         const topCountry = sortedCountries[0]?.name || 'No data yet';
 
-        // Device Aggregation
         const deviceCounts: Record<string, number> = {};
         clicks.forEach((c) => {
           const dev = c.device || 'Desktop';
@@ -355,7 +351,6 @@ export const ShortlinksPage: React.FC = () => {
         });
         const topDevice = Object.entries(deviceCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Desktop';
 
-        // Referrer Aggregation
         const referrerCounts: Record<string, number> = {};
         clicks.forEach((c) => {
           const ref = c.referrer || 'Direct';
@@ -365,7 +360,7 @@ export const ShortlinksPage: React.FC = () => {
 
         return (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#0A0A0A]/75"
             onClick={() => setSelectedAnalyticsLink(null)}
           >
             <div
@@ -373,23 +368,23 @@ export const ShortlinksPage: React.FC = () => {
               aria-modal="true"
               aria-labelledby="shortlink-analytics-modal-title"
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
+              className="w-full max-w-2xl max-h-[90vh] flex flex-col bg-elevated border-1.5 border-border-strong overflow-hidden"
             >
               {/* Modal Header */}
-              <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
+              <div className="p-4 border-b-1.5 border-border-strong flex items-center justify-between flex-shrink-0 bg-subtle">
                 <div className="min-w-0 pr-3">
                   <div className="flex items-center space-x-2">
-                    <span className="p-1 rounded bg-sky-500/10 text-sky-500">
+                    <span className="p-1 bg-surface border border-border-strong text-signal">
                       <BarChart2 className="w-4 h-4" />
                     </span>
-                    <h3 id="shortlink-analytics-modal-title" className="font-semibold text-sm text-slate-900 dark:text-white truncate">
+                    <h3 id="shortlink-analytics-modal-title" className="font-display font-bold text-sm uppercase text-ink truncate">
                       Analytics & Click Tracker
                     </h3>
-                    <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                    <span className="font-mono text-xs font-bold text-canvas bg-signal px-2 py-0.5 border border-border-strong">
                       /r/{selectedAnalyticsLink.slug}
                     </span>
                   </div>
-                  <p className="text-[11px] font-mono text-slate-400 truncate mt-1">
+                  <p className="text-[11px] font-mono text-ink-muted truncate mt-1">
                     {selectedAnalyticsLink.originalUrl}
                   </p>
                 </div>
@@ -398,48 +393,48 @@ export const ShortlinksPage: React.FC = () => {
                   type="button"
                   aria-label="Close analytics modal"
                   onClick={() => setSelectedAnalyticsLink(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  className="p-1.5 border-1.5 border-border-strong text-ink-muted hover:text-ink hover:bg-surface transition-colors duration-fast"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Scrollable Analytics Body */}
-              <div className="p-4 space-y-4 overflow-y-auto flex-1 font-sans text-xs">
+              <div className="p-4 space-y-4 overflow-y-auto flex-1 font-mono text-xs">
                 {/* 4 Metric KPI Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
-                    <span className="text-[10px] font-mono uppercase text-slate-400 block mb-1">
+                  <div className="p-3 bg-surface border-1.5 border-border-strong">
+                    <span className="werkbund-coord block mb-1">
                       Total Clicks
                     </span>
-                    <span className="text-lg font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+                    <span className="text-xl font-bold font-mono text-ink tabular-nums">
                       {selectedAnalyticsLink.clicks}
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
-                    <span className="text-[10px] font-mono uppercase text-slate-400 block mb-1">
+                  <div className="p-3 bg-surface border-1.5 border-border-strong">
+                    <span className="werkbund-coord block mb-1">
                       Top Country
                     </span>
-                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate block">
+                    <span className="text-xs font-bold text-ink truncate block uppercase">
                       {topCountry}
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
-                    <span className="text-[10px] font-mono uppercase text-slate-400 block mb-1">
+                  <div className="p-3 bg-surface border-1.5 border-border-strong">
+                    <span className="werkbund-coord block mb-1">
                       Top Device
                     </span>
-                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate block">
+                    <span className="text-xs font-bold text-ink truncate block uppercase">
                       {topDevice}
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
-                    <span className="text-[10px] font-mono uppercase text-slate-400 block mb-1">
+                  <div className="p-3 bg-surface border-1.5 border-border-strong">
+                    <span className="werkbund-coord block mb-1">
                       Top Referrer
                     </span>
-                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate block">
+                    <span className="text-xs font-bold text-ink truncate block uppercase">
                       {topReferrer}
                     </span>
                   </div>
@@ -447,30 +442,30 @@ export const ShortlinksPage: React.FC = () => {
 
                 {/* Country Distribution Breakdown */}
                 {sortedCountries.length > 0 && (
-                  <div className="p-3.5 rounded-lg bg-slate-50/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800">
+                  <div className="p-3.5 bg-surface border-1.5 border-border-strong">
                     <div className="flex items-center space-x-1.5 mb-2.5">
-                      <Globe className="w-3.5 h-3.5 text-emerald-500" />
-                      <h4 className="font-semibold text-xs text-slate-800 dark:text-slate-200">
+                      <Globe className="w-3.5 h-3.5 text-signal" />
+                      <h4 className="font-bold text-xs text-ink uppercase tracking-wider">
                         Geographic Breakdown ({sortedCountries.length} countries)
                       </h4>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       {sortedCountries.map((item) => {
                         const totalTracked = clicks.length || 1;
                         const pct = Math.round((item.count / totalTracked) * 100);
                         return (
                           <div key={item.name} className="flex items-center justify-between text-[11px] font-mono">
-                            <span className="text-slate-700 dark:text-slate-300 w-44 truncate">
+                            <span className="text-ink font-bold w-44 truncate uppercase">
                               {item.code ? `${item.code} - ` : ''}{item.name}
                             </span>
-                            <div className="flex-1 mx-3 bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                            <div className="flex-1 mx-3 bg-subtle border border-border-strong h-2.5 p-0.5">
                               <div
-                                className="bg-emerald-500 h-full rounded-full"
+                                className="bg-signal h-full"
                                 style={{ width: `${pct}%` }}
                               />
                             </div>
-                            <span className="text-slate-400 tabular-nums w-12 text-right">
+                            <span className="text-ink-muted tabular-nums w-14 text-right font-bold">
                               {item.count} ({pct}%)
                             </span>
                           </div>
@@ -481,43 +476,43 @@ export const ShortlinksPage: React.FC = () => {
                 )}
 
                 {/* Real-Time Click Logs Ledger */}
-                <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
-                  <div className="p-2.5 px-3 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] font-mono">
-                    <span className="font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
-                      <Activity className="w-3.5 h-3.5 text-sky-500" />
+                <div className="border-1.5 border-border-strong bg-surface overflow-hidden">
+                  <div className="p-2.5 px-3 bg-subtle border-b-1.5 border-border-strong flex items-center justify-between text-[11px] font-mono">
+                    <span className="font-bold text-ink uppercase tracking-wider flex items-center space-x-1.5">
+                      <Activity className="w-3.5 h-3.5 text-signal" />
                       <span>Detailed Click Log (Last {clicks.length})</span>
                     </span>
-                    <span className="text-slate-400">
-                      Logged in real-time
+                    <span className="werkbund-coord">
+                      REAL-TIME LOG
                     </span>
                   </div>
 
                   {clicks.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-slate-400 font-mono px-4">
-                      No detailed click logs recorded yet. Visit or share <code className="text-emerald-500 font-semibold">/r/{selectedAnalyticsLink.slug}</code> to begin recording click IP, country, and device information.
+                    <div className="py-8 text-center text-xs text-ink-muted font-mono px-4">
+                      [NULL] NO DETAILED CLICK LOGS RECORDED YET. VISIT OR SHARE <code className="text-signal font-bold">/r/{selectedAnalyticsLink.slug}</code>.
                     </div>
                   ) : (
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
+                    <div className="divide-y-1.5 divide-border-strong max-h-64 overflow-y-auto">
                       {clicks.map((log, idx) => (
                         <div
                           key={idx}
-                          className="p-2.5 px-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] font-mono hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                          className="p-2.5 px-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] font-mono hover:bg-subtle"
                         >
                           <div className="flex items-center space-x-2">
-                            <span className="text-slate-400">
+                            <span className="text-ink-muted">
                               {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </span>
-                            <span className="text-slate-900 dark:text-slate-200 font-semibold">
+                            <span className="text-ink font-bold uppercase">
                               {log.country || log.countryCode || 'Global'} {log.city ? `(${log.city})` : ''}
                             </span>
                             {log.ip && (
-                              <span className="text-[10px] px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
+                              <span className="text-[10px] px-1 py-0.2 bg-canvas text-ink border border-border-strong">
                                 {log.ip}
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center space-x-2 text-slate-400 text-[10px]">
+                          <div className="flex items-center space-x-2 text-ink-secondary text-[10px]">
                             <span>{log.device || 'Desktop'}</span>
                             <span>•</span>
                             <span>{log.os || 'OS'} / {log.browser || 'Browser'}</span>
@@ -534,11 +529,11 @@ export const ShortlinksPage: React.FC = () => {
               </div>
 
               {/* Modal Footer */}
-              <div className="p-3 px-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex justify-end">
+              <div className="p-3 px-4 border-t-1.5 border-border-strong bg-subtle flex justify-end">
                 <button
                   type="button"
                   onClick={() => setSelectedAnalyticsLink(null)}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 transition"
+                  className="werkbund-btn werkbund-btn-signal"
                 >
                   Close Analytics
                 </button>

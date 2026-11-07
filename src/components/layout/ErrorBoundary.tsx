@@ -45,33 +45,36 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return (
         <div
           role="alert"
-          className="min-h-[60vh] flex items-center justify-center p-6 text-slate-900 dark:text-slate-100"
+          className="min-h-[60vh] flex items-center justify-center p-6 text-ink"
         >
-          <div className="max-w-md w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4 text-center">
-            <div className="w-10 h-10 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-5 h-5" />
+          <div className="max-w-md w-full bg-elevated border-1.5 border-border-strong p-6 space-y-4 text-center">
+            <div className="w-12 h-12 bg-surface border-1.5 border-status-danger text-status-danger flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
             </div>
 
             <div className="space-y-1">
-              <h2 className="text-base font-bold tracking-tight">
+              <div className="werkbund-coord text-status-danger">
+                [ERR-500] UNCAUGHT RUNTIME EXCEPTION
+              </div>
+              <h2 className="text-base font-display font-bold uppercase tracking-tight text-ink">
                 Something went wrong in this module
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                An unexpected runtime or network chunk error occurred. Your workspace data remains safe.
+              <p className="text-xs text-ink-secondary">
+                An unexpected runtime or network chunk error occurred. Your workspace data remains safe in local persistence.
               </p>
             </div>
 
             {this.state.error?.message && (
-              <div className="p-2.5 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px] font-mono text-rose-600 dark:text-rose-400 break-words text-left">
+              <div className="p-3 bg-subtle border-1.5 border-border-strong text-[11px] font-mono text-status-danger break-words text-left">
                 {this.state.error.message}
               </div>
             )}
 
-            <div className="flex items-center justify-center space-x-2 pt-1">
+            <div className="flex items-center justify-center space-x-3 pt-2">
               <button
                 type="button"
                 onClick={this.handleReload}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 text-xs font-mono font-medium transition-colors"
+                className="werkbund-btn werkbund-btn-signal text-xs py-2 px-3"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Reload Module</span>
@@ -79,7 +82,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <button
                 type="button"
                 onClick={this.handleGoHome}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-mono text-slate-700 dark:text-slate-300 transition-colors"
+                className="werkbund-btn werkbund-btn-outline text-xs py-2 px-3"
               >
                 <Home className="w-3.5 h-3.5" />
                 <span>Dashboard</span>

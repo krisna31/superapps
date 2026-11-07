@@ -109,32 +109,33 @@ export const DropZonePage: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Top Header */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-3.5">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+      <div className="border-b-1.5 border-border-strong pb-4">
+        <div className="werkbund-coord mb-1">[MODULE-07] DISTRIBUTED FILE SHARING & STORAGE</div>
+        <h1 className="text-2xl font-display font-bold uppercase tracking-tight text-ink">
           Dropzone File Sharing
         </h1>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Upload and share files backed by Firebase Storage or local browser storage
+        <p className="text-xs text-ink-secondary mt-0.5">
+          Upload and share documents backed by Firebase Cloud Storage or local browser persistence.
         </p>
       </div>
 
       {!isFirebaseConfigured && (
-        <div className="p-3 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex items-center space-x-2">
+        <div className="p-3 bg-surface border-1.5 border-status-warning text-status-warning text-xs flex items-center space-x-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          <span>
+          <span className="font-mono uppercase font-bold text-[11px]">
             Firebase Storage requires configured credentials. Files dropped currently run in local demo mode.
           </span>
         </div>
       )}
 
       {error && (
-        <div className="p-3 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center space-x-2">
+        <div className="p-3 bg-surface border-1.5 border-status-danger text-status-danger text-xs flex items-center space-x-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          <span>{error}</span>
+          <span className="font-mono text-[11px]">{error}</span>
         </div>
       )}
 
-      {/* Upload Drop Zone */}
+      {/* Upload Drop Zone: 1.5px Dashed Grid Frame */}
       <div
         role="button"
         tabIndex={uploading ? -1 : 0}
@@ -160,12 +161,12 @@ export const DropZonePage: React.FC = () => {
           setIsDraggingOver(false);
           if (!uploading) handleFileUpload(e.dataTransfer.files);
         }}
-        className={`p-6 rounded-lg border border-dashed transition-all cursor-pointer flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+        className={`p-8 border-1.5 border-dashed transition-colors duration-fast cursor-pointer flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal ${
           uploading
-            ? 'border-emerald-500 bg-emerald-500/5 cursor-wait'
+            ? 'border-signal bg-signal-tint cursor-wait'
             : isDraggingOver
-            ? 'border-emerald-500 bg-emerald-500/5'
-            : 'border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40'
+            ? 'border-signal bg-signal-tint'
+            : 'border-border-strong bg-surface hover:bg-subtle'
         }`}
       >
         <input
@@ -177,18 +178,18 @@ export const DropZonePage: React.FC = () => {
           onChange={(e) => handleFileUpload(e.target.files)}
         />
 
-        <div className={`w-9 h-9 rounded-md flex items-center justify-center mb-2 ${
+        <div className={`w-10 h-10 border-1.5 border-border-strong flex items-center justify-center mb-3 ${
           uploading 
-            ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 animate-pulse'
-            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+            ? 'bg-signal text-canvas animate-pulse'
+            : 'bg-subtle text-ink'
         }`}>
-          <CloudUpload className="w-4 h-4" />
+          <CloudUpload className="w-5 h-5" />
         </div>
 
-        <h3 className="font-semibold text-xs text-slate-800 dark:text-slate-200">
+        <h3 className="font-display font-bold text-sm uppercase text-ink">
           {uploading ? (
             uploadProgress ? (
-              <span>Uploading {uploadProgress.currentFileIndex} of {uploadProgress.totalFiles}: <span className="font-mono text-emerald-500">{uploadProgress.fileName}</span></span>
+              <span>Uploading {uploadProgress.currentFileIndex} of {uploadProgress.totalFiles}: <span className="font-mono text-signal">{uploadProgress.fileName}</span></span>
             ) : 'Processing upload...'
           ) : (
             'Click or drag and drop files here to upload'
@@ -197,55 +198,55 @@ export const DropZonePage: React.FC = () => {
 
         {uploading && uploadProgress ? (
           <div className="w-full max-w-sm mt-3 space-y-1.5">
-            <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-subtle border-1.5 border-border-strong h-3 p-0.5">
               <div 
-                className="bg-emerald-500 h-full rounded-full transition-all duration-150 ease-out"
+                className="bg-signal h-full transition-all duration-fast"
                 style={{ width: `${Math.max(5, uploadProgress.percent)}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <div className="flex items-center justify-between text-[11px] font-mono text-ink-muted">
               <span>{formatSize(uploadProgress.loaded)} / {formatSize(uploadProgress.total)}</span>
-              <span className="font-semibold text-emerald-500">{uploadProgress.percent}%</span>
+              <span className="font-bold text-signal tabular-nums">{uploadProgress.percent}%</span>
             </div>
           </div>
         ) : (
-          <p className="text-[11px] text-slate-400 mt-0.5 max-w-sm font-mono">
-            Scoped directly to your private workspace storage bucket
+          <p className="werkbund-coord mt-1 max-w-sm">
+            SCOPED DIRECTLY TO PRIVATE WORKSPACE STORAGE BUCKET
           </p>
         )}
       </div>
 
       {/* Uploaded Files Table */}
-      <div className="rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="p-2.5 px-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-mono">
-          <span className="font-semibold text-slate-500 uppercase tracking-wider">
+      <div className="bg-surface border-1.5 border-border-strong overflow-hidden">
+        <div className="p-3 border-b-1.5 border-border-strong flex items-center justify-between text-xs font-mono bg-subtle">
+          <span className="font-bold text-ink uppercase tracking-wider">
             Uploaded Files ({files.length})
           </span>
-          <span className="text-slate-400 tabular-nums">
+          <span className="text-ink-muted tabular-nums">
             Total: {formatSize(files.reduce((acc, f) => acc + f.fileSize, 0))}
           </span>
         </div>
 
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+        <div className="divide-y-1.5 divide-border-strong">
           {files.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400 font-mono">
-              No files uploaded yet. Drop a file above to begin.
+            <div className="py-12 text-center text-xs font-mono text-ink-muted">
+              [NULL] NO FILES UPLOADED YET. DROP FILES IN THE BOUNDARY ABOVE.
             </div>
           ) : (
             files.map((item) => (
               <div
                 key={item.id}
-                className="py-2 px-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                className="py-2.5 px-4 flex items-center justify-between hover:bg-subtle transition-colors duration-fast"
               >
-                <div className="flex items-center space-x-2.5 truncate pr-3">
-                  <div className="w-7 h-7 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center space-x-3 truncate pr-3">
+                  <div className="w-7 h-7 bg-subtle border-1.5 border-border-strong text-ink flex items-center justify-center flex-shrink-0">
                     <File className="w-3.5 h-3.5" />
                   </div>
                   <div className="truncate">
-                    <h4 className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">
+                    <h4 className="text-xs font-bold text-ink truncate uppercase">
                       {item.fileName}
                     </h4>
-                    <div className="flex items-center space-x-1.5 text-[10px] font-mono text-slate-400 tabular-nums">
+                    <div className="flex items-center space-x-2 text-[10px] font-mono text-ink-muted tabular-nums">
                       <span>{formatSize(item.fileSize)}</span>
                       <span>•</span>
                       <span>{new Date(item.uploadedAt).toLocaleDateString()}</span>
@@ -253,15 +254,15 @@ export const DropZonePage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-1 flex-shrink-0">
+                <div className="flex items-center space-x-1.5 flex-shrink-0">
                   <button
                     onClick={() => copyUrl(item.id, item.downloadUrl)}
-                    className="p-1 rounded text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="p-1.5 border border-border-strong bg-canvas text-ink hover:bg-ink hover:text-canvas transition-colors duration-fast"
                     title="Copy download link"
                     aria-label={`Copy download link for ${item.fileName}`}
                   >
                     {copiedId === item.id ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <Check className="w-3.5 h-3.5 text-status-success" />
                     ) : (
                       <Copy className="w-3.5 h-3.5" />
                     )}
@@ -273,7 +274,7 @@ export const DropZonePage: React.FC = () => {
                       download={sanitizeFileName(item.fileName)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1 rounded text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="p-1.5 border border-border-strong bg-canvas text-ink hover:bg-signal hover:text-canvas transition-colors duration-fast inline-flex items-center"
                       title="Open / Download"
                       aria-label={`Download ${item.fileName}`}
                     >
@@ -283,7 +284,7 @@ export const DropZonePage: React.FC = () => {
 
                   <button
                     onClick={() => handleDeleteFile(item)}
-                    className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="p-1.5 border border-border-strong bg-canvas text-ink hover:bg-status-danger hover:text-white transition-colors duration-fast"
                     title="Delete file"
                     aria-label={`Delete ${item.fileName}`}
                   >

@@ -124,7 +124,6 @@ export const ExpensesPage: React.FC = () => {
   const netBalance = totalIncome - totalExpense;
 
   const exportCsv = () => {
-    // Sanitize values to prevent CSV formula injection in spreadsheet software
     const sanitizeCsvValue = (val: string): string => {
       let escaped = (val || '').replace(/"/g, '""');
       if (/^[=\+\-@\t\r]/.test(escaped)) {
@@ -156,13 +155,14 @@ export const ExpensesPage: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-1.5 border-border-strong pb-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <div className="werkbund-coord mb-1">[MODULE-04] FINANCIAL CASHFLOW & BUDGET</div>
+          <h1 className="text-2xl font-display font-bold uppercase tracking-tight text-ink">
             Expenses & Budget
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Track income, expenses, and category spending
+          <p className="text-xs text-ink-secondary mt-0.5">
+            Architectural cashflow ledger with category analytics, CSV data portability, and net balance monitoring.
           </p>
         </div>
 
@@ -170,16 +170,16 @@ export const ExpensesPage: React.FC = () => {
           <button
             onClick={exportCsv}
             disabled={expenses.length === 0}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs transition disabled:opacity-50"
+            className="werkbund-btn werkbund-btn-outline disabled:opacity-40"
             title="Download CSV ledger"
           >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
+            <Download className="w-3.5 h-3.5" />
             <span>Export CSV</span>
           </button>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium text-xs transition"
+            className="werkbund-btn werkbund-btn-signal"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Transaction</span>
@@ -187,74 +187,71 @@ export const ExpensesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Financial Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <span className="font-mono text-[10px] uppercase tracking-wider">Total Income</span>
-            <div className="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-              <ArrowDownLeft className="w-3.5 h-3.5" />
-            </div>
+      {/* Financial Summary Cards: Shared-Border Grid */}
+      <div className="werkbund-grid grid-cols-1 md:grid-cols-3">
+        <div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="werkbund-coord">[LEDGER-01] TOTAL INCOME</span>
+            <ArrowDownLeft className="w-4 h-4 text-status-success" />
           </div>
-          <div className="mt-1.5 text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
+          <div className="mt-2 text-2xl font-display font-bold text-status-success tabular-nums tracking-tight">
             Rp {totalIncome.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5 font-mono">All registered earnings</div>
+          <div className="werkbund-coord text-[10px] mt-1">ALL REGISTERED EARNINGS</div>
         </div>
 
-        <div className="p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <span className="font-mono text-[10px] uppercase tracking-wider">Total Expenses</span>
-            <div className="w-6 h-6 rounded-md bg-rose-500/10 text-rose-500 flex items-center justify-center">
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </div>
+        <div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="werkbund-coord">[LEDGER-02] TOTAL EXPENSES</span>
+            <ArrowUpRight className="w-4 h-4 text-status-danger" />
           </div>
-          <div className="mt-1.5 text-xl font-bold font-mono text-rose-600 dark:text-rose-400 tabular-nums">
+          <div className="mt-2 text-2xl font-display font-bold text-status-danger tabular-nums tracking-tight">
             Rp {totalExpense.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5 font-mono">All registered expenditures</div>
+          <div className="werkbund-coord text-[10px] mt-1">ALL REGISTERED EXPENDITURES</div>
         </div>
 
-        <div className="p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <span className="font-mono text-[10px] uppercase tracking-wider">Net Balance</span>
-            <div className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
-              <Wallet className="w-3.5 h-3.5" />
-            </div>
+        <div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="werkbund-coord">[LEDGER-03] NET BALANCE</span>
+            <Wallet className="w-4 h-4 text-signal" />
           </div>
-          <div className={`mt-1.5 text-xl font-bold font-mono tabular-nums ${netBalance >= 0 ? 'text-slate-900 dark:text-white' : 'text-rose-500'}`}>
+          <div className={`mt-2 text-2xl font-display font-bold tabular-nums tracking-tight ${netBalance >= 0 ? 'text-ink' : 'text-status-danger'}`}>
             Rp {netBalance.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5 font-mono">Net remaining surplus</div>
+          <div className="werkbund-coord text-[10px] mt-1">NET REMAINING SURPLUS</div>
         </div>
       </div>
 
       {/* Categorical Spend Distribution */}
       {sortedCategories.length > 0 && totalExpense > 0 && (
-        <div className="p-3.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
-            <span className="font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-              Top Expenditure Categories
-            </span>
-            <span className="font-mono text-[10px] text-slate-400">
-              Distribution of Rp {totalExpense.toLocaleString('id-ID')}
+        <div className="bg-surface border-1.5 border-border-strong p-4">
+          <div className="flex items-center justify-between mb-3 pb-2 border-b-1.5 border-border-strong">
+            <div>
+              <div className="werkbund-coord mb-0.5">[ANALYTICS-01]</div>
+              <span className="font-display font-bold text-xs uppercase tracking-wider text-ink">
+                Top Expenditure Categories
+              </span>
+            </div>
+            <span className="werkbund-coord text-[10px] tabular-nums">
+              TOTAL EXPENSE: RP {totalExpense.toLocaleString('id-ID')}
             </span>
           </div>
 
-          <div className="space-y-2 pt-1">
+          <div className="space-y-3 pt-1">
             {sortedCategories.map(([cat, amount]) => {
               const pct = Math.round((amount / totalExpense) * 100);
               return (
                 <div key={cat} className="space-y-1">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-slate-700 dark:text-slate-300">{cat}</span>
-                    <span className="text-slate-500 tabular-nums">
+                    <span className="text-ink font-bold uppercase">{cat}</span>
+                    <span className="text-ink-secondary tabular-nums">
                       Rp {amount.toLocaleString('id-ID')} ({pct}%)
                     </span>
                   </div>
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-subtle border-1.5 border-border-strong h-3 p-0.5">
                     <div
-                      className="bg-slate-600 dark:bg-slate-400 h-full transition-all duration-300"
+                      className="bg-signal-secondary h-full transition-all duration-fast"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -266,34 +263,34 @@ export const ExpensesPage: React.FC = () => {
       )}
 
       {/* Filter row */}
-      <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
-        <div className="flex items-center space-x-1">
+      <div className="flex items-center justify-between bg-surface p-2 border-1.5 border-border-strong">
+        <div className="flex items-center space-x-1.5">
           <button
             onClick={() => setFilterType('all')}
-            className={`px-2.5 py-1 rounded-md text-xs font-mono transition ${
+            className={`px-3 py-1 text-xs font-mono uppercase tracking-wider border-1.5 transition-colors duration-fast ${
               filterType === 'all'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-ink text-canvas border-border-strong font-bold'
+                : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
             }`}
           >
             All ({expenses.length})
           </button>
           <button
             onClick={() => setFilterType('expense')}
-            className={`px-2.5 py-1 rounded-md text-xs font-mono transition ${
+            className={`px-3 py-1 text-xs font-mono uppercase tracking-wider border-1.5 transition-colors duration-fast ${
               filterType === 'expense'
-                ? 'bg-rose-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-status-danger text-white border-status-danger font-bold'
+                : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
             }`}
           >
             Expenses
           </button>
           <button
             onClick={() => setFilterType('income')}
-            className={`px-2.5 py-1 rounded-md text-xs font-mono transition ${
+            className={`px-3 py-1 text-xs font-mono uppercase tracking-wider border-1.5 transition-colors duration-fast ${
               filterType === 'income'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-status-success text-white border-status-success font-bold'
+                : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
             }`}
           >
             Income
@@ -301,25 +298,25 @@ export const ExpensesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Transaction List */}
-      <div className="rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+      {/* Transaction List: Architectural Table */}
+      <div className="bg-surface border-1.5 border-border-strong overflow-hidden">
+        <div className="divide-y-1.5 divide-border-strong">
           {filteredExpenses.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400 font-mono">
-              No transactions recorded in this category.
+            <div className="py-12 text-center text-xs font-mono text-ink-muted">
+              [NULL] NO TRANSACTIONS RECORDED IN THIS CATEGORY.
             </div>
           ) : (
             filteredExpenses.map((exp) => (
               <div
                 key={exp.id}
-                className="py-2 px-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
+                className="py-2.5 px-4 flex items-center justify-between hover:bg-subtle transition-colors duration-fast"
               >
-                <div className="flex items-center space-x-2.5 min-w-0">
+                <div className="flex items-center space-x-3 min-w-0">
                   <div
-                    className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
+                    className={`w-7 h-7 border-1.5 border-border-strong flex items-center justify-center flex-shrink-0 ${
                       exp.type === 'income'
-                        ? 'bg-emerald-500/10 text-emerald-500'
-                        : 'bg-rose-500/10 text-rose-500'
+                        ? 'bg-status-success text-white font-bold'
+                        : 'bg-status-danger text-white font-bold'
                     }`}
                   >
                     {exp.type === 'income' ? (
@@ -329,11 +326,11 @@ export const ExpensesPage: React.FC = () => {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">
+                    <h4 className="text-xs font-bold text-ink uppercase truncate">
                       {exp.description}
                     </h4>
-                    <div className="flex items-center space-x-1.5 text-[10px] font-mono text-slate-400">
-                      <span className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[9px] uppercase">
+                    <div className="flex items-center space-x-2 text-[10px] font-mono text-ink-muted mt-0.5">
+                      <span className="px-1.5 py-0.2 border border-border-strong bg-subtle text-ink font-bold uppercase">
                         {exp.category}
                       </span>
                       <span>•</span>
@@ -342,12 +339,12 @@ export const ExpensesPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2.5 flex-shrink-0">
+                <div className="flex items-center space-x-3 flex-shrink-0">
                   <span
-                    className={`text-xs font-semibold font-mono tabular-nums ${
+                    className={`text-xs font-mono font-bold tabular-nums ${
                       exp.type === 'income'
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-rose-600 dark:text-rose-400'
+                        ? 'text-status-success'
+                        : 'text-status-danger'
                     }`}
                   >
                     {exp.type === 'income' ? '+' : '-'} Rp {exp.amount.toLocaleString('id-ID')}
@@ -355,7 +352,7 @@ export const ExpensesPage: React.FC = () => {
 
                   <button
                     onClick={() => handleDeleteExpense(exp.id)}
-                    className="p-1 text-slate-400 hover:text-rose-500 rounded-md transition"
+                    className="p-1 border border-border-strong bg-canvas text-ink-muted hover:text-status-danger hover:border-status-danger transition-colors duration-fast"
                     title="Delete record"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -370,7 +367,7 @@ export const ExpensesPage: React.FC = () => {
       {/* New Transaction Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A0A0A]/75"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsModalOpen(false);
           }}
@@ -379,14 +376,19 @@ export const ExpensesPage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="record-transaction-modal-title"
-            className="w-full max-w-sm rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-lg"
+            className="w-full max-w-sm bg-elevated border-1.5 border-border-strong p-6"
           >
-            <div className="flex items-center justify-between mb-3.5">
-              <h3 id="record-transaction-modal-title" className="font-semibold text-sm text-slate-900 dark:text-white">Record Transaction</h3>
+            <div className="flex items-center justify-between mb-4 pb-2 border-b-1.5 border-border-strong">
+              <div>
+                <span className="werkbund-coord text-[10px]">[TRANSACTION-NEW]</span>
+                <h3 id="record-transaction-modal-title" className="font-display font-bold text-sm uppercase text-ink">
+                  Record Transaction
+                </h3>
+              </div>
               <button
                 onClick={() => setIsModalOpen(false)}
                 aria-label="Close modal"
-                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="p-1 text-ink-muted hover:text-ink border-1.5 border-transparent hover:border-border-strong"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -394,31 +396,25 @@ export const ExpensesPage: React.FC = () => {
 
             <form onSubmit={handleCreateExpense} className="space-y-3">
               {/* Type Switcher */}
-              <div className="grid grid-cols-2 gap-1 p-1 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-medium">
+              <div className="grid grid-cols-2 gap-1.5 p-1 border-1.5 border-border-strong bg-subtle text-xs font-mono">
                 <button
                   type="button"
-                  onClick={() => {
-                    setType('expense');
-                    if (category === 'Salary' || category === 'Investment') setCategory('Food');
-                  }}
-                  className={`py-1.5 rounded-md transition ${
+                  onClick={() => setType('expense')}
+                  className={`py-1.5 border transition-colors duration-fast uppercase font-bold text-[11px] ${
                     type === 'expense'
-                      ? 'bg-rose-600 text-white font-semibold'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                      ? 'bg-status-danger text-white border-status-danger'
+                      : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
                   }`}
                 >
                   Expense
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setType('income');
-                    if (category === 'Food') setCategory('Salary');
-                  }}
-                  className={`py-1.5 rounded-md transition ${
+                  onClick={() => setType('income')}
+                  className={`py-1.5 border transition-colors duration-fast uppercase font-bold text-[11px] ${
                     type === 'income'
-                      ? 'bg-emerald-600 text-white font-semibold'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                      ? 'bg-status-success text-white border-status-success'
+                      : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
                   }`}
                 >
                   Income
@@ -426,78 +422,81 @@ export const ExpensesPage: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="expense-amount-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
+                <label htmlFor="exp-amount-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
                   Amount (IDR) *
                 </label>
                 <input
-                  id="expense-amount-input"
+                  id="exp-amount-input"
                   type="number"
                   required
-                  min="1"
+                  min="0"
                   step="any"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="e.g. 50000"
-                  className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono tabular-nums"
+                  className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal tabular-nums"
                 />
               </div>
 
-              <div>
-                <label htmlFor="expense-category-select" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
-                  Category
-                </label>
-                <select
-                  id="expense-category-select"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none"
-                >
-                  {categories.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label htmlFor="exp-category-select" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                    Category
+                  </label>
+                  <select
+                    id="exp-category-select"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-2 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink uppercase font-bold focus:outline-none"
+                  >
+                    {categories.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="exp-date-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                    Date
+                  </label>
+                  <input
+                    id="exp-date-input"
+                    type="date"
+                    required
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="w-full px-2 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div>
-                <label htmlFor="expense-desc-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
-                  Description / Note
+                <label htmlFor="exp-desc-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink-secondary mb-1">
+                  Description / Vendor
                 </label>
                 <input
-                  id="expense-desc-input"
+                  id="exp-desc-input"
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Starbucks or Grocery shopping"
-                  className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  placeholder="e.g. Server hosting, Lunch meeting"
+                  className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal"
                 />
               </div>
 
-              <div>
-                <label htmlFor="expense-date-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">
-                  Date
-                </label>
-                <input
-                  id="expense-date-input"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none font-mono tabular-nums"
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex justify-end space-x-2 pt-3 border-t-1.5 border-border-strong">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="werkbund-btn werkbund-btn-outline"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 transition"
+                  className="werkbund-btn werkbund-btn-signal"
                 >
-                  Save Transaction
+                  Record
                 </button>
               </div>
             </form>

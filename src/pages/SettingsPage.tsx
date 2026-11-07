@@ -128,14 +128,17 @@ export const SettingsPage: React.FC = () => {
 
   if (!isSuperadmin) {
     return (
-      <div className="p-6 rounded-lg bg-rose-500/10 border border-rose-500/20 text-center max-w-xl mx-auto my-12">
-        <div className="inline-flex p-3 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 mb-3">
-          <ShieldAlert className="w-6 h-6" />
+      <div className="p-8 rounded-none bg-[var(--bg-surface)] border-[1.5px] border-rose-500/40 text-center max-w-xl mx-auto my-12 shadow-none">
+        <div className="inline-flex p-3 rounded-none bg-rose-500/10 border-[1.5px] border-rose-500/30 text-rose-600 dark:text-rose-400 mb-3">
+          <ShieldAlert className="w-8 h-8" />
         </div>
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+        <div className="font-mono text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest mb-1">
+          [ERR-403 / RESTRICTED]
+        </div>
+        <h2 className="text-xl font-display font-black tracking-tight text-[var(--text-primary)] uppercase">
           Administrator Access Required
         </h2>
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
+        <p className="text-xs font-mono text-[var(--text-muted)] mt-2 max-w-md mx-auto leading-relaxed">
           The settings dashboard contains sensitive security policies and workspace access controls restricted exclusively to the workspace Superadmin.
         </p>
       </div>
@@ -168,23 +171,26 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3.5">
+      {/* Top Header - Werkbund Subway Wayfinding Band */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-[1.5px] border-[var(--border-strong)] pb-3.5">
         <div>
           <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-500" />
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <span className="font-mono text-xs font-bold px-1.5 py-0.5 bg-[var(--text-primary)] text-[var(--bg-canvas)] rounded-none">
+              [SEC-CONFIG]
+            </span>
+            <ShieldCheck className="w-5 h-5 text-[var(--color-primary)]" />
+            <h1 className="text-2xl font-display font-black tracking-tight text-[var(--text-primary)] uppercase">
               System Administration & Security
             </h1>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs font-mono text-[var(--text-muted)] mt-1 uppercase tracking-wide">
             Configure access controls, guest mode, registration policies, and workspace parameters
           </p>
         </div>
 
         <div className="flex items-center space-x-2 self-start sm:self-auto">
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5" />
+          <span className="inline-flex items-center px-2.5 py-1 text-xs font-mono font-bold uppercase tracking-wider bg-[var(--bg-subtle)] text-[var(--color-primary)] border-[1.5px] border-[var(--border-strong)] rounded-none">
+            <span className="w-2 h-2 bg-[var(--color-primary)] mr-2" />
             Superadmin Session
           </span>
         </div>
@@ -192,116 +198,116 @@ export const SettingsPage: React.FC = () => {
 
       {/* Notifications */}
       {saveSuccessMessage && (
-        <div className="p-2.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs flex items-center space-x-2">
-          <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-500" />
-          <span className="font-medium">{saveSuccessMessage}</span>
+        <div className="p-3 rounded-none bg-[var(--bg-surface)] border-[1.5px] border-[var(--color-primary)] text-[var(--text-primary)] text-xs font-mono flex items-center space-x-2 shadow-none">
+          <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-[var(--color-primary)]" />
+          <span className="font-bold">{saveSuccessMessage}</span>
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-2.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center space-x-2">
+        <div className="p-3 rounded-none bg-rose-500/10 border-[1.5px] border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-mono flex items-center space-x-2 shadow-none">
           <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-500" />
-          <span className="font-medium">{errorMessage}</span>
+          <span className="font-bold">{errorMessage}</span>
         </div>
       )}
 
-      {/* Access Control Switches */}
+      {/* Access Control Switches - Werkbund Grid Cells */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* Toggle 1: Guest Mode Access */}
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex flex-col justify-between">
+        <div className="rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-surface)] p-4 flex flex-col justify-between shadow-none">
           <div>
-            <div className="flex items-center justify-between mb-2.5">
-              <div className="flex items-center space-x-2">
-                <div className={`p-1.5 rounded-md ${systemSettings.allowGuestAccess ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
-                  {systemSettings.allowGuestAccess ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+            <div className="flex items-center justify-between mb-3 border-b border-[var(--border-subtle)] pb-2.5">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-1.5 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] text-[var(--text-primary)]">
+                  {systemSettings.allowGuestAccess ? <Unlock className="w-4 h-4 text-[var(--color-primary)]" /> : <Lock className="w-4 h-4 text-[var(--text-muted)]" />}
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
+                  <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-primary)]">
                     Guest Mode Access
                   </h3>
-                  <span className="text-[10px] font-mono text-slate-400">
+                  <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase">
                     Anonymous exploration
                   </span>
                 </div>
               </div>
 
-              {/* Accessible Toggle Button */}
+              {/* Accessible Toggle Button (Square Werkbund Switch) */}
               <button
                 type="button"
                 role="switch"
                 aria-checked={systemSettings.allowGuestAccess}
                 onClick={handleToggleGuestAccess}
-                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
-                  systemSettings.allowGuestAccess ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
+                className={`relative inline-flex h-6 w-12 flex-shrink-0 cursor-pointer rounded-none border-[1.5px] border-[var(--border-strong)] p-0.5 transition-colors duration-100 ease-linear focus:outline-none ${
+                  systemSettings.allowGuestAccess ? 'bg-[var(--color-primary)]' : 'bg-[var(--bg-canvas)]'
                 }`}
                 title="Toggle Guest Mode"
               >
                 <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    systemSettings.allowGuestAccess ? 'translate-x-4' : 'translate-x-0'
+                  className={`pointer-events-none inline-block h-4 w-5 transform rounded-none border border-[var(--border-strong)] bg-white shadow-none transition duration-100 ease-linear ${
+                    systemSettings.allowGuestAccess ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
               </button>
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs font-mono text-[var(--text-muted)] leading-relaxed">
               When enabled, visitors can use tools and store data locally without logging in. When disabled, the entire workspace is locked behind an authentication wall.
             </p>
           </div>
 
-          <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-mono">
-            <span className="text-slate-400">Policy status:</span>
-            <span className={`font-semibold ${systemSettings.allowGuestAccess ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+          <div className="mt-4 pt-2.5 border-t-[1.5px] border-[var(--border-strong)] flex items-center justify-between text-[11px] font-mono">
+            <span className="text-[var(--text-muted)] uppercase">Policy status:</span>
+            <span className={`font-bold uppercase tracking-wider ${systemSettings.allowGuestAccess ? 'text-[var(--color-primary)]' : 'text-rose-600 dark:text-rose-400'}`}>
               {systemSettings.allowGuestAccess ? 'Guest Allowed' : 'Strict Lock Screen Enforced'}
             </span>
           </div>
         </div>
 
         {/* Toggle 2: User Registration */}
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex flex-col justify-between">
+        <div className="rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-surface)] p-4 flex flex-col justify-between shadow-none">
           <div>
-            <div className="flex items-center justify-between mb-2.5">
-              <div className="flex items-center space-x-2">
-                <div className={`p-1.5 rounded-md ${systemSettings.allowUserRegistration ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
-                  {systemSettings.allowUserRegistration ? <UserCheck className="w-4 h-4" /> : <Users className="w-4 h-4" />}
+            <div className="flex items-center justify-between mb-3 border-b border-[var(--border-subtle)] pb-2.5">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-1.5 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] text-[var(--text-primary)]">
+                  {systemSettings.allowUserRegistration ? <UserCheck className="w-4 h-4 text-[var(--color-primary)]" /> : <Users className="w-4 h-4 text-[var(--text-muted)]" />}
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
+                  <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-primary)]">
                     User Registration
                   </h3>
-                  <span className="text-[10px] font-mono text-slate-400">
+                  <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase">
                     Self-service sign up
                   </span>
                 </div>
               </div>
 
-              {/* Accessible Toggle Button */}
+              {/* Accessible Toggle Button (Square Werkbund Switch) */}
               <button
                 type="button"
                 role="switch"
                 aria-checked={systemSettings.allowUserRegistration}
                 onClick={handleToggleUserRegistration}
-                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
-                  systemSettings.allowUserRegistration ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
+                className={`relative inline-flex h-6 w-12 flex-shrink-0 cursor-pointer rounded-none border-[1.5px] border-[var(--border-strong)] p-0.5 transition-colors duration-100 ease-linear focus:outline-none ${
+                  systemSettings.allowUserRegistration ? 'bg-[var(--color-primary)]' : 'bg-[var(--bg-canvas)]'
                 }`}
                 title="Toggle User Registration"
               >
                 <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    systemSettings.allowUserRegistration ? 'translate-x-4' : 'translate-x-0'
+                  className={`pointer-events-none inline-block h-4 w-5 transform rounded-none border border-[var(--border-strong)] bg-white shadow-none transition duration-100 ease-linear ${
+                    systemSettings.allowUserRegistration ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
               </button>
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs font-mono text-[var(--text-muted)] leading-relaxed">
               When enabled, visitors can create their own accounts via the registration form. When disabled, the Sign Up tab is hidden and only existing accounts can authenticate.
             </p>
           </div>
 
-          <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-mono">
-            <span className="text-slate-400">Policy status:</span>
-            <span className={`font-semibold ${systemSettings.allowUserRegistration ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+          <div className="mt-4 pt-2.5 border-t-[1.5px] border-[var(--border-strong)] flex items-center justify-between text-[11px] font-mono">
+            <span className="text-[var(--text-muted)] uppercase">Policy status:</span>
+            <span className={`font-bold uppercase tracking-wider ${systemSettings.allowUserRegistration ? 'text-[var(--color-primary)]' : 'text-amber-600 dark:text-amber-400'}`}>
               {systemSettings.allowUserRegistration ? 'Open Registration' : 'Registration Closed'}
             </span>
           </div>
@@ -309,14 +315,15 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* Superadmin Account Configuration */}
-      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <div className="rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-surface)] p-4 shadow-none">
         <div className="flex items-center space-x-2 mb-2">
-          <Mail className="w-4 h-4 text-slate-500" />
-          <h2 className="text-xs font-semibold font-mono uppercase tracking-wider text-slate-900 dark:text-white">
+          <span className="font-mono text-xs font-bold text-[var(--color-primary)]">[SEC-02]</span>
+          <Mail className="w-4 h-4 text-[var(--text-muted)]" />
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-primary)]">
             Primary Superadmin Designation
           </h2>
         </div>
-        <p className="text-xs text-slate-500 mb-3">
+        <p className="text-xs font-mono text-[var(--text-muted)] mb-3 leading-relaxed">
           The designated email receives full superadmin privileges across all devices and client sessions upon authentication.
         </p>
 
@@ -328,38 +335,39 @@ export const SettingsPage: React.FC = () => {
               readOnly
               aria-readonly="true"
               placeholder="name@example.com"
-              className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono cursor-not-allowed select-all"
+              className="w-full px-3 py-2 text-xs rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-canvas)] text-[var(--text-primary)] font-mono cursor-not-allowed select-all"
             />
           </div>
-          <span className="inline-flex items-center justify-center space-x-1.5 px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-mono border border-slate-200 dark:border-slate-700">
-            <Lock className="w-3 h-3 text-slate-400" />
+          <span className="inline-flex items-center justify-center space-x-1.5 px-3 py-2 rounded-none bg-[var(--bg-subtle)] text-[var(--text-primary)] text-xs font-mono font-bold uppercase border-[1.5px] border-[var(--border-strong)]">
+            <Lock className="w-3.5 h-3.5 text-[var(--color-primary)]" />
             <span>Enforced in Security Rules</span>
           </span>
         </div>
 
-        <div className="mt-3 p-2.5 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-[11px] font-mono text-slate-500 flex items-start space-x-2">
-          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-slate-400" />
+        <div className="mt-3 p-3 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)] text-[11px] font-mono text-[var(--text-muted)] flex items-start space-x-2">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-[var(--color-primary)]" />
           <div className="leading-relaxed">
-            <span className="font-semibold">Security Notice: </span>
+            <span className="font-bold text-[var(--text-primary)] uppercase">Security Notice: </span>
             <span>The superadmin identity (jelvinkrisnaputra31@gmail.com) is hardcoded and cryptographically verified in firestore.rules.</span>
           </div>
         </div>
       </div>
 
-      {/* Workspace Data Portability & Backup Center (Milestone 4) */}
-      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      {/* Workspace Data Portability & Backup Center */}
+      <div className="rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-surface)] p-4 shadow-none">
         <div className="flex items-center space-x-2 mb-2">
-          <Database className="w-4 h-4 text-slate-500" />
-          <h2 className="text-xs font-semibold font-mono uppercase tracking-wider text-slate-900 dark:text-white">
+          <span className="font-mono text-xs font-bold text-[var(--color-primary)]">[SEC-03]</span>
+          <Database className="w-4 h-4 text-[var(--text-muted)]" />
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-primary)]">
             Workspace Data Portability & Backup
           </h2>
         </div>
-        <p className="text-xs text-slate-500 mb-3.5">
+        <p className="text-xs font-mono text-[var(--text-muted)] mb-3.5 leading-relaxed">
           Full data snapshot export and migration across all modules (Tasks, Notes, Habits, Expenses, Snippets, Shortlinks, Dropzone, Media History, and Settings). Optional client-side AES-GCM 256-bit encryption (PBKDF2-SHA256).
         </p>
 
-        <div className="mb-3.5 max-w-md">
-          <label htmlFor="backup-passphrase" className="block text-[11px] font-mono font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <div className="mb-3.5 max-w-md space-y-1">
+          <label htmlFor="backup-passphrase" className="block text-[11px] font-mono font-bold text-[var(--text-primary)] uppercase">
             Backup Encryption Passphrase (Optional — AES-GCM 256-bit)
           </label>
           <input
@@ -368,7 +376,7 @@ export const SettingsPage: React.FC = () => {
             value={backupPassphrase}
             onChange={(e) => setBackupPassphrase(e.target.value)}
             placeholder="Leave blank for plain JSON, or enter passphrase to encrypt/decrypt"
-            className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
+            className="w-full px-3 py-2 text-xs font-mono rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-canvas)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--color-primary)]"
           />
         </div>
 
@@ -376,7 +384,7 @@ export const SettingsPage: React.FC = () => {
           <button
             onClick={handleExportWorkspace}
             disabled={isExporting}
-            className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium transition disabled:opacity-50"
+            className="flex items-center justify-center space-x-1.5 px-4 py-2 rounded-none bg-[var(--color-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] text-white text-xs font-mono font-bold uppercase tracking-wider transition-colors duration-100 ease-linear disabled:opacity-50 shadow-none"
           >
             <Download className="w-3.5 h-3.5" />
             <span>
@@ -399,7 +407,7 @@ export const SettingsPage: React.FC = () => {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isImporting}
-            className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium transition disabled:opacity-50"
+            className="flex items-center justify-center space-x-1.5 px-4 py-2 rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-surface)] hover:bg-[var(--text-primary)] hover:text-[var(--bg-canvas)] text-[var(--text-primary)] text-xs font-mono font-bold uppercase tracking-wider transition-colors duration-100 ease-linear disabled:opacity-50 shadow-none"
           >
             <Upload className="w-3.5 h-3.5" />
             <span>{isImporting ? 'Importing...' : 'Import Workspace Backup'}</span>
@@ -407,7 +415,7 @@ export const SettingsPage: React.FC = () => {
 
           <button
             onClick={handleResetWorkspace}
-            className="flex items-center justify-center space-x-1.5 px-3 py-2 rounded-md border border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 dark:text-rose-400 text-xs font-medium transition"
+            className="flex items-center justify-center space-x-1.5 px-4 py-2 rounded-none border-[1.5px] border-rose-500/50 bg-rose-500/10 hover:bg-rose-500 hover:text-white text-rose-600 dark:text-rose-400 text-xs font-mono font-bold uppercase tracking-wider transition-colors duration-100 ease-linear shadow-none"
             title="Wipe demo and custom data to start clean"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -416,53 +424,54 @@ export const SettingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* System Information & Architecture */}
-      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-        <div className="flex items-center space-x-2 mb-3">
-          <Server className="w-4 h-4 text-slate-500" />
-          <h2 className="text-xs font-semibold font-mono uppercase tracking-wider text-slate-900 dark:text-white">
+      {/* System Information & Architecture - Werkbund Exposed Grid */}
+      <div className="rounded-none border-[1.5px] border-[var(--border-strong)] bg-[var(--bg-surface)] p-4 shadow-none">
+        <div className="flex items-center space-x-2 mb-3 border-b border-[var(--border-subtle)] pb-2.5">
+          <span className="font-mono text-xs font-bold text-[var(--color-primary)]">[TELEMETRY]</span>
+          <Server className="w-4 h-4 text-[var(--text-muted)]" />
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-primary)]">
             System Environment & Free-Tier Guardrails
           </h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs font-mono">
-          <div className="p-2.5 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-            <span className="text-slate-400 block text-[10px] uppercase mb-0.5">Architecture</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">GitHub Pages SPA + Firebase</span>
+          <div className="p-3 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)]">
+            <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold mb-0.5">Architecture</span>
+            <span className="font-bold text-[var(--text-primary)]">GitHub Pages SPA + Firebase</span>
           </div>
 
-          <div className="p-2.5 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-            <span className="text-slate-400 block text-[10px] uppercase mb-0.5">Database Mode</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">
+          <div className="p-3 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)]">
+            <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold mb-0.5">Database Mode</span>
+            <span className="font-bold text-[var(--text-primary)]">
               {isFirebaseConfigured ? 'Firestore + Multi-tab Cache' : 'Local Storage Fallback'}
             </span>
           </div>
 
-          <div className="p-2.5 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-            <span className="text-slate-400 block text-[10px] uppercase mb-0.5">Production Domain</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center space-x-1">
-              <Globe className="w-3 h-3 text-sky-500" />
+          <div className="p-3 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)]">
+            <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold mb-0.5">Production Domain</span>
+            <span className="font-bold text-[var(--text-primary)] flex items-center space-x-1.5">
+              <Globe className="w-3.5 h-3.5 text-[var(--color-primary)]" />
               <span>apps.k31.my.id</span>
             </span>
           </div>
 
-          <div className="p-2.5 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-            <span className="text-slate-400 block text-[10px] uppercase mb-0.5">Active Superadmin</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block">
+          <div className="p-3 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)]">
+            <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold mb-0.5">Active Superadmin</span>
+            <span className="font-bold text-[var(--text-primary)] truncate block">
               {systemSettings.superadminEmail}
             </span>
           </div>
 
-          <div className="p-2.5 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-            <span className="text-slate-400 block text-[10px] uppercase mb-0.5">Current User Role</span>
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400 uppercase">
+          <div className="p-3 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)]">
+            <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold mb-0.5">Current User Role</span>
+            <span className="font-bold text-[var(--color-primary)] uppercase">
               {user?.role || 'user'}
             </span>
           </div>
 
-          <div className="p-2.5 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-            <span className="text-slate-400 block text-[10px] uppercase mb-0.5">Release Version</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">v1.0.0 (Milestone 2)</span>
+          <div className="p-3 rounded-none bg-[var(--bg-canvas)] border-[1.5px] border-[var(--border-strong)]">
+            <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold mb-0.5">Release Version</span>
+            <span className="font-bold text-[var(--text-primary)]">v1.0.0 (Milestone 2)</span>
           </div>
         </div>
       </div>

@@ -66,7 +66,6 @@ export const NotesPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Reset active note selection when switching users to prevent cross-account editor state retention
     selectedNoteIdRef.current = null;
     setSelectedNoteId(null);
     setActiveTitle('');
@@ -170,14 +169,14 @@ export const NotesPage: React.FC = () => {
     const tokens = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
     return tokens.map((tok, i) => {
       if (tok.startsWith('**') && tok.endsWith('**') && tok.length > 4) {
-        return <strong key={i} className="font-semibold text-slate-900 dark:text-white">{tok.slice(2, -2)}</strong>;
+        return <strong key={i} className="font-bold text-ink">{tok.slice(2, -2)}</strong>;
       }
       if (tok.startsWith('*') && tok.endsWith('*') && tok.length > 2) {
         return <em key={i} className="italic">{tok.slice(1, -1)}</em>;
       }
       if (tok.startsWith('`') && tok.endsWith('`') && tok.length > 2) {
         return (
-          <code key={i} className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-mono text-[11px]">
+          <code key={i} className="px-1.5 py-0.5 bg-subtle border border-border-default text-signal font-mono text-[11px]">
             {tok.slice(1, -1)}
           </code>
         );
@@ -194,53 +193,53 @@ export const NotesPage: React.FC = () => {
       if (line.trim().startsWith('```')) {
         inCodeBlock = !inCodeBlock;
         return (
-          <div key={idx} className="font-mono text-[11px] text-slate-500 bg-slate-950 px-2.5 py-0.5 rounded-sm my-0.5 select-none">
+          <div key={idx} className="font-mono text-[11px] text-ink-muted bg-subtle px-3 py-1 my-1 border-1.5 border-border-strong select-none">
             {line}
           </div>
         );
       }
       if (inCodeBlock) {
         return (
-          <pre key={idx} className="font-mono text-xs text-emerald-400 bg-slate-950 px-3 py-0.5 overflow-x-auto leading-relaxed">
+          <pre key={idx} className="font-mono text-xs text-signal bg-subtle px-3 py-0.5 overflow-x-auto leading-relaxed border-l-2 border-signal">
             <code>{line || ' '}</code>
           </pre>
         );
       }
       if (line.startsWith('# ')) {
-        return <h1 key={idx} className="text-lg font-bold text-slate-900 dark:text-white mt-3 mb-1.5">{renderInlineMarkdown(line.substring(2))}</h1>;
+        return <h1 key={idx} className="text-xl font-display font-bold text-ink uppercase tracking-tight mt-4 mb-2">{renderInlineMarkdown(line.substring(2))}</h1>;
       }
       if (line.startsWith('## ')) {
-        return <h2 key={idx} className="text-base font-bold text-slate-800 dark:text-slate-100 mt-2.5 mb-1">{renderInlineMarkdown(line.substring(3))}</h2>;
+        return <h2 key={idx} className="text-lg font-display font-bold text-ink uppercase tracking-tight mt-3 mb-1.5">{renderInlineMarkdown(line.substring(3))}</h2>;
       }
       if (line.startsWith('### ')) {
-        return <h3 key={idx} className="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-2 mb-1">{renderInlineMarkdown(line.substring(4))}</h3>;
+        return <h3 key={idx} className="text-base font-display font-bold text-ink uppercase tracking-tight mt-2.5 mb-1">{renderInlineMarkdown(line.substring(4))}</h3>;
       }
       if (line.startsWith('- [x] ') || line.startsWith('- [X] ')) {
         return (
-          <div key={idx} className="flex items-center space-x-2 ml-2 my-0.5 text-xs text-slate-500 line-through">
-            <input type="checkbox" checked readOnly className="rounded accent-emerald-500 pointer-events-none" />
+          <div key={idx} className="flex items-center space-x-2 ml-2 my-1 text-xs text-ink-muted line-through">
+            <span className="w-3.5 h-3.5 bg-signal border border-border-strong flex items-center justify-center text-canvas text-[9px] font-bold">✓</span>
             <span>{renderInlineMarkdown(line.substring(6))}</span>
           </div>
         );
       }
       if (line.startsWith('- [ ] ')) {
         return (
-          <div key={idx} className="flex items-center space-x-2 ml-2 my-0.5 text-xs text-slate-700 dark:text-slate-300">
-            <input type="checkbox" checked={false} readOnly className="rounded accent-emerald-500 pointer-events-none" />
+          <div key={idx} className="flex items-center space-x-2 ml-2 my-1 text-xs text-ink">
+            <span className="w-3.5 h-3.5 border-1.5 border-border-strong bg-canvas" />
             <span>{renderInlineMarkdown(line.substring(6))}</span>
           </div>
         );
       }
       if (line.startsWith('- ')) {
-        return <li key={idx} className="ml-4 list-disc text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{renderInlineMarkdown(line.substring(2))}</li>;
+        return <li key={idx} className="ml-4 list-disc text-xs text-ink leading-relaxed">{renderInlineMarkdown(line.substring(2))}</li>;
       }
       if (line.startsWith('> ')) {
-        return <blockquote key={idx} className="border-l-2 border-slate-300 dark:border-slate-700 pl-3 italic text-xs text-slate-500 my-1">{renderInlineMarkdown(line.substring(2))}</blockquote>;
+        return <blockquote key={idx} className="border-l-4 border-signal pl-3 italic text-xs text-ink-secondary my-1.5">{renderInlineMarkdown(line.substring(2))}</blockquote>;
       }
       if (!line.trim()) {
         return <div key={idx} className="h-2" />;
       }
-      return <p key={idx} className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed my-0.5">{renderInlineMarkdown(line)}</p>;
+      return <p key={idx} className="text-xs text-ink leading-relaxed my-1">{renderInlineMarkdown(line)}</p>;
     });
   };
 
@@ -251,290 +250,299 @@ export const NotesPage: React.FC = () => {
         return (
           n.title.toLowerCase().includes(q) ||
           n.content.toLowerCase().includes(q) ||
-          n.tags.some((t: string) => t.toLowerCase().includes(q))
+          n.tags.some((t) => t.toLowerCase().includes(q))
         );
       })
       .sort((a, b) => {
-        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
         return b.updatedAt - a.updatedAt;
       });
   }, [notes, search]);
 
   return (
-    <div className="min-h-[calc(100vh-7.5rem)] md:h-[calc(100vh-7.5rem)] flex flex-col md:flex-row gap-3">
-      {/* Notes Sidebar List */}
-      <div className="w-full md:w-72 max-h-64 md:max-h-none flex flex-col rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 overflow-hidden">
-        <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center space-x-1.5">
-            <FileText className="w-4 h-4 text-slate-500" />
-            <h2 className="font-semibold text-xs text-slate-900 dark:text-white uppercase tracking-wider font-mono">
-              Notes Vault
-            </h2>
-          </div>
-          <button
-            onClick={handleCreateNote}
-            className="p-1 rounded bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 transition"
-            title="Create New Note"
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
+    <div className="space-y-4">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-1.5 border-border-strong pb-4">
+        <div>
+          <div className="werkbund-coord mb-1">[MODULE-02] DOCUMENTATION & NOTES VAULT</div>
+          <h1 className="text-2xl font-display font-bold uppercase tracking-tight text-ink">
+            Notes Vault
+          </h1>
+          <p className="text-xs text-ink-secondary mt-0.5">
+            Architectural markdown knowledge vault with instant preview, tag taxonomy, and pinning.
+          </p>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-2">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search notes or tags..."
-            className="w-full pl-8 pr-2.5 py-1 text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono"
-          />
-        </div>
-
-        {/* Note list */}
-        <div className="flex-1 overflow-y-auto space-y-1 pr-0.5">
-          {filteredNotes.length === 0 ? (
-            <div className="text-center py-6 text-xs text-slate-400 font-mono">
-              No notes found.
-            </div>
-          ) : (
-            filteredNotes.map((note) => {
-              const isSelected = note.id === selectedNoteId;
-              return (
-                <div
-                  key={note.id}
-                  role="button"
-                  tabIndex={0}
-                  aria-selected={isSelected}
-                  onClick={() => selectNote(note)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      selectNote(note);
-                    }
-                  }}
-                  className={`p-2 rounded-md cursor-pointer transition text-left relative focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400 ${
-                    isSelected
-                      ? 'bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-medium'
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/40 border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate pr-2">
-                      {note.title}
-                    </h4>
-                    {note.isPinned && <Pin className="w-3 h-3 text-amber-500 flex-shrink-0" />}
-                  </div>
-
-                  <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                    {note.content.replace(/[#*`>-]/g, '').trim()}
-                  </p>
-
-                  <div className="flex items-center space-x-1 mt-1.5 overflow-x-hidden">
-                    {note.tags.map((t: string) => (
-                      <span
-                        key={t}
-                        className="text-[9px] px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono"
-                      >
-                        #{t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+        <button
+          onClick={handleCreateNote}
+          className="werkbund-btn werkbund-btn-signal self-start sm:self-auto"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>New Note</span>
+        </button>
       </div>
 
-      {/* Editor & Preview Area */}
-      <div className="flex-1 flex flex-col rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 overflow-hidden">
-        {selectedNoteId ? (
-          <>
-            {/* Top Toolbar */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 gap-3">
-              <input
-                type="text"
-                value={activeTitle}
-                onChange={(e) => setActiveTitle(e.target.value)}
-                placeholder="Note Title..."
-                className="text-base font-bold bg-transparent text-slate-900 dark:text-white focus:outline-none flex-1"
-              />
+      {/* Main Asymmetric Split: Continuous Grid Skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-0 border-1.5 border-border-strong bg-border-strong">
+        {/* Left column: Notes Directory */}
+        <div className="md:col-span-4 bg-surface p-4 flex flex-col border-b-1.5 md:border-b-0 md:border-r-1.5 border-border-strong min-h-[500px]">
+          {/* Search bar */}
+          <div className="relative mb-3">
+            <Search className="w-3.5 h-3.5 text-ink-muted absolute left-2.5 top-2.5" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="SEARCH NOTES OR #TAGS..."
+              className="w-full pl-8 pr-3 py-1.5 text-xs font-mono uppercase tracking-wider border-1.5 border-border-strong bg-canvas text-ink placeholder:text-ink-muted focus:outline-none focus:border-signal"
+            />
+          </div>
 
-              <div className="flex items-center space-x-1.5">
-                <button
-                  onClick={() => setActivePinned(!activePinned)}
-                  className={`p-1.5 rounded-md transition ${
-                    activePinned
-                      ? 'text-amber-500 bg-amber-500/10'
-                      : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-                  }`}
-                  title={activePinned ? 'Unpin note' : 'Pin note'}
-                >
-                  <Pin className="w-3.5 h-3.5" />
-                </button>
+          <div className="flex items-center justify-between werkbund-coord text-[10px] mb-2 px-1">
+            <span>INDEX [{filteredNotes.length}]</span>
+            <span>SORT: PINNED / NEWEST</span>
+          </div>
 
-                <div className="flex rounded-md bg-slate-100 dark:bg-slate-800 p-0.5 text-xs font-mono">
-                  <button
-                    onClick={() => setMode('edit')}
-                    className={`px-2 py-0.5 rounded transition flex items-center space-x-1 ${
-                      mode === 'edit'
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-semibold'
-                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                    }`}
-                  >
-                    <Edit3 className="w-3 h-3" />
-                    <span>Edit</span>
-                  </button>
-                  <button
-                    onClick={() => setMode('preview')}
-                    className={`px-2 py-0.5 rounded transition flex items-center space-x-1 ${
-                      mode === 'preview'
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-semibold'
-                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                    }`}
-                  >
-                    <Eye className="w-3 h-3" />
-                    <span>Preview</span>
-                  </button>
-                </div>
-
-                <button
-                  onClick={handleSaveActiveNote}
-                  className="flex items-center space-x-1 px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition"
-                >
-                  {isSaved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
-                  <span>{isSaved ? 'Saved' : 'Save'}</span>
-                </button>
-
-                <button
-                  onClick={() => handleDeleteNote(selectedNoteId)}
-                  className="p-1.5 text-slate-400 hover:text-rose-500 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                  title="Delete Note"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+          {/* Notes list */}
+          <div className="flex-1 overflow-y-auto space-y-1.5 max-h-[560px] pr-0.5">
+            {filteredNotes.length === 0 ? (
+              <div className="py-12 text-center text-xs font-mono text-ink-muted border-1.5 border-dashed border-border-default">
+                [NULL] NO NOTES FOUND.
               </div>
-            </div>
+            ) : (
+              filteredNotes.map((note) => {
+                const isSelected = selectedNoteId === note.id;
+                return (
+                  <div
+                    key={note.id}
+                    onClick={() => selectNote(note)}
+                    className={`p-3 cursor-pointer transition-colors duration-fast border-1.5 ${
+                      isSelected
+                        ? 'bg-ink text-canvas border-border-strong'
+                        : 'bg-surface hover:bg-subtle text-ink border-border-subtle hover:border-border-strong'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold truncate pr-2 uppercase">
+                        {note.title}
+                      </h4>
+                      {note.isPinned && <Pin className="w-3 h-3 text-signal-secondary flex-shrink-0" />}
+                    </div>
 
-            {/* Tags row */}
-            <div className="flex items-center space-x-2 py-1.5 text-xs border-b border-slate-100 dark:border-slate-800">
-              <Tag className="w-3 h-3 text-slate-400" />
-              <input
-                type="text"
-                value={activeTags}
-                onChange={(e) => setActiveTags(e.target.value)}
-                placeholder="tags separated by comma (e.g. project, idea, todo)"
-                className="bg-transparent flex-1 text-slate-600 dark:text-slate-400 focus:outline-none text-xs font-mono"
-              />
-            </div>
+                    <p className={`text-[11px] line-clamp-1 mt-1 ${isSelected ? 'text-canvas/80' : 'text-ink-secondary'}`}>
+                      {note.content.replace(/[#*`>-]/g, '').trim()}
+                    </p>
 
-            {/* Content area */}
-            <div className="flex-1 overflow-y-auto pt-2 flex flex-col">
-              {mode === 'edit' ? (
-                <>
-                  {/* Markdown Quick Formatting Toolbar */}
-                  <div className="flex items-center flex-wrap gap-1 pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 text-slate-500">
+                    <div className="flex items-center space-x-1 mt-2 overflow-x-hidden">
+                      {note.tags.map((t: string) => (
+                        <span
+                          key={t}
+                          className={`text-[9px] px-1 py-0.5 border font-mono uppercase ${
+                            isSelected
+                              ? 'bg-canvas text-ink border-canvas font-bold'
+                              : 'bg-subtle text-ink border-border-strong'
+                          }`}
+                        >
+                          #{t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right column: Editor & Preview */}
+        <div className="md:col-span-8 bg-surface p-5 flex flex-col min-h-[500px]">
+          {selectedNoteId ? (
+            <>
+              {/* Top Toolbar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b-1.5 border-border-strong gap-3">
+                <input
+                  type="text"
+                  value={activeTitle}
+                  onChange={(e) => setActiveTitle(e.target.value)}
+                  placeholder="Note Title..."
+                  className="text-lg font-display font-bold uppercase tracking-tight bg-transparent text-ink focus:outline-none flex-1 border-b border-transparent focus:border-border-strong pb-1"
+                />
+
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setActivePinned(!activePinned)}
+                    className={`p-1.5 border-1.5 border-border-strong transition-colors duration-fast ${
+                      activePinned
+                        ? 'bg-signal-secondary text-ink font-bold'
+                        : 'bg-surface text-ink-muted hover:text-ink hover:bg-subtle'
+                    }`}
+                    title={activePinned ? 'Unpin note' : 'Pin note'}
+                  >
+                    <Pin className="w-3.5 h-3.5" />
+                  </button>
+
+                  <div className="flex border-1.5 border-border-strong p-0.5 text-xs font-mono bg-subtle">
                     <button
-                      type="button"
-                      onClick={() => insertMarkdown('**', '**')}
-                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                      title="Bold (**text**)"
+                      onClick={() => setMode('edit')}
+                      className={`px-2.5 py-1 transition-colors duration-fast flex items-center space-x-1 uppercase font-bold text-[10px] ${
+                        mode === 'edit'
+                          ? 'bg-ink text-canvas'
+                          : 'text-ink-secondary hover:text-ink'
+                      }`}
                     >
-                      <Bold className="w-3.5 h-3.5" />
+                      <Edit3 className="w-3 h-3" />
+                      <span>Edit</span>
                     </button>
                     <button
-                      type="button"
-                      onClick={() => insertMarkdown('*', '*')}
-                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                      title="Italic (*text*)"
+                      onClick={() => setMode('preview')}
+                      className={`px-2.5 py-1 transition-colors duration-fast flex items-center space-x-1 uppercase font-bold text-[10px] ${
+                        mode === 'preview'
+                          ? 'bg-ink text-canvas'
+                          : 'text-ink-secondary hover:text-ink'
+                      }`}
                     >
-                      <Italic className="w-3.5 h-3.5" />
-                    </button>
-                    <span className="w-px h-3.5 bg-slate-200 dark:bg-slate-800 mx-0.5" />
-                    <button
-                      type="button"
-                      onClick={() => insertMarkdown('# ')}
-                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                      title="Heading 1 (# )"
-                    >
-                      <Heading1 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertMarkdown('## ')}
-                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                      title="Heading 2 (## )"
-                    >
-                      <Heading2 className="w-3.5 h-3.5" />
-                    </button>
-                    <span className="w-px h-3.5 bg-slate-200 dark:bg-slate-800 mx-0.5" />
-                    <button
-                      type="button"
-                      onClick={() => insertMarkdown('- [ ] ')}
-                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                      title="Checklist item (- [ ] )"
-                    >
-                      <CheckSquare className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertMarkdown('- ')}
-                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                      title="Bullet list (- )"
-                    >
-                      <List className="w-3.5 h-3.5" />
-                    </button>
-                    <span className="w-px h-3.5 bg-slate-200 dark:bg-slate-800 mx-0.5" />
-                    <button
-                      type="button"
-                      onClick={() => insertMarkdown('`', '`')}
-                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                      title="Inline Code (`code`)"
-                    >
-                      <Code className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertMarkdown('> ')}
-                      className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                      title="Blockquote (> )"
-                    >
-                      <Quote className="w-3.5 h-3.5" />
+                      <Eye className="w-3 h-3" />
+                      <span>Preview</span>
                     </button>
                   </div>
 
-                  <textarea
-                    ref={textareaRef}
-                    value={activeContent}
-                    onChange={(e) => setActiveContent(e.target.value)}
-                    placeholder="Start writing markdown notes..."
-                    className="w-full flex-1 bg-transparent text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none resize-none leading-relaxed"
-                  />
-                </>
-              ) : (
-                <div className="prose dark:prose-invert max-w-none">
-                  {renderMarkdown(activeContent)}
+                  <button
+                    onClick={handleSaveActiveNote}
+                    className="werkbund-btn werkbund-btn-signal text-xs py-1.5 px-3"
+                  >
+                    {isSaved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+                    <span>{isSaved ? 'Saved' : 'Save'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteNote(selectedNoteId)}
+                    className="p-1.5 border-1.5 border-border-strong text-ink hover:bg-status-danger hover:text-white transition-colors duration-fast"
+                    title="Delete Note"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              )}
+              </div>
+
+              {/* Tags row */}
+              <div className="flex items-center space-x-2 py-2 text-xs border-b-1.5 border-border-strong bg-subtle/50 px-2 mt-2">
+                <Tag className="w-3.5 h-3.5 text-signal" />
+                <input
+                  type="text"
+                  value={activeTags}
+                  onChange={(e) => setActiveTags(e.target.value)}
+                  placeholder="tags separated by comma (e.g. project, idea, todo)"
+                  className="bg-transparent flex-1 text-ink focus:outline-none text-xs font-mono uppercase tracking-wider"
+                />
+              </div>
+
+              {/* Content area */}
+              <div className="flex-1 overflow-y-auto pt-3 flex flex-col">
+                {mode === 'edit' ? (
+                  <>
+                    {/* Markdown Quick Formatting Toolbar */}
+                    <div className="flex items-center flex-wrap gap-1 pb-2.5 mb-2.5 border-b-1.5 border-border-subtle text-ink">
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown('**', '**')}
+                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        title="Bold (**text**)"
+                      >
+                        <Bold className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown('*', '*')}
+                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        title="Italic (*text*)"
+                      >
+                        <Italic className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="w-px h-4 bg-border-strong mx-1" />
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown('# ')}
+                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        title="Heading 1 (# )"
+                      >
+                        <Heading1 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown('## ')}
+                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        title="Heading 2 (## )"
+                      >
+                        <Heading2 className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="w-px h-4 bg-border-strong mx-1" />
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown('- [ ] ')}
+                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        title="Checklist item (- [ ] )"
+                      >
+                        <CheckSquare className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown('- ')}
+                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        title="Bullet list (- )"
+                      >
+                        <List className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="w-px h-4 bg-border-strong mx-1" />
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown('`', '`')}
+                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        title="Inline Code (`code`)"
+                      >
+                        <Code className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertMarkdown('> ')}
+                        className="p-1.5 border border-border-strong bg-canvas hover:bg-ink hover:text-canvas transition-colors duration-fast"
+                        title="Blockquote (> )"
+                      >
+                        <Quote className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <textarea
+                      ref={textareaRef}
+                      value={activeContent}
+                      onChange={(e) => setActiveContent(e.target.value)}
+                      placeholder="Start writing markdown notes..."
+                      className="w-full flex-1 bg-transparent text-xs font-mono text-ink focus:outline-none resize-none leading-relaxed p-1"
+                    />
+                  </>
+                ) : (
+                  <div className="p-2 space-y-2">
+                    {renderMarkdown(activeContent)}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-ink-muted">
+              <FileText className="w-12 h-12 text-border-default mb-3" />
+              <h3 className="text-base font-display font-bold uppercase text-ink">No Note Selected</h3>
+              <p className="text-xs text-ink-secondary mt-1 max-w-xs font-mono">
+                Select an existing note from the vault index or create a new document.
+              </p>
+              <button
+                onClick={handleCreateNote}
+                className="werkbund-btn werkbund-btn-signal mt-4"
+              >
+                Create First Note
+              </button>
             </div>
-          </>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-slate-400">
-            <FileText className="w-10 h-10 text-slate-300 dark:text-slate-700 mb-2" />
-            <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300">No Note Selected</h3>
-            <p className="text-xs text-slate-400 mt-0.5 max-w-xs font-mono">
-              Select an existing note from the vault or create a new note.
-            </p>
-            <button
-              onClick={handleCreateNote}
-              className="mt-3 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium transition"
-            >
-              Create First Note
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

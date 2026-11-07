@@ -155,7 +155,6 @@ export const SwissKnifePage: React.FC = () => {
   const [regexError, setRegexError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Guard against empty pattern (which matches every character boundary) and oversized input
     if (!regexPattern.trim()) {
       setRegexMatches([]);
       setRegexError(null);
@@ -189,17 +188,18 @@ export const SwissKnifePage: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-3.5">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+      <div className="border-b-1.5 border-border-strong pb-4">
+        <div className="werkbund-coord mb-1">[MODULE-06] CLIENT-SIDE DEV UTILITIES</div>
+        <h1 className="text-2xl font-display font-bold uppercase tracking-tight text-ink">
           SwissKnife Dev Tools
         </h1>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Client-side developer utilities for passwords, JSON, Base64, UUIDs, hashes, and regex
+        <p className="text-xs text-ink-secondary mt-0.5">
+          Client-side developer utilities for passwords, JSON formatting, Base64 conversion, UUIDs, cryptographic hashes, and regex testing.
         </p>
       </div>
 
-      {/* Tabs navigation */}
-      <div role="tablist" aria-label="SwissKnife developer tools" className="flex overflow-x-auto p-1 rounded-md bg-slate-100 dark:bg-slate-800 space-x-1">
+      {/* Tabs navigation: Wayfinding Bar */}
+      <div role="tablist" aria-label="SwissKnife developer tools" className="flex overflow-x-auto p-1 border-1.5 border-border-strong bg-subtle space-x-1.5">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -209,10 +209,10 @@ export const SwissKnifePage: React.FC = () => {
               role="tab"
               aria-selected={isActive}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-mono whitespace-nowrap transition ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-wider whitespace-nowrap transition-colors duration-fast border-1.5 ${
                 isActive
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'bg-ink text-canvas border-border-strong font-bold'
+                  : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -222,29 +222,29 @@ export const SwissKnifePage: React.FC = () => {
         })}
       </div>
 
-      {/* Tab Panels */}
-      <div role="tabpanel" className="rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5">
+      {/* Tab Panels: Sharp Structural Frame */}
+      <div role="tabpanel" className="bg-surface border-1.5 border-border-strong p-5">
         {/* 1. PASSWORD GENERATOR */}
         {activeTab === 'password' && (
           <div className="space-y-4 max-w-xl">
             <div>
-              <label className="block text-[11px] font-mono text-slate-500 uppercase tracking-wider mb-1.5">
+              <label className="block text-[11px] font-mono text-ink uppercase tracking-wider mb-1.5 font-bold">
                 Generated Password
               </label>
-              <div className="flex items-center space-x-2 p-2.5 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                <span className="font-mono text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex-1 truncate select-all tabular-nums">
+              <div className="flex items-center space-x-2 p-3 bg-canvas border-1.5 border-border-strong">
+                <span className="font-mono text-sm font-bold text-signal flex-1 truncate select-all tabular-nums">
                   {generatedPass}
                 </span>
                 <button
                   onClick={() => copyToClipboard(generatedPass, 'pass')}
-                  className="p-1 rounded text-slate-400 hover:text-emerald-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition"
+                  className="p-1.5 border border-border-strong bg-surface text-ink hover:bg-ink hover:text-canvas transition-colors duration-fast"
                   title="Copy password"
                 >
-                  {copiedKey === 'pass' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedKey === 'pass' ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
                 <button
                   onClick={generatePassword}
-                  className="p-1 rounded text-slate-400 hover:text-emerald-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition"
+                  className="p-1.5 border border-border-strong bg-surface text-ink hover:bg-ink hover:text-canvas transition-colors duration-fast"
                   title="Regenerate"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -254,9 +254,9 @@ export const SwissKnifePage: React.FC = () => {
 
             {/* Slider */}
             <div>
-              <div className="flex justify-between text-xs font-mono mb-1">
-                <label htmlFor="swissknife-pass-length" className="text-slate-500">Length</label>
-                <span className="font-bold text-slate-800 dark:text-slate-200 tabular-nums">{passLength} characters</span>
+              <div className="flex justify-between text-xs font-mono mb-1.5">
+                <label htmlFor="swissknife-pass-length" className="text-ink font-bold uppercase">Length</label>
+                <span className="font-bold text-ink tabular-nums">{passLength} characters</span>
               </div>
               <input
                 id="swissknife-pass-length"
@@ -265,47 +265,47 @@ export const SwissKnifePage: React.FC = () => {
                 max="64"
                 value={passLength}
                 onChange={(e) => setPassLength(Number(e.target.value))}
-                className="w-full accent-slate-900 dark:accent-white"
+                className="w-full accent-signal"
               />
             </div>
 
-            {/* Checkboxes */}
-            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-              <label className="flex items-center space-x-2 cursor-pointer">
+            {/* Checkboxes: Sharp Squares */}
+            <div className="grid grid-cols-2 gap-2.5 text-xs font-mono">
+              <label className="flex items-center space-x-2 cursor-pointer p-2 bg-subtle border border-border-strong">
                 <input
                   type="checkbox"
                   checked={passUpper}
                   onChange={(e) => setPassUpper(e.target.checked)}
-                  className="rounded text-slate-900 focus-visible:ring-1 focus-visible:ring-slate-400"
+                  className="accent-signal"
                 />
-                <span>Uppercase (A-Z)</span>
+                <span className="uppercase font-bold">Uppercase (A-Z)</span>
               </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
+              <label className="flex items-center space-x-2 cursor-pointer p-2 bg-subtle border border-border-strong">
                 <input
                   type="checkbox"
                   checked={passLower}
                   onChange={(e) => setPassLower(e.target.checked)}
-                  className="rounded text-slate-900 focus-visible:ring-1 focus-visible:ring-slate-400"
+                  className="accent-signal"
                 />
-                <span>Lowercase (a-z)</span>
+                <span className="uppercase font-bold">Lowercase (a-z)</span>
               </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
+              <label className="flex items-center space-x-2 cursor-pointer p-2 bg-subtle border border-border-strong">
                 <input
                   type="checkbox"
                   checked={passNums}
                   onChange={(e) => setPassNums(e.target.checked)}
-                  className="rounded text-slate-900 focus-visible:ring-1 focus-visible:ring-slate-400"
+                  className="accent-signal"
                 />
-                <span>Numbers (0-9)</span>
+                <span className="uppercase font-bold">Numbers (0-9)</span>
               </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
+              <label className="flex items-center space-x-2 cursor-pointer p-2 bg-subtle border border-border-strong">
                 <input
                   type="checkbox"
                   checked={passSyms}
                   onChange={(e) => setPassSyms(e.target.checked)}
-                  className="rounded text-slate-900 focus-visible:ring-1 focus-visible:ring-slate-400"
+                  className="accent-signal"
                 />
-                <span>Symbols (!@#$%)</span>
+                <span className="uppercase font-bold">Symbols (!@#$%)</span>
               </label>
             </div>
           </div>
@@ -315,16 +315,16 @@ export const SwissKnifePage: React.FC = () => {
         {activeTab === 'json' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1.5">
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={() => formatJson(2)}
-                  className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-mono font-medium transition"
+                  className="werkbund-btn werkbund-btn-signal text-xs py-1.5 px-3"
                 >
                   Beautify (2 Spaces)
                 </button>
                 <button
                   onClick={minifyJson}
-                  className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-mono font-medium transition"
+                  className="werkbund-btn werkbund-btn-outline text-xs py-1.5 px-3"
                 >
                   Minify
                 </button>
@@ -333,16 +333,16 @@ export const SwissKnifePage: React.FC = () => {
               {jsonOutput && (
                 <button
                   onClick={() => copyToClipboard(jsonOutput, 'json')}
-                  className="flex items-center space-x-1 text-xs text-slate-500 hover:text-emerald-500 font-mono"
+                  className="flex items-center space-x-1.5 text-xs text-ink hover:text-signal font-mono uppercase font-bold"
                 >
-                  {copiedKey === 'json' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedKey === 'json' ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>Copy Result</span>
                 </button>
               )}
             </div>
 
             {jsonError && (
-              <div className="p-2.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs flex items-center space-x-2 font-mono">
+              <div className="p-3 bg-surface border-1.5 border-status-danger text-status-danger text-xs flex items-center space-x-2 font-mono">
                 <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                 <span>{jsonError}</span>
               </div>
@@ -350,25 +350,25 @@ export const SwissKnifePage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label htmlFor="swissknife-json-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">Input JSON</label>
+                <label htmlFor="swissknife-json-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink font-bold mb-1">Input JSON</label>
                 <textarea
                   id="swissknife-json-input"
                   rows={10}
                   value={jsonInput}
                   onChange={(e) => setJsonInput(e.target.value)}
-                  className="w-full p-2.5 font-mono text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 tabular-nums leading-relaxed"
+                  className="w-full p-3 font-mono text-xs border-1.5 border-border-strong bg-canvas text-ink focus:outline-none focus:border-signal tabular-nums leading-relaxed"
                 />
               </div>
 
               <div>
-                <label htmlFor="swissknife-json-output" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">Formatted Output</label>
+                <label htmlFor="swissknife-json-output" className="block text-[11px] font-mono uppercase tracking-wider text-ink font-bold mb-1">Formatted Output</label>
                 <textarea
                   id="swissknife-json-output"
                   readOnly
                   rows={10}
                   value={jsonOutput}
                   placeholder="Output will appear here after formatting..."
-                  className="w-full p-2.5 font-mono text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-emerald-600 dark:text-emerald-400 focus:outline-none tabular-nums leading-relaxed"
+                  className="w-full p-3 font-mono text-xs border-1.5 border-border-strong bg-canvas text-signal focus:outline-none tabular-nums leading-relaxed"
                 />
               </div>
             </div>
@@ -378,23 +378,23 @@ export const SwissKnifePage: React.FC = () => {
         {/* 3. BASE64 */}
         {activeTab === 'base64' && (
           <div className="space-y-3 max-w-xl">
-            <div className="flex space-x-1.5 font-mono">
+            <div className="flex space-x-2 font-mono">
               <button
                 onClick={() => setB64Mode('encode')}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
+                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-1.5 transition-colors duration-fast ${
                   b64Mode === 'encode'
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    ? 'bg-ink text-canvas border-border-strong'
+                    : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
                 }`}
               >
                 Encode to Base64
               </button>
               <button
                 onClick={() => setB64Mode('decode')}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
+                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-1.5 transition-colors duration-fast ${
                   b64Mode === 'decode'
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    ? 'bg-ink text-canvas border-border-strong'
+                    : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
                 }`}
               >
                 Decode from Base64
@@ -402,27 +402,27 @@ export const SwissKnifePage: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="swissknife-b64-input" className="block text-[11px] font-mono uppercase text-slate-500 mb-1">Input Text</label>
+              <label htmlFor="swissknife-b64-input" className="block text-[11px] font-mono uppercase tracking-wider text-ink font-bold mb-1">Input Text</label>
               <textarea
                 id="swissknife-b64-input"
                 rows={4}
                 value={b64Text}
                 onChange={(e) => setB64Text(e.target.value)}
-                className="w-full p-2.5 font-mono text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 leading-relaxed"
+                className="w-full p-3 font-mono text-xs border-1.5 border-border-strong bg-canvas text-ink focus:outline-none focus:border-signal leading-relaxed"
               />
             </div>
 
             {b64Error ? (
-              <div className="text-xs text-rose-500 font-mono">{b64Error}</div>
+              <div className="text-xs text-status-danger font-mono uppercase font-bold">{b64Error}</div>
             ) : (
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label htmlFor="swissknife-b64-result" className="text-[11px] font-mono uppercase text-slate-500">Result</label>
+                  <label htmlFor="swissknife-b64-result" className="text-[11px] font-mono uppercase tracking-wider text-ink font-bold">Result</label>
                   <button
                     onClick={() => copyToClipboard(b64Result, 'b64')}
-                    className="flex items-center space-x-1 text-xs text-slate-500 hover:text-emerald-500 font-mono"
+                    className="flex items-center space-x-1.5 text-xs text-ink hover:text-signal font-mono uppercase font-bold"
                   >
-                    {copiedKey === 'b64' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedKey === 'b64' ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>Copy</span>
                   </button>
                 </div>
@@ -431,7 +431,7 @@ export const SwissKnifePage: React.FC = () => {
                   readOnly
                   rows={4}
                   value={b64Result}
-                  className="w-full p-2.5 font-mono text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-emerald-600 dark:text-emerald-400 focus:outline-none leading-relaxed"
+                  className="w-full p-3 font-mono text-xs border-1.5 border-border-strong bg-canvas text-signal focus:outline-none leading-relaxed"
                 />
               </div>
             )}
@@ -441,17 +441,17 @@ export const SwissKnifePage: React.FC = () => {
         {/* 4. UUID GENERATOR */}
         {activeTab === 'uuid' && (
           <div className="space-y-3 max-w-xl font-mono">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pb-2 border-b-1.5 border-border-strong">
               <div className="flex items-center space-x-2">
-                <span className="text-xs text-slate-500">Count:</span>
+                <span className="text-xs text-ink font-bold uppercase">Count:</span>
                 {[1, 5, 10].map((c) => (
                   <button
                     key={c}
                     onClick={() => setUuidCount(c)}
-                    className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                    className={`px-2.5 py-1 text-xs font-bold border-1.5 ${
                       uuidCount === c
-                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        ? 'bg-ink text-canvas border-border-strong'
+                        : 'bg-canvas text-ink border-border-subtle hover:border-border-strong'
                     }`}
                   >
                     {c}
@@ -459,17 +459,17 @@ export const SwissKnifePage: React.FC = () => {
                 ))}
               </div>
 
-              <div className="flex items-center space-x-1.5">
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={generateUuids}
-                  className="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                  className="p-1.5 border-1.5 border-border-strong bg-canvas text-ink hover:bg-ink hover:text-canvas transition-colors duration-fast"
                   title="Generate new batch"
                 >
-                  <RefreshCw className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
+                  <RefreshCw className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => copyToClipboard(uuidBatch.join('\n'), 'all_uuids')}
-                  className="flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium"
+                  className="werkbund-btn werkbund-btn-signal text-xs py-1 px-2.5"
                 >
                   {copiedKey === 'all_uuids' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>Copy All</span>
@@ -481,14 +481,14 @@ export const SwissKnifePage: React.FC = () => {
               {uuidBatch.map((id, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-2 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+                  className="flex items-center justify-between p-2.5 bg-canvas border-1.5 border-border-strong"
                 >
-                  <span className="text-xs text-slate-800 dark:text-slate-200 select-all tabular-nums">{id}</span>
+                  <span className="text-xs text-ink select-all tabular-nums font-bold">{id}</span>
                   <button
                     onClick={() => copyToClipboard(id, `uuid-${index}`)}
-                    className="p-1 text-slate-400 hover:text-emerald-500"
+                    className="p-1 border border-border-strong bg-surface text-ink hover:bg-ink hover:text-canvas transition-colors duration-fast"
                   >
-                    {copiedKey === `uuid-${index}` ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedKey === `uuid-${index}` ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               ))}
@@ -500,43 +500,45 @@ export const SwissKnifePage: React.FC = () => {
         {activeTab === 'hash' && (
           <div className="space-y-3 max-w-xl font-mono">
             <div>
-              <label htmlFor="swissknife-hash-input" className="block text-[11px] uppercase text-slate-500 mb-1">Plain Text</label>
+              <label htmlFor="swissknife-hash-input" className="block text-[11px] uppercase tracking-wider text-ink font-bold mb-1">Plain Text</label>
               <input
                 id="swissknife-hash-input"
                 type="text"
                 value={hashInput}
                 onChange={(e) => setHashInput(e.target.value)}
-                className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink focus:outline-none focus:border-signal"
               />
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3 pt-2">
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">SHA-256</span>
+                  <span className="text-[10px] text-ink font-bold uppercase tracking-wider">SHA-256 Digest</span>
                   <button
                     onClick={() => copyToClipboard(sha256, 'sha256')}
-                    className="text-slate-400 hover:text-emerald-500"
+                    className="flex items-center space-x-1 text-xs text-ink hover:text-signal font-bold uppercase"
                   >
-                    {copiedKey === 'sha256' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedKey === 'sha256' ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>Copy</span>
                   </button>
                 </div>
-                <div className="p-2 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-emerald-600 dark:text-emerald-400 break-all select-all tabular-nums">
+                <div className="p-2.5 bg-canvas border-1.5 border-border-strong text-xs text-signal break-all select-all tabular-nums font-bold">
                   {sha256}
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">SHA-1</span>
+                  <span className="text-[10px] text-ink font-bold uppercase tracking-wider">SHA-1 Digest</span>
                   <button
                     onClick={() => copyToClipboard(sha1, 'sha1')}
-                    className="text-slate-400 hover:text-emerald-500"
+                    className="flex items-center space-x-1 text-xs text-ink hover:text-signal font-bold uppercase"
                   >
-                    {copiedKey === 'sha1' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedKey === 'sha1' ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>Copy</span>
                   </button>
                 </div>
-                <div className="p-2 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-emerald-600 dark:text-emerald-400 break-all select-all tabular-nums">
+                <div className="p-2.5 bg-canvas border-1.5 border-border-strong text-xs text-signal break-all select-all tabular-nums font-bold">
                   {sha1}
                 </div>
               </div>
@@ -549,54 +551,54 @@ export const SwissKnifePage: React.FC = () => {
           <div className="space-y-3 max-w-xl font-mono">
             <div className="grid grid-cols-4 gap-2">
               <div className="col-span-3">
-                <label htmlFor="swissknife-regex-pattern" className="block text-[11px] uppercase text-slate-500 mb-1">Regular Expression</label>
+                <label htmlFor="swissknife-regex-pattern" className="block text-[11px] uppercase tracking-wider text-ink font-bold mb-1">Regular Expression</label>
                 <input
                   id="swissknife-regex-pattern"
                   type="text"
                   value={regexPattern}
                   onChange={(e) => setRegexPattern(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink focus:outline-none focus:border-signal"
                 />
               </div>
               <div>
-                <label htmlFor="swissknife-regex-flags" className="block text-[11px] uppercase text-slate-500 mb-1">Flags</label>
+                <label htmlFor="swissknife-regex-flags" className="block text-[11px] uppercase tracking-wider text-ink font-bold mb-1">Flags</label>
                 <input
                   id="swissknife-regex-flags"
                   type="text"
                   value={regexFlags}
                   onChange={(e) => setRegexFlags(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none"
+                  className="w-full px-3 py-1.5 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink focus:outline-none focus:border-signal uppercase font-bold"
                 />
               </div>
             </div>
 
             {regexError && (
-              <div className="text-xs text-rose-500">{regexError}</div>
+              <div className="p-2.5 bg-surface border-1.5 border-status-danger text-status-danger text-xs font-mono">{regexError}</div>
             )}
 
             <div>
-              <label htmlFor="swissknife-regex-text" className="block text-[11px] uppercase text-slate-500 mb-1">Test String</label>
+              <label htmlFor="swissknife-regex-text" className="block text-[11px] uppercase tracking-wider text-ink font-bold mb-1">Test String</label>
               <textarea
                 id="swissknife-regex-text"
                 rows={3}
                 value={regexText}
                 onChange={(e) => setRegexText(e.target.value)}
-                className="w-full p-2.5 text-xs rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 leading-relaxed"
+                className="w-full p-3 text-xs font-mono border-1.5 border-border-strong bg-canvas text-ink focus:outline-none focus:border-signal leading-relaxed"
               />
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <span className="text-[11px] uppercase text-slate-500">
+                <span className="text-[11px] uppercase tracking-wider text-ink font-bold">
                   Matches ({regexMatches.length})
                 </span>
               </div>
-              <div className="p-2.5 rounded-md bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-1">
+              <div className="p-3 bg-canvas border-1.5 border-border-strong space-y-1">
                 {regexMatches.length === 0 ? (
-                  <span className="text-xs text-slate-400">No matches found.</span>
+                  <span className="text-xs text-ink-muted">[NULL] NO MATCHES FOUND.</span>
                 ) : (
                   regexMatches.map((m, idx) => (
-                    <div key={idx} className="text-xs text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    <div key={idx} className="text-xs text-signal font-bold tabular-nums">
                       [{idx + 1}] {m}
                     </div>
                   ))

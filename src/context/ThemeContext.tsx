@@ -12,8 +12,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('superapps_theme') as ThemeMode;
-    return saved || 'dark';
+    const saved = localStorage.getItem('superapps_theme') || localStorage.getItem('ui-theme-mode');
+    return (saved as ThemeMode) || 'dark';
   });
 
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
@@ -30,17 +30,22 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isDark = theme === 'dark';
       }
 
-      setResolvedTheme(isDark ? 'dark' : 'light');
+      const mode = isDark ? 'dark' : 'light';
+      setResolvedTheme(mode);
 
+      root.setAttribute('data-theme', mode);
       if (isDark) {
         root.classList.add('dark');
+        root.classList.remove('light');
       } else {
         root.classList.remove('dark');
+        root.classList.add('light');
       }
     };
 
     applyTheme();
     localStorage.setItem('superapps_theme', theme);
+    localStorage.setItem('ui-theme-mode', theme);
 
     const listener = () => {
       if (theme === 'system') applyTheme();
