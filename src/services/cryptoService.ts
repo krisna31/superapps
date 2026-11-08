@@ -141,7 +141,9 @@ export async function decryptPayload(
   const iv = base64ToBytes(envelope.iv);
   const ciphertext = base64ToBytes(envelope.ciphertext);
   const iterations =
-    typeof envelope.iterations === 'number' && envelope.iterations >= 10_000
+    typeof envelope.iterations === 'number' &&
+    envelope.iterations >= 10_000 &&
+    envelope.iterations <= 1_000_000
       ? envelope.iterations
       : PBKDF2_ITERATIONS;
 

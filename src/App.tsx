@@ -32,7 +32,7 @@ export const App: React.FC = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <BrowserRouter>
           <ErrorBoundary>
             <Suspense fallback={<PageFallback />}>
               <Routes>

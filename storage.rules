@@ -10,8 +10,8 @@ service firebase.storage {
       allow create, update: if request.auth != null && 
         request.auth.uid == userId &&
         request.resource.size < 10 * 1024 * 1024 &&
-        !request.resource.name.lower().matches('.*\\.(exe|bat|cmd|sh|bash|vbs|vbe|js|jse|wsf|wsh|msc|ps1|scr|pif|msi|msp|com|html|htm|svg|xhtml|xml)$') &&
-        !request.resource.contentType.matches('text/html.*|image/svg\\+xml.*|application/xhtml\\+xml.*|text/javascript.*|application/javascript.*|text/xml.*|application/xml.*');
+        !request.resource.name.lower().matches('.*\\.(exe|bat|cmd|sh|bash|vbs|vbe|js|jse|wsf|wsh|msc|ps1|ps1xml|ps2|ps2xml|psc1|psc2|scr|pif|msi|msp|com|hta|cpl|dll|reg|application|gadget|html|htm|svg|xhtml|xml)$') &&
+        !request.resource.contentType.matches('text/html.*|image/svg\\+xml.*|application/xhtml\\+xml.*|text/javascript.*|application/javascript.*|text/xml.*|application/xml.*|application/x-msdownload.*|application/x-sh.*');
     }
   }
 }

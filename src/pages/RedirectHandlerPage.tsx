@@ -93,7 +93,7 @@ export const RedirectHandlerPage: React.FC = () => {
 
           <Link
             to="/"
-            className="mt-6 ios-btn ios-btn-primary rounded-[10px] text-xs font-semibold px-4 min-h-[40px] flex items-center space-x-2"
+            className="mt-6 ios-btn ios-btn-primary rounded-[10px] text-xs font-semibold px-4 min-h-[44px] flex items-center space-x-2"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Superapps Home</span>
@@ -119,7 +119,7 @@ export const RedirectHandlerPage: React.FC = () => {
 
         <Link
           to="/"
-          className="mt-6 ios-btn ios-btn-primary rounded-[10px] text-xs font-semibold px-4 min-h-[40px] flex items-center space-x-2"
+          className="mt-6 ios-btn ios-btn-primary rounded-[10px] text-xs font-semibold px-4 min-h-[44px] flex items-center space-x-2"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Return to Superapps Home</span>

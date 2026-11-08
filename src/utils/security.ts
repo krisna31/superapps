@@ -148,6 +148,7 @@ export function isDangerousFileExtension(fileName: string): boolean {
     '.vbe', '.js', '.jse', '.wsf', '.wsh', '.msc',
     '.ps1', '.ps1xml', '.ps2', '.ps2xml', '.psc1', '.psc2',
     '.scr', '.pif', '.application', '.gadget', '.msi', '.msp', '.com',
+    '.hta', '.cpl', '.dll', '.reg',
     '.html', '.htm', '.svg', '.xhtml', '.xml'
   ];
   return dangerous.includes(ext);

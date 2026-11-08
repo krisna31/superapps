@@ -134,6 +134,10 @@ describe('Security & Sanitization Utilities', () => {
       expect(isDangerousFileExtension('phish.htm')).toBe(true);
       expect(isDangerousFileExtension('payload.xhtml')).toBe(true);
       expect(isDangerousFileExtension('xxe.xml')).toBe(true);
+      expect(isDangerousFileExtension('malicious.hta')).toBe(true);
+      expect(isDangerousFileExtension('control.cpl')).toBe(true);
+      expect(isDangerousFileExtension('library.dll')).toBe(true);
+      expect(isDangerousFileExtension('registry.reg')).toBe(true);
     });
 
     it('allows safe document, media, and archive extensions', () => {
@@ -220,6 +224,13 @@ describe('Security & Sanitization Utilities', () => {
       await expect(decryptPayload(envelope, 'wrong-passphrase')).rejects.toThrow(
         /Decryption failed/i
       );
+    });
+
+    it('caps excessive iterations to avoid client-side denial of service attacks', async () => {
+      const envelope = await encryptPayload('{"secret":true}', 'my-passphrase');
+      envelope.iterations = 999_999_999;
+      const decrypted = await decryptPayload(envelope, 'my-passphrase');
+      expect(decrypted).toBe('{"secret":true}');
     });
   });
 

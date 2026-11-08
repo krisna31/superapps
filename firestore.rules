@@ -10,6 +10,8 @@ service cloud.firestore {
     // Helper function to check if caller is the verified superadmin (jelvinkrisnaputra31@gmail.com)
     function isSuperadmin() {
       return isAuthenticated() && 
+        'email' in request.auth.token &&
+        'email_verified' in request.auth.token &&
         request.auth.token.email.lower() == 'jelvinkrisnaputra31@gmail.com' && 
         request.auth.token.email_verified == true;
     }
