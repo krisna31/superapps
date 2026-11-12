@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Menu, 
@@ -7,11 +7,13 @@ import {
   Moon, 
   Monitor, 
   User, 
-  LogOut
+  LogOut,
+  Palette
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { SyncStatusBadge } from '@/components/common/SyncStatusBadge';
+import { ThemePickerModal } from '@/components/common/ThemePickerModal';
 
 interface NavbarProps {
   onOpenCommandPalette: () => void;
@@ -25,7 +27,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleSidebar,
 }) => {
   const { user, signOut } = useAuth();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme, archetypeMetadata } = useTheme();
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-30 h-14 ios-frosted-nav px-3.5 sm:px-5 flex items-center justify-between transition-colors">
@@ -82,13 +85,24 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Live Cloud Sync Status Badge */}
         <SyncStatusBadge onOpenAuthModal={onOpenAuthModal} />
 
+        {/* Theme Studio Button */}
+        <button
+          type="button"
+          aria-label={`Open Theme Studio (Active: ${archetypeMetadata.name})`}
+          onClick={() => setIsThemeModalOpen(true)}
+          className="w-9 h-9 rounded-full bg-subtle/80 hover:bg-subtle text-ink flex items-center justify-center transition-colors border border-border-subtle"
+          title={`Theme Studio: ${archetypeMetadata.name}`}
+        >
+          <Palette className="w-4 h-4 text-accent-primary" />
+        </button>
+
         {/* Theme Mode Toggle Button */}
         <button
           type="button"
           aria-label={`Switch theme (current: ${theme})`}
           onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark')}
           className="w-9 h-9 rounded-full bg-subtle/80 hover:bg-subtle text-ink flex items-center justify-center transition-colors border border-border-subtle"
-          title={`Current theme: ${theme}. Click to switch.`}
+          title={`Color mode: ${theme}. Click to switch.`}
         >
           {theme === 'system' ? (
             <Monitor className="w-4 h-4" />
@@ -144,6 +158,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         )}
       </div>
+
+      {/* Theme Studio Modal */}
+      <ThemePickerModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+      />
     </header>
   );
 };

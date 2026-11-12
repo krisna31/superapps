@@ -15,15 +15,22 @@ import {
   Upload,
   Database,
   Trash2,
-  KeyRound
+  KeyRound,
+  Palette,
+  Sun,
+  Moon,
+  Monitor,
+  Check
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { isFirebaseConfigured } from '@/firebase/config';
 import { dataService } from '@/services/dataService';
 import { cryptoService } from '@/services/cryptoService';
 
 export const SettingsPage: React.FC = () => {
   const { user, systemSettings, updateSystemSettings } = useAuth();
+  const { archetype, setArchetype, allArchetypes, polarity, setPolarity } = useTheme();
   const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -430,7 +437,142 @@ export const SettingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. System Information & Architecture */}
+      {/* 4. Workspace Appearance & Theme Studio */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <div className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+            Workspace Appearance & Theme Studio
+          </div>
+          <span className="text-[11px] text-ink-muted font-mono">
+            {allArchetypes.length} Archetypes • 0-WCAG AA/AAA
+          </span>
+        </div>
+
+        <div className="ios-inset-grouped bg-surface shadow-sm p-4 sm:p-5 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-subtle">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 rounded-lg bg-accent-primary/10 text-accent-primary flex items-center justify-center">
+                <Palette className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-ink">Design Archetype Roster</h2>
+                <p className="text-xs text-ink-secondary">
+                  Dynamically shifts color palettes, typography axis, and corner geometries.
+                </p>
+              </div>
+            </div>
+
+            {/* Polarity Quick Switcher */}
+            <div className="flex items-center p-1 bg-subtle rounded-lg border border-border-subtle self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setPolarity('light')}
+                className={`flex items-center space-x-1.5 py-1 px-2.5 rounded text-xs font-semibold transition-all ${
+                  polarity === 'light'
+                    ? 'bg-surface text-ink shadow-sm border border-border-subtle'
+                    : 'text-ink-secondary hover:text-ink'
+                }`}
+              >
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+                <span>Light</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPolarity('dark')}
+                className={`flex items-center space-x-1.5 py-1 px-2.5 rounded text-xs font-semibold transition-all ${
+                  polarity === 'dark'
+                    ? 'bg-surface text-ink shadow-sm border border-border-subtle'
+                    : 'text-ink-secondary hover:text-ink'
+                }`}
+              >
+                <Moon className="w-3.5 h-3.5 text-accent-primary" />
+                <span>Dark</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPolarity('system')}
+                className={`flex items-center space-x-1.5 py-1 px-2.5 rounded text-xs font-semibold transition-all ${
+                  polarity === 'system'
+                    ? 'bg-surface text-ink shadow-sm border border-border-subtle'
+                    : 'text-ink-secondary hover:text-ink'
+                }`}
+              >
+                <Monitor className="w-3.5 h-3.5 text-ink-muted" />
+                <span>Auto</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Archetypes Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {allArchetypes.map((theme) => {
+              const isSelected = archetype === theme.id;
+              return (
+                <button
+                  key={theme.id}
+                  type="button"
+                  onClick={() => setArchetype(theme.id)}
+                  className={`text-left p-3.5 rounded-lg border transition-all relative flex flex-col justify-between ${
+                    isSelected
+                      ? 'border-accent-primary bg-accent-tint/40 shadow-sm ring-1 ring-accent-primary'
+                      : 'border-border-subtle hover:border-border-default bg-subtle/20 hover:bg-subtle/50'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-1.5 mb-1">
+                      <span className="font-display font-bold text-xs text-ink">{theme.name}</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-medium bg-surface border border-border-subtle text-ink-muted whitespace-nowrap">
+                        {theme.badge}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-ink-secondary line-clamp-2 leading-relaxed mb-3">
+                      {theme.tagline}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between pt-2 border-t border-border-subtle/80 mt-1">
+                      <span className="text-[10px] font-mono text-ink-muted truncate max-w-[130px]">
+                        {theme.fontSample.display}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        <span
+                          className="w-3 h-3 rounded-full border border-black/20"
+                          style={{ backgroundColor: theme.previewColors.canvas }}
+                          title="Canvas"
+                        />
+                        <span
+                          className="w-3 h-3 rounded-full border border-black/20"
+                          style={{ backgroundColor: theme.previewColors.surface }}
+                          title="Surface"
+                        />
+                        <span
+                          className="w-3 h-3 rounded-full border border-black/20"
+                          style={{ backgroundColor: theme.previewColors.accent }}
+                          title="Accent"
+                        />
+                        <span
+                          className="w-3 h-3 rounded-full border border-black/20"
+                          style={{ backgroundColor: theme.previewColors.secondary }}
+                          title="Secondary"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {isSelected && (
+                    <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-accent-primary text-white flex items-center justify-center shadow-sm">
+                      <Check className="w-2.5 h-2.5 stroke-[3]" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 5. System Information & Architecture */}
       <div className="space-y-2">
         <div className="text-xs font-semibold uppercase tracking-wider text-ink-muted px-1">
           System Environment & Telemetry

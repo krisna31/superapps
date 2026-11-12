@@ -15,7 +15,9 @@ import {
   Moon, 
   Sun, 
   ShieldCheck, 
-  Plus 
+  Plus,
+  Palette,
+  Monitor
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -39,7 +41,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme, setArchetype, allArchetypes } = useTheme();
   const { user } = useAuth();
 
   const commands: CommandItem[] = useMemo(() => [
@@ -165,6 +167,13 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       icon: Plus,
       action: () => navigate('/shortlinks?create=true'),
     },
+    ...allArchetypes.map((t) => ({
+      id: `theme-archetype-${t.id}`,
+      title: `Theme: ${t.name} (${t.badge})`,
+      category: 'Appearance' as const,
+      icon: Palette,
+      action: () => setArchetype(t.id),
+    })),
     {
       id: 'theme-toggle',
       title: `Switch to ${resolvedTheme === 'dark' ? 'Light' : 'Dark'} Mode`,
@@ -172,7 +181,14 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({ isOpen
       icon: resolvedTheme === 'dark' ? Sun : Moon,
       action: () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark'),
     },
-  ], [navigate, user?.role, resolvedTheme, setTheme]);
+    {
+      id: 'theme-mode-system',
+      title: 'Theme Polarity: Follow System OS',
+      category: 'Appearance',
+      icon: Monitor,
+      action: () => setTheme('system'),
+    },
+  ], [navigate, user?.role, resolvedTheme, setTheme, setArchetype, allArchetypes]);
 
   const filteredCommands = useMemo(
     () =>

@@ -1,4 +1,32 @@
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemePolarity = 'light' | 'dark' | 'system';
+export type ThemeMode = ThemePolarity; // backward compatibility
+
+export type ThemeArchetype =
+  | 'ios-system'
+  | 'android-material'
+  | 'honkai-valkyrie'
+  | 'zenless-urban'
+  | 'werkbund-brutalist'
+  | 'retro-amber-crt'
+  | 'pure-monolith';
+
+export interface ThemeMetadata {
+  id: ThemeArchetype;
+  name: string;
+  tagline: string;
+  lineage: string;
+  badge: string;
+  previewColors: {
+    canvas: string;
+    surface: string;
+    accent: string;
+    secondary: string;
+  };
+  fontSample: {
+    display: string;
+    family: string;
+  };
+}
 
 export interface UserProfile {
   uid: string;

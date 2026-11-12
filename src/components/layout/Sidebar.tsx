@@ -18,6 +18,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 
 interface SidebarProps {
   isOpenMobile: boolean;
@@ -26,6 +27,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile }) => {
   const { user } = useAuth();
+  const { archetypeMetadata } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
@@ -91,7 +93,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, onCloseMobile })
                   <span className="font-display font-semibold text-xs text-ink tracking-tight">Workspace</span>
                   <div className="flex items-center space-x-1 text-[11px] text-ink-muted">
                     <span className="w-1.5 h-1.5 rounded-full bg-status-success" />
-                    <span>Apple HIG iOS</span>
+                    <span className="truncate max-w-[140px]">{archetypeMetadata.name}</span>
                   </div>
                 </div>
               </div>
